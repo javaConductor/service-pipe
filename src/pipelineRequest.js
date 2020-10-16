@@ -1,8 +1,17 @@
-import axios from "axios";
-import extractor from "./extractor";
+const axios = require("axios");
+const extractor = require("./extractor");
+const Pipeline = require("./pipeline");
 
+/**
+ *
+ */
 class PipelineRequest {
 
+    /**
+     *
+     * @param pipeline {Pipeline}
+     * @param initialData Data from request
+     */
     constructor(pipeline, initialData) {
         this.pipeline = pipeline;
         this.initialData = initialData;
@@ -15,22 +24,28 @@ class PipelineRequest {
      * @returns {Promise<[data, err]>}
      */
     async start() {
-        return this._startSeq(this.pipeline.sequence, this.initialData)
+        return this._startSeq(this.pipeline.steps, this.initialData)
     }
 
+    /**
+     *
+     * @param sequence
+     * @param initialData
+     * @returns {Promise<*|{}>}
+     * @private
+     */
     async _startSeq(sequence, initialData) {
-
         let data = initialData || {};
         /// loop thru each node in the sequence
         for (let step in sequence) {
-
-            const [stepData, err] = await this.processStep(step, data)
+            const [stepData, err] = await this.processStep(sequence[step], data)
             if (err) {
                 throw new Error(`Error processing step: ${step.name}`)
             }
-
-            return data;
+            /// combine data from step with previous data
+            data = {...data, ...stepData};
         }
+        return data;
     }
 
     /**
@@ -41,26 +56,27 @@ class PipelineRequest {
      * @returns {Promise<*[]|({data, statusCode}|Error)[]>}
      */
     async processStep(step, data) {
-
-        // use the data from the node in the step to make the HTTP call
-        const realData = {...step.node.nodeData, ...data};
-
-        const template = (tpl, args) => tpl.replace(/\${(\w+)}/g, (_, v) => args[v]);
-
-        console.log(template(step.node.url, realData));
-
-        /// create the URL from the step
-        const url = this.interpolate(step.node.url, realData)
-
-        /// create the Header entries from the step data
-        let headers = {};
-        for (const headerName in step.node.headers) {
-            headers[headerName] = this.interpolate(step.node.headers[headerName], realData)
-        }
-
-        const payload = this.interpolate(step.node.payload, realData);
-
         try {
+
+            // use the data from the node in the step to make the HTTP call
+            const realData = {...step.node.nodeData, ...data};
+            const template = (tpl, args) => tpl.replace(/\${(\w+)}/g, (_, v) => args[v]);
+            console.log(template(step.node.url, realData));
+
+            /// create the URL from the step
+            const url = this.interpolate(step.node.url, realData)
+
+            /// create the Header entries from the step data
+            let headers = {};
+            for (const headerName in step.node.headers) {
+                headers[headerName] = this.interpolate(step.node.headers[headerName], realData)
+            }
+            ///TODO do something different for strings and objects
+            const payload = (typeof step.node.payload === "string")
+                ? this.interpolate(step.node.payload, realData)
+                : step.node.payload;
+
+            ///  Make the CALL
             const response = await axios({
                 method: step.node.method,
                 url: url,
@@ -68,26 +84,27 @@ class PipelineRequest {
                 config: {headers: {'Content-Type': step.node.contentType, ...headers}}
             });
 
-            /*
-            *    const stepDataSample = {
-        previousData: {},
-        data: {},
-        executionStart: Date(),
-        executionLength: 1000,// millis
-        statusCode: 200
-    } */
             /// extract data
-            const [newData, err] = extractor.extract(step.node.contentType, response.data, step.node.extract)
+            const [newData, err] = extractor.extract(
+                step.node.contentType, response.data, step.extract)
             if (err) {
                 return [undefined, err];
             }
-
+/*
+ *    const stepDataSample = {
+previousData: {},
+data: {},
+executionStart: Date(),
+executionLength: 1000,// millis
+statusCode: 200
+}
+* */
             /// create stepData
             const stepData = {
                 data: {...data, ...newData},//just data for now
                 statusCode: response.status
             }
-            return [stepData, new Error("")];
+            return [stepData,];
 
         } catch (e) {
             return [undefined, e];
@@ -100,6 +117,6 @@ class PipelineRequest {
         const url = tFunc(urlTemplate, data)
         return url;
     }
-
-
 }
+
+module.exports = PipelineRequest;
