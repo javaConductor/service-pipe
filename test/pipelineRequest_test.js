@@ -8,7 +8,25 @@ const PipelineNode = require("../src/pipelineNode");
 const PipelineStep = require("../src/pipelineStep");
 const PipelineRequest = require("../src/pipelineRequest");
 
-
+describe('PipelineRequest', function () {
+    describe('start', function () {
+        beforeEach(() => {
+            nock('https://createuser.acme.com')
+                .post('/')
+                .reply(200, {
+                    "type": "NewAccountResponse",
+                    "organization": "$dev2$",
+                    "apiKey": "a00541bf-15db-4d61-8077-604a07aa6b22"
+                });
+            nock('https://login.acme.com')
+                .post('/')
+                .reply(200, {
+                    "type": "AuthResponse",
+                    "token": "d4c78800-5490-4de2-b50e-ffb96960d964",
+                    "expires": "2021-10-18T02:16:59.676-05:00"
+                });
+        });
+        it('should run pipeline', function (){
 const tdgCreateUserNode = new PipelineNode({
     id: 777,
     name: "tdgCreateUserNode",
@@ -74,27 +92,6 @@ const pipeline = new Pipeline({
     nodes: [tdgCreateUserNode, tdgLoginNode],
     steps: [tdgCreateUserStep, tdgLoginStep]
 });
-
-
-describe('PipelineRequest', function () {
-    describe('start', function () {
-        beforeEach(() => {
-            nock('https://createuser.acme.com')
-                .post('/')
-                .reply(200, {
-                    "type": "NewAccountResponse",
-                    "organization": "$dev2$",
-                    "apiKey": "a00541bf-15db-4d61-8077-604a07aa6b22"
-                });
-            nock('https://login.acme.com')
-                .post('/')
-                .reply(200, {
-                    "type": "AuthResponse",
-                    "token": "d4c78800-5490-4de2-b50e-ffb96960d964",
-                    "expires": "2021-10-18T02:16:59.676-05:00"
-                });
-        });
-        it('should run pipeline', function () {
             const pipelineRequest = new PipelineRequest(pipeline, {
                 username: `BigMan@acme.com`,
                 password: "password"
