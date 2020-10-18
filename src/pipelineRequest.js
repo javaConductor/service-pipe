@@ -15,7 +15,6 @@ class PipelineRequest {
     constructor(pipeline, initialData) {
         this.pipeline = pipeline;
         this.initialData = initialData;
-        this.stepHistory = {};// history account by step name
         this.pipelineHistory = [];
     }
 
@@ -35,6 +34,7 @@ class PipelineRequest {
      * @private
      */
     async _startSeq(sequence, initialData) {
+
         let data = initialData || {};
         /// loop thru each node in the sequence
         for (let step in sequence) {
@@ -42,8 +42,15 @@ class PipelineRequest {
             if (err) {
                 throw new Error(`Error processing step: ${step.name}`)
             }
+
+            ///TODO Add to History or send to listeners
+            const historyItem = {
+                name: sequence[step].name,
+                statusCode: stepData.statusCode,
+            }
+
             /// combine data from step with previous data
-            data = {...data, ...stepData};
+            data = {...data, ...stepData.data};
         }
         return data;
     }
@@ -57,7 +64,6 @@ class PipelineRequest {
      */
     async processStep(step, data) {
         try {
-
             // use the data from the node in the step to make the HTTP call
             const realData = {...step.node.nodeData, ...data};
             const template = (tpl, args) => tpl.replace(/\${(\w+)}/g, (_, v) => args[v]);
@@ -74,7 +80,7 @@ class PipelineRequest {
             ///TODO do something different for strings and objects
             const payload = (typeof step.node.payload === "string")
                 ? this.interpolate(step.node.payload, realData)
-                : step.node.payload;
+                : this.interpolateObject(step.node.payload, realData);
 
             ///  Make the CALL
             const response = await axios({
@@ -90,15 +96,15 @@ class PipelineRequest {
             if (err) {
                 return [undefined, err];
             }
-/*
- *    const stepDataSample = {
-previousData: {},
-data: {},
-executionStart: Date(),
-executionLength: 1000,// millis
-statusCode: 200
-}
-* */
+            /*
+             *    const stepDataSample = {
+            previousData: {},
+            data: {},
+            executionStart: Date(),
+            executionLength: 1000,// millis
+            statusCode: 200
+            }
+            * */
             /// create stepData
             const stepData = {
                 data: {...data, ...newData},//just data for now
@@ -117,6 +123,16 @@ statusCode: 200
         const url = tFunc(urlTemplate, data)
         return url;
     }
+
+    interpolateObject(obj, realData) {
+        return Object.keys(obj).reduce((result, key) => {
+            const value = (typeof obj[key] === "string")
+                ? this.interpolate(obj[key], realData)
+                : obj[key];
+            return {...result, [key]: value}
+        }, {});
+    }
+
 }
 
 module.exports = PipelineRequest;

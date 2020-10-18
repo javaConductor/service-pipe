@@ -1,9 +1,7 @@
-
-
 //import xpath from 'xpath';
 //import xmldom from 'xmldom';
 //const dom = xmldom.DomParser
-module.exports =  (function (jmespath) {
+module.exports = (function (jmespath) {
         /**
          * Extracts values from data object
          *

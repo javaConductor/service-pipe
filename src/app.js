@@ -1,11 +1,11 @@
 const Pipeline = require("./pipeline");
 const PipelineNode = require("./pipelineNode");
 const PipelineStep = require("./pipelineStep");
-const PipelineRequest = require(  "./pipelineRequest");
+const PipelineRequest = require("./pipelineRequest");
 
 const tdgCreateUserNode = new PipelineNode({
     id: 777,
-    name: "Tdg Login",
+    name: "tdgCreateUserNode",
     url: 'http://localhost:8080/',
     method: "POST",
     headers: {
@@ -17,15 +17,16 @@ const tdgCreateUserNode = new PipelineNode({
     payload: {
         "type": "createAccount",
         "organization": "$dev2$",
-        "password": "password",
-        "email": "pipeline3@yahoo.com",
-        "status": "Active"
+        "password": "${password}",
+        "email": "${username}",
+        "status": "Active",
+        num: 23,
     },
     contentType: "application/json"
 });
 const tdgLoginNode = new PipelineNode({
     id: 777,
-    name: "Tdg Login",
+    name: "tdgLoginNode",
     url: 'http://localhost:8080/',
     method: "POST",
     headers: {
@@ -36,18 +37,18 @@ const tdgLoginNode = new PipelineNode({
     nodeData: {},
     payload: {
         "type": "authenticate",
-        "username": "me@you.us",
-        "password": "password"
+        "username": "${username}",
+        "password": "${password}"
     },
     contentType: "application/json"
 });
 
 const tdgCreateUserStep = new PipelineStep({
     name: 'Tdg Create User',
-    node: tdgCreateUserNode,
+    nodeName: "tdgCreateUserNode",
     params: {},
     data: {},
-    extract:{
+    extract: {
         org: "organization",
         key: "apiKey"
     }
@@ -55,20 +56,22 @@ const tdgCreateUserStep = new PipelineStep({
 
 const tdgLoginStep = new PipelineStep({
     name: 'Tdg Login',
-    node: tdgLoginNode,
+    nodeName: 'tdgLoginNode',
     params: {},
     data: {},
-    extract:{}
+    extract: {}
 });
 
 const pipeline = new Pipeline({
     name: "TDG Pipeline 1",
-    nodes: [tdgCreateUserNode],
-    steps: [tdgCreateUserStep]
+    nodes: [tdgCreateUserNode, tdgLoginNode],
+    steps: [tdgCreateUserStep, tdgLoginStep]
 });
 
-
-const pipelineRequest  = new PipelineRequest(pipeline, {});
+const pipelineRequest = new PipelineRequest(pipeline, {
+    username: `OneMo_${new Date().getTime()}@mine.sget`,
+    password: "password"
+});
 
 runIt = async () => {
     const response = await pipelineRequest.start();

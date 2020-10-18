@@ -1,4 +1,3 @@
-
 class Pipeline {
 
     constructor(props) {
@@ -18,11 +17,28 @@ class Pipeline {
 
         this.name = props.name;
         this.nodes = props.nodes || {};
-        this.steps = props.steps; //[]];
+        //this.steps = props.steps; //[]];
         this.status = props.status;//'Active'
+        /// resolve nodeNames
+        this.steps = props.steps.map((step) => {
+            if (!step.node) {
+                if (!step.nodeName) {
+                    throw new Error(`Node is missing from step: ${this.name}`);
+                }
+                const node = this.nodes.find((node) => {
+                    return node.name === step.nodeName
+                });
+                if (!node) {
+                    throw new Error(`Node [${step.nodeName}] not found for step [${step.name}]`);
+                }
+                step = {...step, node};
+            }
+            return step;
+        });
+
     }
 }
 
-Pipeline.Status = { New: 'New', Active: 'Active'}
+Pipeline.Status = {New: 'New', Active: 'Active'}
 
 module.exports = Pipeline;
