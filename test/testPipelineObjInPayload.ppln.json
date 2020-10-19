@@ -1,0 +1,14 @@
+{
+  "name": "Pipeline with obj in payload",
+  "steps": [
+    {
+      "name": "single step",
+      "nodeName": "test.values",
+      "params": {},
+      "data": {},
+      "extract": {
+        "success" :"success"
+      }
+    }
+  ]
+}

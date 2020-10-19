@@ -21,6 +21,7 @@ class Nodes {
             const jsonText = fs.readFileSync(`${this.nodesFolder}/${nodeFile}`, 'utf8');
             const nodeData = JSON.parse(jsonText);
             try {
+                console.log(`Loaded node: ${nodeData.name}`);
                 this.nodes = [...this.nodes, new PipelineNode(nodeData)];
             } catch (e) {
                 console.warn(`Error in node file [${nodeFile}]: ${e}`);
@@ -31,6 +32,10 @@ class Nodes {
 
     getNode(nodeName){
         return this.nodes.find((node) => (node.name === nodeName));
+    }
+
+    availableNodes(){
+        return this.nodes.map((node) => (node.name));
     }
 
 }

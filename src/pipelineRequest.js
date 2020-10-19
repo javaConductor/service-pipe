@@ -1,6 +1,7 @@
 const axios = require("axios");
 const extractor = require("./extractor");
 const Pipeline = require("./pipeline");
+const jmespath  = require("jmespath")
 
 /**
  *
@@ -34,7 +35,6 @@ class PipelineRequest {
      * @private
      */
     async _startSeq(sequence, initialData) {
-
         let data = initialData || {};
         /// loop thru each node in the sequence
         for (let step in sequence) {
@@ -52,6 +52,8 @@ class PipelineRequest {
             /// combine data from step with previous data
             data = {...data, ...stepData.data};
         }
+
+        ///TODO Add final pipeline extraction here - default to ALL data
         return data;
     }
 
@@ -96,15 +98,7 @@ class PipelineRequest {
             if (err) {
                 return [undefined, err];
             }
-            /*
-             *    const stepDataSample = {
-            previousData: {},
-            data: {},
-            executionStart: Date(),
-            executionLength: 1000,// millis
-            statusCode: 200
-            }
-            * */
+
             /// create stepData
             const stepData = {
                 data: {...data, ...newData},//just data for now
@@ -127,12 +121,24 @@ class PipelineRequest {
     interpolateObject(obj, realData) {
         return Object.keys(obj).reduce((result, key) => {
             const value = (typeof obj[key] === "string")
-                ? this.interpolate(obj[key], realData)
+                ? this.interpolateValue(obj[key], realData)
                 : obj[key];
             return {...result, [key]: value}
         }, {});
     }
 
+    interpolateValue(value, data){
+
+        if (value.startsWith('object:')){
+            const valueName = value.substr(7);
+            return jmespath.search(data, valueName);
+        }else if (value.startsWith('array:')){
+            const valueName = value.substr(6);
+            return jmespath.search(data, valueName);
+        }else{
+            return this.interpolate(value, data);
+        }
+    }
 }
 
 module.exports = PipelineRequest;
