@@ -1,0 +1,18 @@
+{
+  "id": 777,
+  "name": "tdgLoginNode",
+  "url": "https://login.acme.com/",
+  "method": "POST",
+  "headers": {
+    "Accept": "application/json",
+    "Cache-Control": "no-cache",
+    "Content-Type": "application/json"
+  },
+  "nodeData": {},
+  "payload": {
+    "type": "authenticate",
+    "username": "${username}",
+    "password": "${password}"
+  },
+  "contentType": "application/json"
+}

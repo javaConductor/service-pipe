@@ -1,0 +1,21 @@
+{
+  "id": 777,
+  "name": "tdgCreateUserNode",
+  "url": "https://createuser.acme.com/",
+  "method": "POST",
+  "headers": {
+    "Accept": "application/json",
+    "Cache-Control": "no-cache",
+    "Content-Type": "application/json"
+  },
+  "nodeData": {},
+  "payload": {
+    "type": "createAccount",
+    "organization": "$dev2$",
+    "password": "${password}",
+    "email": "${username}",
+    "status": "Active",
+    "num": 23
+  },
+  "contentType": "application/json"
+}
