@@ -13,7 +13,6 @@ class Loader {
         if (!pipelineFilename) {
             throw new Error('Missing pipelineFilename');
         }
-
         try {
             const jsonText = fs.readFileSync(pipelineFilename, 'utf8');
             const pipelineData = JSON.parse(jsonText);
@@ -22,7 +21,7 @@ class Loader {
             for (const n in pipelineData.steps) {
                 let step = pipelineData.steps[n];
                 if (step.nodeName) {
-                    console.info(`Step: [${step.name}] Searching for node [${step.nodeName}] for nodes ${JSON.stringify(this.nodes.availableNodes())}`);
+                    //console.info(`Step: [${step.name}] Searching for node [${step.nodeName}] for nodes ${JSON.stringify(this.nodes.availableNodes())}`);
                     const node = this.nodes.getNode(step.nodeName);
                     if (!node) {
                         throw  new Error(`File: [${pipelineFilename}] Node [${step.nodeName}] not found in step [${step.name}]`)

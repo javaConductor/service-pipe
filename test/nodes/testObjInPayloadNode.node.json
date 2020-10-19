@@ -10,6 +10,7 @@
   },
   "nodeData": {},
   "payload": {
+    "list": "object:list",
     "values": "object:values",
     "message": "${message}"
   },
