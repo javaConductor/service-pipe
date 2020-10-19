@@ -31,7 +31,7 @@ describe('PipelineRequest', function () {
             nock('https://sum.acme.com')
                 .post('/')
                 .reply(200, {
-                    "success": "true"
+                    "success": true
                 });
             nock('https://simplesingle.acme.com')
                 .post('/')
@@ -69,7 +69,7 @@ describe('PipelineRequest', function () {
                 password: "password"
             });
 
-            return pipelineRequest.start().then(([response, err]) => {
+            return pipelineRequest.start().then(([response, pipelineHistory, err]) => {
                     should.not.exist(err);
                     assert.equal('object', typeof response, 'Should be an object');
                     assert(response.username, "BigMan@acme.com");
@@ -91,10 +91,9 @@ describe('PipelineRequest', function () {
                 password: "password"
             });
 
-            return pipelineRequest.start().then(([response, err]) => {
+            return pipelineRequest.start().then(([response,pipelineHistory,  err]) => {
                     should.not.exist(err);
                     assert.equal('object', typeof response, 'Should be an object');
-                    console.log(`Response: ${JSON.stringify(response)}`);
                     assert(response["username"], "BigMan@acme.com");
                     assert(response["password"], "password");
                     assert(response["key"], "a00541bf-15db-4d61-8077-604a07aa6b22");
@@ -117,10 +116,10 @@ describe('PipelineRequest', function () {
                 list: testList
             });
 
-            return pipelineRequest.start().then(([response, err]) => {
+            return pipelineRequest.start().then(([response,pipelineHistory,  err]) => {
                     assert.equal('object', typeof response, 'Should be an object');
                     assert.equal(response["message"], "This is the message");
-                    assert.deepEqual(response["values"], testValues, "'values' do not match.");
+                       assert.deepEqual(response["values"], testValues, "'values' do not match.");
                     assert.deepEqual(response["list"], testList, "'list' does not match.");
                 },
                 (reason) => {
@@ -132,11 +131,10 @@ describe('PipelineRequest', function () {
         it('should report 404 error in single step', function () {
             const pipeline = new Loader(new Nodes('./test/nodes')).loadPipeline("./test/testSimpleSingleStep.ppln.json");
             const pipelineRequest = new PipelineRequest(pipeline, {});
-            return pipelineRequest.start().then(([response, err]) => {
-                    console.log(`Error: ${JSON.stringify(err)}`);
+            return pipelineRequest.start().then(([response,pipelineHistory,  err]) => {
+                    //console.log(`Error: ${JSON.stringify(err)}`);
                     should.exist(err);
                     assert.equal('Error processing step: [simpleSingle]: Node: [test.simpleSingle] Not Found', err.message, 'Message Should match');
-                    console.log(`Error: ${JSON.stringify(err)}`);
                 },
                 (reason) => {
                     assert.fail(reason);
