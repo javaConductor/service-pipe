@@ -1,0 +1,18 @@
+{
+  "id": 777,
+  "name": "test.values",
+  "url": "https://sum.acme.com/",
+  "method": "POST",
+  "headers": {
+    "Accept": "application/json",
+    "Cache-Control": "no-cache",
+    "Content-Type": "application/json"
+  },
+  "nodeData": {},
+  "payload": {
+    "list": "object:list",
+    "values": "object:values",
+    "message": "${message}"
+  },
+  "contentType": "application/json"
+}

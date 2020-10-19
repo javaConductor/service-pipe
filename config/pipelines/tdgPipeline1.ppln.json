@@ -1,6 +1,5 @@
 {
   "name": "TDG Pipeline 1",
-
   "steps": [
     {
       "name": "Tdg Create User",

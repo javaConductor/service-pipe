@@ -1,13 +1,15 @@
 const chai = require('chai');
 const assert = chai.assert;
 const should = chai.should();
+const expect = chai.expect;
 const nock = require('nock');
 const Pipeline = require("../src/pipeline");
-const PipelineNode = require("../src/pipelineNode");
 const PipelineStep = require("../src/pipelineStep");
 const PipelineRequest = require("../src/pipelineRequest");
 const Loader = require("../src/loader");
-const defaultNodes = require("../src/nodes").default;
+
+const Nodes = require("../src/nodes");
+const testNodes = new Nodes('./test/nodes');
 
 describe('PipelineRequest', function () {
     describe('start', function () {
@@ -26,13 +28,18 @@ describe('PipelineRequest', function () {
                     "token": "d4c78800-5490-4de2-b50e-ffb96960d964",
                     "expires": "2021-10-18T02:16:59.676-05:00"
                 });
+            nock('https://sum.acme.com')
+                .post('/')
+                .reply(200, {
+                    "success": "true"
+                });
         });
 
-        it('should run manually created pipeline', function (){
+        it('should run manually created pipeline', function () {
             const tdgCreateUserStep = new PipelineStep({
                 name: 'Tdg Create User',
                 nodeName: "tdgCreateUserNode",
-                node: defaultNodes.getNode('tdgCreateUserNode'),
+                node: testNodes.getNode('tdgCreateUserNode'),
                 params: {},
                 data: {},
                 extract: {
@@ -42,14 +49,14 @@ describe('PipelineRequest', function () {
             });
             const tdgLoginStep = new PipelineStep({
                 name: 'Tdg Login',
-                node: defaultNodes.getNode('tdgLoginNode'),
+                node: testNodes.getNode('tdgLoginNode'),
                 params: {},
                 data: {},
                 extract: {}
             });
             const pipeline = new Pipeline({
                 name: "TDG Pipeline 1",
-                nodes: [defaultNodes.getNode('tdgCreateUserNode'), defaultNodes.getNode('tdgLoginNode')],
+                nodes: [testNodes.getNode('tdgCreateUserNode'), testNodes.getNode('tdgLoginNode')],
                 steps: [tdgCreateUserStep, tdgLoginStep]
             });
 
@@ -72,11 +79,9 @@ describe('PipelineRequest', function () {
                 }
             );
         });
-        it('should run pipeline from file', function (){
 
-            const pipeline =  new Loader().loadPipeline("./testPipeline1.ppln.json");
-//            console.log(JSON.stringify(pipeline, null, 2));
-
+        it('should run pipeline from file', function () {
+            const pipeline = new Loader().loadPipeline("./test/testPipeline1.ppln.json");
             const pipelineRequest = new PipelineRequest(pipeline, {
                 username: `BigMan@acme.com`,
                 password: "password"
@@ -95,6 +100,29 @@ describe('PipelineRequest', function () {
                 }
             );
         });
+
+        it('should return message:string and values:object and list:array', function () {
+            const pipeline = new Loader(new Nodes('./test/nodes')).loadPipeline("./test/testPipelineObjInPayload.ppln.json");
+            const testValues = {age: 12, city: "Chicago"};
+            const testList = ['a', 'b', 'c'];
+            const pipelineRequest = new PipelineRequest(pipeline, {
+                message: `This is the message`,
+                values: testValues,
+                list: testList
+            });
+
+            return pipelineRequest.start().then((response) => {
+                    assert.equal('object', typeof response, 'Should be an object');
+                    assert.equal(response["message"], "This is the message");
+                    assert.deepEqual(response["values"], testValues);
+                    assert.deepEqual(response["list"], testList);
+                },
+                (reason) => {
+                    assert.fail(reason);
+                }
+            );
+        });
+
     })
 })
 
