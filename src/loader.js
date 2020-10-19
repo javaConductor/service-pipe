@@ -5,7 +5,7 @@ const Pipeline = require('./pipeline');
 
 class Loader {
 
-    constructor(nodes =  require("./nodes").default) {
+    constructor(nodes = require("./nodes").default) {
         this.nodes = nodes;
     }
 
@@ -29,7 +29,7 @@ class Loader {
                     }
                     step.node = node;
                 }
-                if (!step.node){
+                if (!step.node) {
                     throw  new Error(`File: [${pipelineFilename}] Step: [${step.name}] missing node.`);
                 }
                 if (!step.nodeName) {

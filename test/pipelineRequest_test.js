@@ -105,20 +105,37 @@ describe('PipelineRequest', function () {
             const pipeline = new Loader(new Nodes('./test/nodes')).loadPipeline("./test/testPipelineObjInPayload.ppln.json");
             const pipelineRequest = new PipelineRequest(pipeline, {
                 message: `This is the message`,
-                values: {age:12,city:"Chicago"}
+                values: {age: 12, city: "Chicago"}
             });
 
             return pipelineRequest.start().then((response) => {
                     assert.equal('object', typeof response, 'Should be an object');
                     assert.equal(response["message"], "This is the message");
-                    assert.deepEqual(response["values"], {age:12,city:"Chicago"});
-                    },
+                    assert.deepEqual(response["values"], {age: 12, city: "Chicago"});
+                },
                 (reason) => {
                     assert.fail(reason);
                 }
             );
         });
 
+        it('should return message as string and values as array', function () {
+            const pipeline = new Loader(new Nodes('./test/nodes')).loadPipeline("./test/testPipelineObjInPayload.ppln.json");
+            const testValues = {age: 12, city: "Chicago"};
+            const pipelineRequest = new PipelineRequest(pipeline, {
+                message: `This is the message`,
+                values: testValues
+            });
+            return pipelineRequest.start().then((response) => {
+                    assert.equal('object', typeof response, 'Should be an object');
+                    assert.equal(response["message"], "This is the message");
+                    assert.deepEqual(response["values"], testValues );
+                },
+                (reason) => {
+                    assert.fail(reason);
+                }
+            );
+        });
     })
 })
 

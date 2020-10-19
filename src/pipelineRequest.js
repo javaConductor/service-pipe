@@ -1,7 +1,7 @@
 const axios = require("axios");
 const extractor = require("./extractor");
 const Pipeline = require("./pipeline");
-const jmespath  = require("jmespath")
+const jmespath = require("jmespath")
 
 /**
  *
@@ -127,15 +127,15 @@ class PipelineRequest {
         }, {});
     }
 
-    interpolateValue(value, data){
+    interpolateValue(value, data) {
 
-        if (value.startsWith('object:')){
+        if (value.startsWith('object:')) {
             const valueName = value.substr(7);
             return jmespath.search(data, valueName);
-        }else if (value.startsWith('array:')){
+        } else if (value.startsWith('array:')) {
             const valueName = value.substr(6);
             return jmespath.search(data, valueName);
-        }else{
+        } else {
             return this.interpolate(value, data);
         }
     }
