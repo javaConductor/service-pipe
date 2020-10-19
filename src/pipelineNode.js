@@ -9,6 +9,7 @@ class PipelineNode {
         this.nodeData = nodeProps.nodeData;
         this.payload = nodeProps.payload;
         this.contentType = nodeProps.contentType;
+        this.steps = nodeProps.steps;
     }
 }
 
