@@ -3,8 +3,8 @@ const assert = chai.assert;
 const should = chai.should();
 const expect = chai.expect;
 const nock = require('nock');
-const Pipeline = require("../src/pipeline");
-const PipelineStep = require("../src/pipelineStep");
+const Pipeline = require("../src/model/pipeline");
+const PipelineStep = require("../src/model/pipelineStep");
 const PipelineRequest = require("../src/pipelineRequest");
 const Loader = require("../src/loader");
 
@@ -89,6 +89,7 @@ describe('PipelineRequest', function () {
 
             return pipelineRequest.start().then((response) => {
                     assert.equal('object', typeof response, 'Should be an object');
+                    console.log(`Response: ${JSON.stringify( response)}`);
                     assert(response["username"], "BigMan@acme.com");
                     assert(response["password"], "password");
                     assert(response["key"], "a00541bf-15db-4d61-8077-604a07aa6b22");
@@ -114,15 +115,13 @@ describe('PipelineRequest', function () {
             return pipelineRequest.start().then((response) => {
                     assert.equal('object', typeof response, 'Should be an object');
                     assert.equal(response["message"], "This is the message");
-                    assert.deepEqual(response["values"], testValues);
-                    assert.deepEqual(response["list"], testList);
+                    assert.deepEqual(response["values"], testValues, "'values' do not match.");
+                    assert.deepEqual(response["list"], testList, "'list' does not match.");
                 },
                 (reason) => {
                     assert.fail(reason);
                 }
             );
         });
-
     })
-})
-
+});

@@ -1,7 +1,7 @@
 const config = require('../src/config');
 const fs = require('fs');
 const glob = require("glob")
-const Pipeline = require('./pipeline');
+const Pipeline = require('./model/pipeline');
 
 class Loader {
 

@@ -1,6 +1,6 @@
 const axios = require("axios");
 const extractor = require("./extractor");
-const Pipeline = require("./pipeline");
+const Pipeline = require("./model/pipeline");
 const jmespath = require("jmespath")
 
 /**
@@ -24,7 +24,11 @@ class PipelineRequest {
      * @returns {Promise<[data, err]>}
      */
     async start() {
-        return this._startSeq(this.pipeline.steps, this.initialData)
+        const results = await this._startSeq(this.pipeline.steps, this.initialData);
+        const finalValue = (this.pipeline.extract && Object.keys(this.pipeline.extract).length > 0)
+            ? extractor.extract("application/json",results, this.pipeline.extract)
+            : results;
+        return finalValue;
     }
 
     /**
@@ -53,7 +57,6 @@ class PipelineRequest {
             data = {...data, ...stepData.data};
         }
 
-        ///TODO Add final pipeline extraction here - default to ALL data
         return data;
     }
 

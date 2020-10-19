@@ -1,6 +1,6 @@
-const Pipeline = require("./pipeline");
-const PipelineNode = require("./pipelineNode");
-const PipelineStep = require("./pipelineStep");
+const Pipeline = require("./model/pipeline");
+const PipelineNode = require("./model/pipelineNode");
+const PipelineStep = require("./model/pipelineStep");
 const PipelineRequest = require("./pipelineRequest");
 
 const tdgCreateUserNode = new PipelineNode({

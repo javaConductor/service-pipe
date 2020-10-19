@@ -1,7 +1,7 @@
 const config = require('../src/config');
 const fs = require('fs');
 const glob = require("glob")
-const PipelineNode = require('./pipelineNode');
+const PipelineNode = require('./model/pipelineNode');
 
 class Nodes {
 
