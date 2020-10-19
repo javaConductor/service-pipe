@@ -21,14 +21,17 @@ class PipelineRequest {
 
     /**
      *
-     * @returns {Promise<[data, err]>}
+     * @returns {Promise<[*][]>}
      */
     async start() {
-        const results = await this._startSeq(this.pipeline.steps, this.initialData);
+        const [results, err] = await this._startSeq(this.pipeline.steps, this.initialData);
+        if (err){
+            return [undefined, err];
+        }
         const finalValue = (this.pipeline.extract && Object.keys(this.pipeline.extract).length > 0)
             ? extractor.extract("application/json",results, this.pipeline.extract)
             : results;
-        return finalValue;
+        return [finalValue, null];
     }
 
     /**
@@ -44,7 +47,7 @@ class PipelineRequest {
         for (let step in sequence) {
             const [stepData, err] = await this.processStep(sequence[step], data)
             if (err) {
-                throw new Error(`Error processing step: ${step.name}`)
+                return [undefined, new Error(`Error processing step: [${sequence[step].name}]: ${err}`)];
             }
 
             ///TODO Add to History or send to listeners
@@ -57,7 +60,7 @@ class PipelineRequest {
             data = {...data, ...stepData.data};
         }
 
-        return data;
+        return [data];
     }
 
     /**
@@ -88,31 +91,44 @@ class PipelineRequest {
                 : this.interpolateObject(step.node.payload, realData);
 
             ///  Make the CALL
-            const response = await axios({
+            return axios({
                 method: step.node.method,
                 url: url,
                 data: payload,
                 config: {headers: {'Content-Type': step.node.contentType, ...headers}}
+            }).then((response)=>{
+
+                // check to status code
+
+                /// extract data
+                const [newData, err] = extractor.extract(
+                    step.node.contentType, response.data, step.extract)
+                if (err) {
+                    return [undefined, err];
+                }
+
+                /// create stepData
+                const stepData = {
+                    data: {...data, ...newData},//just data for now
+                    statusCode: response.status
+                }
+                return [stepData,];
+
+            },(error)=>{
+
+                if (error.response) {
+                    if (error.response.status == 404){
+                        return [undefined, `Node: [${step.node.name}] Not Found`]
+                    }
+                    console.log(error.response.data);
+                    console.log(error.response.status);
+                    console.log(error.response.headers);
+                }
+                return [undefined, error]
             });
-
-            /// extract data
-            const [newData, err] = extractor.extract(
-                step.node.contentType, response.data, step.extract)
-            if (err) {
-                return [undefined, err];
-            }
-
-            /// create stepData
-            const stepData = {
-                data: {...data, ...newData},//just data for now
-                statusCode: response.status
-            }
-            return [stepData,];
-
         } catch (e) {
             return [undefined, e];
         }
-
     }
 
     interpolate(urlTemplate, data) {
