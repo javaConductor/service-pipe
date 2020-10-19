@@ -28,7 +28,7 @@ describe('PipelineRequest', function () {
                 });
         });
 
-        it('should run manually created pipeline', function (){
+        it('should run manually created pipeline', function () {
             const tdgCreateUserStep = new PipelineStep({
                 name: 'Tdg Create User',
                 nodeName: "tdgCreateUserNode",
@@ -72,9 +72,10 @@ describe('PipelineRequest', function () {
                 }
             );
         });
-        it('should run pipeline from file', function (){
 
-            const pipeline =  new Loader().loadPipeline("./testPipeline1.ppln.json");
+        it('should run pipeline from file', function () {
+
+            const pipeline = new Loader().loadPipeline("./test/testPipeline1.ppln.json");
 //            console.log(JSON.stringify(pipeline, null, 2));
 
             const pipelineRequest = new PipelineRequest(pipeline, {

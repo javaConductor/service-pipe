@@ -67,7 +67,7 @@ class PipelineRequest {
             // use the data from the node in the step to make the HTTP call
             const realData = {...step.node.nodeData, ...data};
             const template = (tpl, args) => tpl.replace(/\${(\w+)}/g, (_, v) => args[v]);
-            console.log(template(step.node.url, realData));
+            //console.log(template(step.node.url, realData));
 
             /// create the URL from the step
             const url = this.interpolate(step.node.url, realData)
