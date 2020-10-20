@@ -19,6 +19,7 @@ class Loader {
             // resolve the node names in steps
             let steps = [];
             for (const n in pipelineData.steps) {
+                // noinspection JSUnfilteredForInLoop
                 let step = pipelineData.steps[n];
                 if (step.nodeName) {
                     //console.info(`Step: [${step.name}] Searching for node [${step.nodeName}] for nodes ${JSON.stringify(this.nodes.availableNodes())}`);
@@ -37,9 +38,8 @@ class Loader {
                 steps = [...steps, step];
             }
             const pipelineInfo = {...pipelineData, steps};
-            const pipeline = new Pipeline(pipelineInfo);
             //console.log(`Loaded pipeline ${JSON.stringify( pipeline,null,2)}`);
-            return pipeline;
+            return new Pipeline(pipelineInfo);
         } catch (e) {
             throw new Error(`Error loading pipeline. File: [${pipelineFilename}]: ${e}`);
         }

@@ -10,6 +10,8 @@ class PipelineNode {
         this.payload = nodeProps.payload;
         this.contentType = nodeProps.contentType;
         this.steps = nodeProps.steps;
+        this.errorIndicators = nodeProps.errorIndicators;
+        this.errorMessages = nodeProps.errorMessages;
     }
 }
 

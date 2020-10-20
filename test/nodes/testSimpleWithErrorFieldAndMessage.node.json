@@ -1,0 +1,25 @@
+{
+  "id": 777,
+  "name": "test.simpleError",
+  "url": "https://simplerror.acme.com/",
+  "method": "POST",
+  "headers": {
+    "Accept": "application/json",
+    "Cache-Control": "no-cache",
+    "Content-Type": "application/json"
+  },
+  "nodeData": {},
+  "payload": {
+    "testData": {
+      "a": 1,
+      "b": 2
+    }
+  },
+  "errorIndicators": {
+    "error": ""
+  },
+  "errorMessages": {
+    "message": "message"
+  },
+  "contentType": "application/json"
+}

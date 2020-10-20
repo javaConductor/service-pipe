@@ -69,7 +69,7 @@ const pipeline = new Pipeline({
 });
 
 const pipelineRequest = new PipelineRequest(pipeline, {
-    username: `OneMo_${new Date().getTime()}@mine.sget`,
+    username: `OneMo_${new Date().getTime()}@mine.get`,
     password: "password"
 });
 

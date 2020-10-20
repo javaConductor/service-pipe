@@ -12,7 +12,6 @@ module.exports = (function (jmespath) {
          */
         function extract(contentType, data, dataPaths = {}) {
             console.assert(data, `NO data passed to extract: [${JSON.stringify(data)}] `);
-
             switch (contentType) {
                 case 'application/json': {
                     return [extractJSON(data, dataPaths)];

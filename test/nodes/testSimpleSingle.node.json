@@ -1,0 +1,19 @@
+{
+  "id": 777,
+  "name": "test.simpleSingle",
+  "url": "https://simplesingle.acme.com/",
+  "method": "POST",
+  "headers": {
+    "Accept": "application/json",
+    "Cache-Control": "no-cache",
+    "Content-Type": "application/json"
+  },
+  "nodeData": {},
+  "payload": {
+    "testData": {
+      "a": 1,
+      "b": 2
+    }
+  },
+  "contentType": "application/json"
+}
