@@ -33,9 +33,17 @@ describe('PipelineRequest', function () {
                 .reply(200, {
                     "success": true
                 });
+
             nock('https://simplesingle.acme.com')
                 .post('/')
                 .reply(404, {});
+
+            nock('https://simplerror.acme.com')
+                .post('/')
+                .reply(200, {
+                    error: "Error in response",
+                    message: "There was an error."
+                });
         });
 
         it('should run manually created pipeline', function () {
@@ -91,7 +99,7 @@ describe('PipelineRequest', function () {
                 password: "password"
             });
 
-            return pipelineRequest.start().then(([response,pipelineHistory,  err]) => {
+            return pipelineRequest.start().then(([response, pipelineHistory, err]) => {
                     should.not.exist(err);
                     assert.equal('object', typeof response, 'Should be an object');
                     assert(response["username"], "BigMan@acme.com");
@@ -116,10 +124,10 @@ describe('PipelineRequest', function () {
                 list: testList
             });
 
-            return pipelineRequest.start().then(([response,pipelineHistory,  err]) => {
+            return pipelineRequest.start().then(([response, pipelineHistory, err]) => {
                     assert.equal('object', typeof response, 'Should be an object');
                     assert.equal(response["message"], "This is the message");
-                       assert.deepEqual(response["values"], testValues, "'values' do not match.");
+                    assert.deepEqual(response["values"], testValues, "'values' do not match.");
                     assert.deepEqual(response["list"], testList, "'list' does not match.");
                 },
                 (reason) => {
@@ -131,7 +139,7 @@ describe('PipelineRequest', function () {
         it('should report 404 error in single step', function () {
             const pipeline = new Loader(new Nodes('./test/nodes')).loadPipeline("./test/testSimpleSingleStep.ppln.json");
             const pipelineRequest = new PipelineRequest(pipeline, {});
-            return pipelineRequest.start().then(([response,pipelineHistory,  err]) => {
+            return pipelineRequest.start().then(([response, pipelineHistory, err]) => {
                     //console.log(`Error: ${JSON.stringify(err)}`);
                     should.exist(err);
                     assert.equal('Error processing step: [simpleSingle]: Node: [test.simpleSingle] Not Found', err.message, 'Message Should match');
@@ -142,5 +150,17 @@ describe('PipelineRequest', function () {
             );
         });
 
+        it('should report error in response from single step', function () {
+            const pipeline = new Loader(new Nodes('./test/nodes')).loadPipeline("./test/testSimpleError.ppln.json");
+            const pipelineRequest = new PipelineRequest(pipeline, {});
+            return pipelineRequest.start().then(([response, pipelineHistory, err]) => {
+                    should.exist(err);
+                    assert.equal(err.message, 'Error processing step: [simpleError]: There was an error.', 'Message Should match response');
+                },
+                (reason) => {
+                    assert.fail(reason);
+                }
+            );
+        });
     })
 });

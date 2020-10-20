@@ -24,29 +24,36 @@ class PipelineRequest {
      * @returns {Promise<[*][]>}
      */
     async start() {
-        let newPipelineHistory = [ {
-            timeStamp: Date.now(),
+        const startTime = Date.now();
+        let pipelineHistory = [{
             pipeline: this.pipeline.name,
+            timeStamp: startTime,
             message: "Start pipeline.",
-            steps: this.pipeline.steps.map((step)=>(step.name))
+            steps: this.pipeline.steps.map((step) => (step.name))
         }]
 
-        const [results, pipelineHistory, err] = await this._startSeq(this.pipeline.name, this.pipeline.steps, this.initialData);
+        const [results, sequenceHistory, err] = await this._startSeq(this.pipeline.name, this.pipeline.steps, this.initialData);
         if (err) {
-            return [undefined, pipelineHistory, err];
+            return [undefined, sequenceHistory, err];
         }
-        const finalValue = (this.hasKeys( this.pipeline.extract))
+        const finalValue = (this.hasKeys(this.pipeline.extract))
+            //TODO need to get this contentType
             ? extractor.extract("application/json", results, this.pipeline.extract)
             : results;
 
-        newPipelineHistory = [...newPipelineHistory,...pipelineHistory, {
-            timeStamp: Date.now(),
+        const now = Date.now();
+        const millis = new Date(now).getTime() - new Date(startTime).getTime();
+        pipelineHistory = [...pipelineHistory, ...sequenceHistory, {
             pipeline: this.pipeline.name,
-            message: "Data received.",
+            timeStamp: now,
+            executionTimeMillis: millis,
+            message: "Pipeline complete.",
             extracted: finalValue
-        }].map((trace)=>{ return {...trace, timeStamp: new Date(trace.timeStamp)}});
-        console.log(`PipelineRequest: Pipeline: [${this.pipeline.name}] History: ${JSON.stringify(newPipelineHistory,null,2)} `);
-        return [finalValue, newPipelineHistory, null];
+        }].map((trace) => {
+            return {...trace, timeStamp: new Date(trace.timeStamp)}
+        });
+        console.log(`PipelineRequest: Pipeline: [${this.pipeline.name}]\nTrace: ${JSON.stringify(pipelineHistory, null, 2)} `);
+        return [finalValue, pipelineHistory, null];
     }
 
     /**
@@ -62,7 +69,7 @@ class PipelineRequest {
         let data = initialData || {};
         /// loop thru each node in the sequence
         for (let step in sequence) {
-            const [stepData, stepTrace, err] = await this.processStep(pipelineName,sequence[step], data)
+            const [stepData, stepTrace, err] = await this.processStep(pipelineName, sequence[step], data)
             if (err) {
                 return [undefined, stepTrace, new Error(`Error processing step: [${sequence[step].name}]: ${err}`)];
             }
@@ -104,9 +111,11 @@ class PipelineRequest {
 
             stepTrace = [...stepTrace, {
                 pipeline: pipelineName,
-                timeStamp: Date.now(),
                 step: step.name,
                 nodeName: step.node.name,
+                nodeURL: url,
+                nodeHeaders: headers,
+                timeStamp: Date.now(),
                 message: "Initiate request.",
                 data: payload
             }];
@@ -121,13 +130,14 @@ class PipelineRequest {
 
                 stepTrace = [...stepTrace, {
                     pipeline: pipelineName,
-                    timeStamp: Date.now(),
                     step: step.name,
                     nodeName: step.node.name,
+                    timeStamp: Date.now(),
                     message: "Request complete.",
                     data: response.data,
                     statusCode: response.status
                 }];
+
 
                 /// extract data
                 const [newData, err] = extractor.extract(
@@ -135,8 +145,9 @@ class PipelineRequest {
                 if (err) {
                     stepTrace = [...stepTrace, {
                         pipeline: pipelineName,
-                        timeStamp: Date.now(),
+                        step: step.name,
                         nodeName: step.node.name,
+                        timeStamp: Date.now(),
                         message: `Error extracting data. keys: ${JSON.stringify(Object.keys(step.extract))}`,
                         data: response.data,
                         statusCode: response.status
@@ -144,38 +155,97 @@ class PipelineRequest {
                     return [undefined, stepTrace, err];
                 }
 
+                /// Check for error conditions
+                if (this.hasKeys(step.node.errorIndicators)) {
+                    for (const ind in step.node.errorIndicators) {
+                        if (response.data[ind]) {
+                            /// loop thru the errorMessages
+                            let msgs = [];
+                            if (this.hasKeys(step.node.errorMessages)) {
+                                for (const key in step.node.errorMessages) {
+                                    const msg = response.data[key];
+                                    if (msg && msg.length > 0) {
+                                        msgs = [...msgs, msg];
+                                    }
+                                }
+                            }
+
+                            stepTrace = [...stepTrace, {
+                                pipeline: pipelineName,
+                                step: step.name,
+                                nodeName: step.node.name,
+                                timeStamp: Date.now(),
+                                message: `Error in response`,
+                                data: response.data,
+                                statusCode: response.status,
+                                responseErrors: msgs
+                            }];
+                            return [undefined, stepTrace, (msgs.join(', '))];
+                        }
+                    }
+
+                }
+
                 /// create stepData
                 const stepData = {
                     data: {...data, ...newData},//just data for now
                     statusCode: response.status
                 }
-                stepTrace = [...stepTrace, {
-                    pipeline: pipelineName,
-                    timeStamp: Date.now(),
-                    nodeName: step.node.name,
-                    message: `Error extracting data. keys: ${JSON.stringify(Object.keys(step.extract))}`,
-                    data: response.data,
-                    statusCode: response.status
-                }];
                 return [stepData, stepTrace];
 
             }, (error) => {
-
                 if (error.response) {
+
+                    if (error.response.status === 404) {
+                        stepTrace = [...stepTrace, {
+                            pipeline: pipelineName,
+                            step: step.name,
+                            nodeName: step.node.name,
+                            timeStamp: Date.now(),
+                            message: `Resource not found.`,
+                            error: `${error.message}`,
+                            statusCode: error.response.status,
+                        }];
+                        return [undefined, stepTrace, `Node: [${step.node.name}] Not Found`];
+                    }
+
+                    if (error.response.status === 500) {
+                        stepTrace = [...stepTrace, {
+                            pipeline: pipelineName,
+                            step: step.name,
+                            nodeName: step.node.name,
+                            timeStamp: Date.now(),
+                            message: `Error in resource.`,
+                            error: `${error.message}`,
+                            statusCode: error.response.status,
+                        }];
+                        return [undefined, stepTrace, `Node: [${step.node.name}]: ${error.message}`];
+
+                    }
+
                     stepTrace = [...stepTrace, {
                         pipeline: pipelineName,
-                        timeStamp: Date.now(),
+                        step: step.name,
                         nodeName: step.node.name,
-                        message: `Error contacting node [${step.node.name}]: ${error.message}`,
+                        timeStamp: Date.now(),
+                        message: `Error contacting node [${step.node.name}]`,
+                        error: `${error.message}`,
                         statusCode: error.response.status,
                     }];
-                    if (error.response.status == 404) {
-                        return [undefined, stepTrace, `Node: [${step.node.name}] Not Found`]
-                    }
+
+                    return [undefined, stepTrace, `${error.message}`];
                 }
                 return [undefined, stepTrace, error]
             });
         } catch (e) {
+            stepTrace = [...stepTrace, {
+                pipeline: pipelineName,
+                step: step.name,
+                nodeName: step.node.name,
+                timeStamp: Date.now(),
+                message: `Error contacting node [${step.node.name}]`,
+                error: `${e.message}`
+            }];
             return [undefined, stepTrace, e];
         }
     }
@@ -196,18 +266,21 @@ class PipelineRequest {
     }
 
     interpolateValue(value, data) {
-
         if (value.startsWith('object:')) {
             const valueName = value.substr(7);
             return jmespath.search(data, valueName);
         } else if (value.startsWith('array:')) {
             const valueName = value.substr(6);
             return jmespath.search(data, valueName);
+        } else if (value.startsWith('string:')) {
+            const valueName = value.substr(7);
+            return jmespath.search(data, valueName);
         } else {
             return this.interpolate(value, data);
         }
     }
-    hasKeys(obj){
+
+    hasKeys(obj) {
         if (!obj)
             return false;
         return Object.keys(obj).length > 0;

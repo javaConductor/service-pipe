@@ -1,0 +1,16 @@
+{
+  "name": "Pipeline with obj in payload",
+  "steps": [
+    {
+      "name": "simpleError",
+      "description": "Test Pipeline: simple error",
+      "nodeName": "test.simpleError",
+      "params": {},
+      "data": {},
+      "extract": {
+        "error": "error",
+        "message": "message"
+      }
+    }
+  ]
+}
