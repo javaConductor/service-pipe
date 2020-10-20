@@ -11,6 +11,17 @@
         "error": "error",
         "message": "message"
       }
+    },
+    {
+      "name": "simpleSingle",
+      "description": "Test Pipeline: simple error",
+      "nodeName": "test.simpleSingle",
+      "params": {},
+      "data": {},
+      "extract": {
+        "error": "error",
+        "message": "message"
+      }
     }
   ]
 }

@@ -154,6 +154,7 @@ describe('PipelineRequest', function () {
             );
         });
 
+        // noinspection DuplicatedCode
         it('should report error in response from single step', function () {
             const message = "There was an error.";
             nock('https://simplerror.acme.com')
@@ -162,6 +163,33 @@ describe('PipelineRequest', function () {
                     error: "Error in response",
                     message
                 });
+            const pipeline = new Loader(testNodes).loadPipeline("./test/testSimpleError.ppln.json");
+            const pipelineRequest = new PipelineRequest(pipeline, {});
+            return pipelineRequest.start().then(([response, pipelineHistory, err]) => {
+                    should.exist(err);
+                    assert.equal(err, `${message}`);
+                    expect(pipelineHistory).to.be.an('array');
+                    expect(pipelineHistory).to.have.lengthOf(5); // Recommended
+                    assert.equal(pipelineHistory[4].errorMessage, `${message}`);
+                },
+                (reason) => {
+                    assert.fail(reason);
+                }
+            );
+        });
+        // noinspection DuplicatedCode
+        it('should report error in response from step 1 of 2', function () {
+            const message = "There was an error.";
+            nock('https://simplerror.acme.com')
+                .post('/')
+                .reply(200, {
+                    error: "Error in response",
+                    message
+                });
+            nock('https://simplesingle.acme.com')
+                .post('/')
+                .reply(404, {});
+
             const pipeline = new Loader(testNodes).loadPipeline("./test/testSimpleError.ppln.json");
             const pipelineRequest = new PipelineRequest(pipeline, {});
             return pipelineRequest.start().then(([response, pipelineHistory, err]) => {

@@ -36,13 +36,15 @@ class PipelineRequest {
         if (err) {
             const now = Date.now();
             const millis = new Date(now).getTime() - new Date(startTime).getTime();
+            //TODO Maybe return the data extracted so far
             const history = [...pipelineHistory, ...sequenceHistory, {
                 pipeline: this.pipeline.name,
                 timeStamp: now,
                 executionTimeMillis: millis,
                 message: "Pipeline completed with error.",
-                errorMessage: err
-            }].map((trace) =>(  {...trace, timeStamp: new Date(trace.timeStamp)}));
+                errorMessage: err,
+                partialData: results
+            }].map((trace) => ({...trace, timeStamp: new Date(trace.timeStamp)}));
 
             console.log(`PipelineRequest: Pipeline: [${this.pipeline.name}]\nTrace: ${JSON.stringify(history, null, 2)} `);
             return [undefined, history, err];
@@ -69,6 +71,7 @@ class PipelineRequest {
 
     /**
      *
+     * @param pipelineName
      * @param sequence
      * @param initialData
      * @returns {Promise<*|{}>}
@@ -82,7 +85,7 @@ class PipelineRequest {
         for (let step in sequence) {
             const [stepData, stepTrace, err] = await this.processStep(pipelineName, sequence[step], data)
             if (err) {
-                return [undefined, stepTrace,  (`${err}`)];
+                return [stepData, stepTrace, (`${err}`)];
             }
 
             ///TODO Add to History or send to listeners
@@ -97,6 +100,7 @@ class PipelineRequest {
     /**
      * Process one step of a pipeline.
      *
+     * @param pipelineName
      * @param step
      * @param data
      * @returns {Promise<*[]|({data, statusCode}|Error)[]>}
@@ -104,7 +108,7 @@ class PipelineRequest {
     async processStep(pipelineName, step, data) {
         let stepTrace = [];
         try {
-            // use the data from the node in the step to make the HTTP call
+            /// use the data from the node in the step to make the HTTP call
             const realData = {...step.node.nodeData, ...data};
 
             /// create the URL from the step
@@ -138,7 +142,6 @@ class PipelineRequest {
                 data: payload,
                 config: {headers: {'Content-Type': step.node.contentType, ...headers}}
             }).then((response) => {
-
                 stepTrace = [...stepTrace, {
                     pipeline: pipelineName,
                     step: step.name,
@@ -148,8 +151,6 @@ class PipelineRequest {
                     data: response.data,
                     statusCode: response.status
                 }];
-
-
                 /// extract data
                 const [newData, err] = extractor.extract(
                     step.node.contentType, response.data, step.extract)
@@ -163,7 +164,7 @@ class PipelineRequest {
                         data: response.data,
                         statusCode: response.status
                     }];
-                    return [undefined, stepTrace, err];
+                    return [{...data, ...response.data}, stepTrace, err];
                 }
 
                 /// Check for error conditions
@@ -171,12 +172,12 @@ class PipelineRequest {
                     for (const ind in step.node.errorIndicators) {
                         if (response.data[ind]) {
                             /// loop thru the errorMessages
-                            let msgs = [];
+                            let messages = [];
                             if (this.hasKeys(step.node.errorMessages)) {
                                 for (const key in step.node.errorMessages) {
                                     const msg = response.data[key];
                                     if (msg && msg.length > 0) {
-                                        msgs = [...msgs, msg];
+                                        messages = [...messages, msg];
                                     }
                                 }
                             }
@@ -189,9 +190,9 @@ class PipelineRequest {
                                 message: `Error in response`,
                                 data: response.data,
                                 statusCode: response.status,
-                                responseErrors: msgs
+                                responseErrors: messages
                             }];
-                            return [undefined, stepTrace, msgs.join(', ')];
+                            return [{...data, ...response.data}, stepTrace, messages.join(', ')];
                         }
                     }
 
@@ -206,7 +207,6 @@ class PipelineRequest {
 
             }, (error) => {
                 if (error.response) {
-
                     if (error.response.status === 404) {
                         stepTrace = [...stepTrace, {
                             pipeline: pipelineName,
@@ -217,7 +217,7 @@ class PipelineRequest {
                             error: `${error.message}`,
                             statusCode: error.response.status,
                         }];
-                        return [undefined, stepTrace, `Node: [${step.node.name}] Not Found`];
+                        return [{...data}, stepTrace, `Node: [${step.node.name}] Not Found`];
                     }
 
                     if (error.response.status === 500) {
@@ -230,8 +230,7 @@ class PipelineRequest {
                             error: `${error.message}`,
                             statusCode: error.response.status,
                         }];
-                        return [undefined, stepTrace, `Node: [${step.node.name}]: ${error.message}`];
-
+                        return [{...data}, stepTrace, `Node: [${step.node.name}]: ${error.message}`];
                     }
 
                     stepTrace = [...stepTrace, {
@@ -243,10 +242,9 @@ class PipelineRequest {
                         error: `${error.message}`,
                         statusCode: error.response.status,
                     }];
-
-                    return [undefined, stepTrace, `${error.message}`];
+                    return [{...data}, stepTrace, `${error.message}`];
                 }
-                return [undefined, stepTrace, error]
+                return [{...data}, stepTrace, error]
             });
         } catch (e) {
             stepTrace = [...stepTrace, {
@@ -257,14 +255,13 @@ class PipelineRequest {
                 message: `Error contacting node [${step.node.name}]`,
                 error: `${e.message}`
             }];
-            return [undefined, stepTrace, e];
+            return [{...data}, stepTrace, e];
         }
     }
 
     interpolate(urlTemplate, data) {
         const tFunc = (tpl, args) => tpl.replace(/\${(\w+)}/g, (_, v) => args[v] || '');
-        const url = tFunc(urlTemplate, data)
-        return url;
+        return tFunc(urlTemplate, data);
     }
 
     interpolateObject(obj, realData) {
