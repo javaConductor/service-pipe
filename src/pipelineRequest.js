@@ -34,7 +34,18 @@ class PipelineRequest {
 
         const [results, sequenceHistory, err] = await this._startSeq(this.pipeline.name, this.pipeline.steps, this.initialData);
         if (err) {
-            return [undefined, sequenceHistory, err];
+            const now = Date.now();
+            const millis = new Date(now).getTime() - new Date(startTime).getTime();
+            const history = [...pipelineHistory, ...sequenceHistory, {
+                pipeline: this.pipeline.name,
+                timeStamp: now,
+                executionTimeMillis: millis,
+                message: "Pipeline completed with error.",
+                errorMessage: err
+            }].map((trace) =>(  {...trace, timeStamp: new Date(trace.timeStamp)}));
+
+            console.log(`PipelineRequest: Pipeline: [${this.pipeline.name}]\nTrace: ${JSON.stringify(history, null, 2)} `);
+            return [undefined, history, err];
         }
         const finalValue = (this.hasKeys(this.pipeline.extract))
             //TODO need to get this contentType
@@ -71,7 +82,7 @@ class PipelineRequest {
         for (let step in sequence) {
             const [stepData, stepTrace, err] = await this.processStep(pipelineName, sequence[step], data)
             if (err) {
-                return [undefined, stepTrace, new Error(`Error processing step: [${sequence[step].name}]: ${err}`)];
+                return [undefined, stepTrace,  (`${err}`)];
             }
 
             ///TODO Add to History or send to listeners
@@ -180,7 +191,7 @@ class PipelineRequest {
                                 statusCode: response.status,
                                 responseErrors: msgs
                             }];
-                            return [undefined, stepTrace, (msgs.join(', '))];
+                            return [undefined, stepTrace, msgs.join(', ')];
                         }
                     }
 
