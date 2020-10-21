@@ -19,7 +19,7 @@ describe('GitHubTest', function () {
 
             const pipeline = new Loader(testNodes).loadPipeline("./test/testGithubJavaconductor.ppln.json");
             const pipelineRequest = new PipelineRequest(pipeline, {});
-            pipelineRequest.start().then(([response, pipelineHistory, err]) => {
+            return pipelineRequest.start().then(([response, pipelineHistory, err]) => {
                     should.not.exist(err);
                     expect(pipelineHistory).to.be.an('array');
                     expect(response).to.be.an('object');

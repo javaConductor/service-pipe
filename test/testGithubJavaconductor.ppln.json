@@ -8,6 +8,7 @@
       "params": {},
       "data": {},
       "extract": {
+        "allOfIt": "array:"
       }
     }
   ]

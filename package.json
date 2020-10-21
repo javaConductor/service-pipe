@@ -6,7 +6,7 @@
   "scripts": {
     "test": "mocha --full-trace --inline-diffs",
     "fullTest": "mocha --full-trace --inline-diffs --recursive",
-    "integrationTest": "mocha --full-trace --inline-diffs test/integration/"
+    "integrationTest": "mocha --timeout 5000 --full-trace --inline-diffs test/integration/"
   },
   "keywords": [],
   "author": "javaConductor",

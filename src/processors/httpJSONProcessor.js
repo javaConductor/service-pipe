@@ -3,6 +3,7 @@ const axios = require("axios");
 const extractor = require("../extractor");
 const Pipeline = require("../model/pipeline");
 const misc = require('../misc');
+const jsonTypes = require('../model/jsonTypes');
 
 class HttpJSONProcessor extends StepProcessor {
 
@@ -64,6 +65,41 @@ class HttpJSONProcessor extends StepProcessor {
                 let responseData = response.data;
                 /// If extractions are to be done
                 if (misc.hasKeys(step.extract)) {
+
+                    /// if the first and only value is a datatype designation(string:,object:,array:)
+                    // alone then
+                    // validate the type and assignn it the data as [key]
+                    if (Object.keys(step.extract).length === 1) {
+
+                        const name = Object.keys(step.extract)[0];
+                        const value = step.extract[name];
+                        if (jsonTypes.isType(value)) {
+
+                            /// create stepData
+                            const stepData = {
+                                //TODO remove ...data
+                                data:  responseData,//just data for now
+                                statusCode: response.status
+                            }
+
+                            if (!jsonTypes.validate(value, responseData) && responseData) {
+                                const errMsg = `Type [${typeof responseData}] does not match extract designation [${value}]`;
+                                stepTrace = [...stepTrace, {
+                                    pipeline: pipelineName,
+                                    step: step.name,
+                                    nodeName: step.node.name,
+                                    timeStamp: Date.now(),
+                                    message: `Extract datatype mismatch`,
+                                    error: errMsg
+                                }];
+                                return [stepData, stepTrace, errMsg]
+                            } else {
+                                stepData.data = {...stepData.data, [name]: responseData}
+                                return [stepData, stepTrace];
+                            }
+                        }
+                    }
+
                     /// extract data
                     const [newData, err] = extractor.extract(
                         step.node.contentType, response.data, step.extract);
@@ -129,7 +165,7 @@ class HttpJSONProcessor extends StepProcessor {
                             nodeName: step.node.name,
                             timeStamp: Date.now(),
                             message: `Resource not found.`,
-                            error: `${error.message}`,
+                            error: `${error.message}\n${JSON.stringify(error.stack,null,2)}`,
                             statusCode: error.response.status,
                         }];
                         return [{...data}, stepTrace, `Node: [${step.node.name}] Not Found`];
@@ -142,7 +178,7 @@ class HttpJSONProcessor extends StepProcessor {
                             nodeName: step.node.name,
                             timeStamp: Date.now(),
                             message: `Error in resource.`,
-                            error: `${error.message}`,
+                            error: `${error.message}\n${JSON.stringify(error.stack,null,2)}`,
                             statusCode: error.response.status,
                         }];
                         return [{...data}, stepTrace, `Node: [${step.node.name}]: ${error.message}`];
@@ -154,7 +190,7 @@ class HttpJSONProcessor extends StepProcessor {
                         nodeName: step.node.name,
                         timeStamp: Date.now(),
                         message: `Error contacting node [${step.node.name}]`,
-                        error: `${error.message}`,
+                        error: `${error.message}\n${JSON.stringify(error.stack,null,2)}`,
                         statusCode: error.response.status,
                     }];
                     return [{...data}, stepTrace, `${error.message}`];
@@ -168,7 +204,7 @@ class HttpJSONProcessor extends StepProcessor {
                 nodeName: step.node.name,
                 timeStamp: Date.now(),
                 message: `Error contacting node [${step.node.name}]`,
-                error: `${e.message}`
+                error: `${e.message}\n${JSON.stringify(e.stack,null,2)}`
             }];
             return [{...data}, stepTrace, e];
         }

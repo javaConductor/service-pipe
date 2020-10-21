@@ -50,7 +50,7 @@ class PipelineRequest {
                 partialData: results
             }].map((trace) => ({...trace, timeStamp: new Date(trace.timeStamp)}));
             //console.log(`PipelineRequest: Pipeline: [${this.pipeline.name}]\nTrace: ${JSON.stringify(history, null, 2)} `);
-            return [undefined, history, err];
+            return [results, history, err];
         }
         const finalValue = (misc.hasKeys(this.pipeline.extract))
             //TODO need to get this contentType
