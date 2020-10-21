@@ -1,0 +1,14 @@
+{
+  "name": "GiHub Repo Pipeline",
+  "steps": [
+    {
+      "name": "Repos",
+      "description": "Test GitHub",
+      "nodeName": "test.githubReposJavaconductor",
+      "params": {},
+      "data": {},
+      "extract": {
+      }
+    }
+  ]
+}
