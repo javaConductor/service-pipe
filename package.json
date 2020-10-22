@@ -4,10 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha --full-trace --inline-diffs",
+    "fullTest": "mocha --full-trace --inline-diffs --recursive",
+    "integrationTest": "mocha --timeout 5000 --full-trace --inline-diffs test/integration/"
   },
   "keywords": [],
-  "author": "",
+  "author": "javaConductor",
   "license": "ISC",
   "dependencies": {
     "axios": "^0.20.0",

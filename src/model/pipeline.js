@@ -11,7 +11,6 @@ class Pipeline {
         this.extract = props.extract || {};
         this.name = props.name;
         this.steps = props.steps;
-        this.status = props.status;
     }
 }
 

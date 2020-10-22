@@ -1,0 +1,24 @@
+{
+  "id": 777,
+  "name": "test.githubReposJavaconductor",
+  "url": "https://api.github.com/users/javaconductor/repos",
+  "method": "GET",
+  "headers": {
+    "Accept": "application/json",
+    "Cache-Control": "no-cache",
+    "Content-Type": "application/json",
+    "Authorization": ""
+  },
+  "nodeData": {},
+  "payload": {
+  },
+  "errorIndicators": {
+    "message": "message",
+    "documentation_url":"documentation_url"
+  },
+  "errorMessages": {
+    "message": "message",
+    "documentation_url":"documentation_url"
+  },
+  "contentType": "application/json"
+}
