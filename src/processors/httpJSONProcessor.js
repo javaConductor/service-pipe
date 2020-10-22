@@ -1,7 +1,6 @@
 const StepProcessor = require('./stepProcessor');
 const axios = require("axios");
 const extractor = require("../extractor");
-const Pipeline = require("../model/pipeline");
 const misc = require('../misc');
 const jsonTypes = require('../model/jsonTypes');
 
@@ -9,6 +8,7 @@ class HttpJSONProcessor extends StepProcessor {
 
     constructor(processorProps) {
         super(processorProps);
+        this.stepType = PipelineStep.StepTypes.HTTP_JSON;
     }
 
     canProcess(step) {
@@ -65,12 +65,10 @@ class HttpJSONProcessor extends StepProcessor {
                 let responseData = response.data;
                 /// If extractions are to be done
                 if (misc.hasKeys(step.extract)) {
-
                     /// if the first and only value is a datatype designation(string:,object:,array:)
                     // alone then
                     // validate the type and assignn it the data as [key]
                     if (Object.keys(step.extract).length === 1) {
-
                         const name = Object.keys(step.extract)[0];
                         const value = step.extract[name];
                         if (jsonTypes.isType(value)) {
@@ -94,7 +92,7 @@ class HttpJSONProcessor extends StepProcessor {
                                 }];
                                 return [stepData, stepTrace, errMsg]
                             } else {
-                                stepData.data = {...stepData.data, [name]: responseData}
+                                stepData.data = {[name]: responseData}
                                 return [stepData, stepTrace];
                             }
                         }

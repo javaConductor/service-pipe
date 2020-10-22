@@ -1,6 +1,6 @@
 class StepProcessor{
     constructor(processorProps) {
-
+        this.stepType = PipelineStep.StepTypes.HTTP_JSON;
     }
 
     canProcess(step){
