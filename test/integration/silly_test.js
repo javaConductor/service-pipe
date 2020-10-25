@@ -16,7 +16,7 @@ const testNodes = new Nodes('./test/nodes');
 describe('PipelineRequest', function () {
     describe('start', function () {
         // noinspection DuplicatedCode
-        it('should return the stats on ann array of numbers', function (doneFn) {
+        it('should return the stats on an array of numbers', function (doneFn) {
 
             const statLinksNode = new PipelineNode({
                     "id": 777,
@@ -45,7 +45,7 @@ describe('PipelineRequest', function () {
 
             const statNode = new PipelineNode({
                     "id": 7770,
-                    "name": "test.sum",
+                    "name": "test.stat",
                     "url": "http://localhost:3001/${statName}",
                     "method": "POST",
                     "headers": {
@@ -117,13 +117,14 @@ describe('PipelineRequest', function () {
                 pipelineRequest.start().then(([response, pipelineHistory, err]) => {
                         should.not.exist(err);
                         expect(pipelineHistory).to.be.an('array');
+                        console.log(`TEST::: ${JSON.stringify(pipelineHistory, null, 2)}`);
+
                         expect(response).to.be.an('object');
                         expect(response.stats).to.be.an('array');
                         expect(response.stats).to.have.lengthOf(4);
 
                         //console.log(`${JSON.stringify(pipelineHistory)}`)
-                        console.log(`TEST::: ${JSON.stringify(pipelineHistory, null, 2)}`);
-                        expect(pipelineHistory).to.have.lengthOf(13);
+                        expect(pipelineHistory).to.have.lengthOf(15);
                         doneFn();
                     },
                     (reason) => {

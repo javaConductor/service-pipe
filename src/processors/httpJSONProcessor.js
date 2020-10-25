@@ -38,7 +38,7 @@ class HttpJSONProcessor extends StepProcessor {
                 step: step.name,
                 nodeName: step.node.name,
                 timeStamp: Date.now(),
-                state: "error",
+                state:PipelineStep.StepStates.ERROR,
                 message: `Error in data.`,
                 error: `Field [${dataArrayKey}] is not an array.`
             }];
@@ -67,6 +67,7 @@ class HttpJSONProcessor extends StepProcessor {
                     nodeName: step.node.name,
                     timeStamp: Date.now(),
                     message: err,
+                    state:PipelineStep.StepStates.ERROR,
                     data: {...realData, ...results},
                     index: cnt
                 }];
@@ -127,6 +128,7 @@ class HttpJSONProcessor extends StepProcessor {
                 nodeURL: url,
                 nodeHeaders: headers,
                 timeStamp: Date.now(),
+                state:PipelineStep.StepStates.IN_PROGRESS,
                 message: "Initiate request.",
                 data: payload
             }];
@@ -192,6 +194,7 @@ class HttpJSONProcessor extends StepProcessor {
                             timeStamp: Date.now(),
                             message: `Error extracting data. keys: ${JSON.stringify(Object.keys(step.extract))}`,
                             data: response.data,
+                            state:PipelineStep.StepStates.ERROR,
                             statusCode: response.status
                         }];
                         return [{...data, ...response.data}, stepTrace, err];
@@ -283,6 +286,7 @@ class HttpJSONProcessor extends StepProcessor {
                 nodeName: step.node.name,
                 timeStamp: Date.now(),
                 message: `Error contacting node [${step.node.name}]`,
+                state:PipelineStep.StepStates.ERROR,
                 error: `${e.message}\n${JSON.stringify(e.stack, null, 2)}`
             }];
             return [{...data}, stepTrace, e];

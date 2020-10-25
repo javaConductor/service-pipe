@@ -43,4 +43,12 @@ PipelineStep.StepTypes = {
     STEP_FOREACH: 'step.forEach'
 };
 
+PipelineStep.StepStates = {
+    INITIALIZATION: 'state.init',
+    ERROR: 'state.error',
+    IN_PROGRESS: 'state.in.progress',
+    COMPLETE: 'state.complete',
+    COMPLETE_WITH_ERRORS: 'state.complete.w.errors',
+};
+
 module.exports = PipelineStep;

@@ -2,6 +2,7 @@ const axios = require("axios");
 const misc = require('./misc');
 const extractor = require("./extractor");
 const Pipeline = require("./model/pipeline");
+const PipelineStep = require("./model/pipelineStep");
 const jmespath = require("jmespath")
 const processorManager = require('./processors/processorManager');
 const StepProcessor = require('./processors/stepProcessor');
@@ -47,6 +48,7 @@ class PipelineRequest {
                 executionTimeMillis: millis,
                 message: "Pipeline completed with error.",
                 errorMessage: err,
+                state:PipelineStep.StepStates.COMPLETE_WITH_ERRORS,
                 partialData: results
             }].map((trace) => ({...trace, timeStamp: new Date(trace.timeStamp)}));
             //console.log(`PipelineRequest: Pipeline: [${this.pipeline.name}]\nTrace: ${JSON.stringify(history, null, 2)} `);
@@ -67,6 +69,7 @@ class PipelineRequest {
             timeStamp: now,
             executionTimeMillis: millis,
             message: "Pipeline complete.",
+            state:PipelineStep.StepStates.COMPLETE,
             extracted: finalValue
         }].map((trace) => {
             return {...trace, timeStamp: new Date(trace.timeStamp)}
@@ -95,6 +98,7 @@ class PipelineRequest {
                 pipelineHistory = [...pipelineHistory, {
                     pipeline: pipelineName,
                     timeStamp: Date.now(),
+                    state:PipelineStep.StepStates.ERROR,
                     message: `No step processor for [${step.name}].`,
                     partialData: data
                 }];
@@ -107,6 +111,16 @@ class PipelineRequest {
             if (err) {
                 return [stepData, stepTrace, (`${err}`)];
             }
+            pipelineHistory = [...pipelineHistory, {
+                pipeline: pipelineName,
+                timeStamp: Date.now(),
+                state:PipelineStep.StepStates.COMPLETE,
+                message: `Step [${step.name}] is completed.`,
+                extracted: stepData
+            }];
+
+
+            ///
 
             ///TODO Add to History or send to listeners
             pipelineHistory = [...pipelineHistory, ...stepTrace];
