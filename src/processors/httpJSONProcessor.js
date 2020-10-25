@@ -20,7 +20,9 @@ class HttpJSONProcessor extends StepProcessor {
         return step.node.contentType === "application/json";
     }
 
-    async aggregateStep(pipeline, step, data){
+    async aggregateStep(pipeline, step, data) {
+        const realData = {...step.node.nodeData, ...(step.data || {}), ...data};
+
         const pipelineName = pipeline.name;
         /// get the dataArrayProperty
         const dataArrayKey = step.dataArrayProperty;
@@ -28,9 +30,9 @@ class HttpJSONProcessor extends StepProcessor {
         const aggregateExtract = step.aggregateExtract;
 
         let stepTrace = [];
-        let value = data[dataArrayKey];
+        let value = realData[dataArrayKey];
 
-        if (!jsonTypes.validate("array:", value)){
+        if (!jsonTypes.validate("array:", value)) {
             stepTrace = [...stepTrace, {
                 pipeline: pipelineName,
                 step: step.name,
@@ -45,18 +47,18 @@ class HttpJSONProcessor extends StepProcessor {
 
         let aggResults = [];
         let cnt = 0;
-        for (const idx in value){
+        for (const idx in value) {
             ++cnt;
-            let aggValue;
-            if ( aggregateExtract ){
-                aggValue = jmespath.search(value[idx], aggregateExtract.dataPath);
-            }else
-                aggValue = data[dataArrayKey];
+            let aggValue = value[idx], aggData;
+            if (aggregateExtract) {
+                if (aggregateExtract.dataPath) {
+                    aggValue = jmespath.search(aggValue, aggregateExtract.dataPath);
+                }
 
-            const aggData = {...data, [dataArrayKey]:undefined, [aggregateExtract.aggKey]: aggValue }
+                aggData = {...realData, [dataArrayKey]: undefined, [aggregateExtract.aggKey]: aggValue}
 
-            console.log(`Passing element ${JSON.stringify( aggData, null, 2 )}`);
-
+                console.log(`Passing element ${JSON.stringify(aggData, null, 2)}`);
+            }
             const [results, sequenceHistory, err] = await this.processStep(pipeline, step, aggData);
             if (err) {
                 stepTrace = [...stepTrace, ...sequenceHistory, {
@@ -65,12 +67,12 @@ class HttpJSONProcessor extends StepProcessor {
                     nodeName: step.node.name,
                     timeStamp: Date.now(),
                     message: err,
-                    data: {...data, ...results},
+                    data: {...realData, ...results},
                     index: cnt
                 }];
-                return [{...data, ...results}, stepTrace, err];
+                return [{...realData, ...results}, stepTrace, err];
             }
-            aggResults = [...aggResults, aggData];
+            aggResults = [...aggResults, results];
             stepTrace = [...stepTrace, ...sequenceHistory];
         }
 
@@ -79,14 +81,12 @@ class HttpJSONProcessor extends StepProcessor {
             step: step.name,
             nodeName: step.node.name,
             timeStamp: Date.now(),
-            message: `Error in response`,
-            data: {...data, [dataOutputKey]:aggResults},
-            count:cnt,
+            message: `Completed aggregate step.`,
+            data: {...data, [dataOutputKey]: aggResults},
+            count: cnt,
         }];
-        const stepData = {
-            data:  {...data, [dataOutputKey]:aggResults}
-        }
-        return [stepData, stepTrace];
+
+        return [{[dataOutputKey]: aggResults}, stepTrace];
     }
 
     async processStep(pipeline, step, data) {
@@ -94,7 +94,7 @@ class HttpJSONProcessor extends StepProcessor {
         let stepTrace = [];
         try {
             /// use the data from the node in the step to make the HTTP call
-            const realData = {...step.node.nodeData, ...data};
+            const realData = {...step.node.nodeData, ...(step.data || {}), ...data};
 
             /// create the URL from the step
             const url = misc.interpolate(step.node.url, realData)
@@ -105,9 +105,20 @@ class HttpJSONProcessor extends StepProcessor {
                 headers[headerName] = misc.interpolate(step.node.headers[headerName], realData)
             }
             ///TODO do something different for strings and objects
-            const payload = (typeof step.node.payload === "string")
-                ? misc.interpolate(step.node.payload, realData)
-                : misc.interpolateObject(step.node.payload, realData);
+            let [payload, err] = this.aggregatePayload(step.node.payload, realData);
+            if (err){
+                stepTrace = [...stepTrace, {
+                    pipeline: pipelineName,
+                    step: step.name,
+                    nodeName: step.node.name,
+                    nodeUrl: url,
+                    state: "error",
+                    timeStamp: Date.now(),
+                    message: `${err}`,
+                    error: err
+                }];
+                return [data, stepTrace, err]
+            }
 
             stepTrace = [...stepTrace, {
                 pipeline: pipelineName,
@@ -122,8 +133,8 @@ class HttpJSONProcessor extends StepProcessor {
 
             let authHeaders = {};
             /// Add auth headers if any
-            if (step.node.authentication && step.node.authentication.basic){
-                authHeaders = {Authorization: this.basicAuthHeader(step.node.authentication.basic.username,step.node.authentication.basic.password)};
+            if (step.node.authentication && step.node.authentication.basic) {
+                authHeaders = {Authorization: this.basicAuthHeader(step.node.authentication.basic.username, step.node.authentication.basic.password)};
             }
 
             ///  Make the CALL
@@ -152,28 +163,20 @@ class HttpJSONProcessor extends StepProcessor {
                         const name = Object.keys(step.extract)[0];
                         const value = step.extract[name];
                         if (jsonTypes.isType(value)) {
-
-                            /// create stepData
-                            const stepData = {
-                                //TODO remove ...data
-                                data:  responseData,//just data for now
-                                statusCode: response.status
-                            }
-
                             if (!jsonTypes.validate(value, responseData) && responseData) {
                                 const errMsg = `Type [${typeof responseData}] does not match extract designation [${value}]`;
                                 stepTrace = [...stepTrace, {
                                     pipeline: pipelineName,
                                     step: step.name,
                                     nodeName: step.node.name,
+                                    nodeUrl: url,
                                     timeStamp: Date.now(),
                                     message: `Extract datatype mismatch`,
                                     error: errMsg
                                 }];
-                                return [stepData, stepTrace, errMsg]
+                                return [responseData, stepTrace, errMsg]
                             } else {
-                                stepData.data = {[name]: responseData}
-                                return [stepData, stepTrace];
+                                return [{[name]: responseData}, stepTrace];
                             }
                         }
                     }
@@ -191,7 +194,6 @@ class HttpJSONProcessor extends StepProcessor {
                             data: response.data,
                             statusCode: response.status
                         }];
-
                         return [{...data, ...response.data}, stepTrace, err];
                     }
                     responseData = newData;
@@ -226,13 +228,7 @@ class HttpJSONProcessor extends StepProcessor {
                         }
                     }
                 }
-                /// create stepData
-                const stepData = {
-                    //TODO remove ...data
-                    data: {...data, ...responseData},//just data for now
-                    statusCode: response.status
-                }
-                return [stepData, stepTrace];
+                return [{...responseData}, stepTrace];
 
             }, (error) => {
                 if (error.response) {
@@ -241,9 +237,10 @@ class HttpJSONProcessor extends StepProcessor {
                             pipeline: pipelineName,
                             step: step.name,
                             nodeName: step.node.name,
+                            nodeUrl: url,
                             timeStamp: Date.now(),
                             message: `Resource not found.`,
-                            error: `${error.message}\n${JSON.stringify(error.stack,null,2)}`,
+                            error: `${error.message}\n${JSON.stringify(error.stack, null, 2)}`,
                             statusCode: error.response.status,
                         }];
                         return [{...data}, stepTrace, `Node: [${step.node.name}] Not Found`];
@@ -254,9 +251,10 @@ class HttpJSONProcessor extends StepProcessor {
                             pipeline: pipelineName,
                             step: step.name,
                             nodeName: step.node.name,
+                            nodeUrl: url,
                             timeStamp: Date.now(),
                             message: `Error in resource.`,
-                            error: `${error.message}\n${JSON.stringify(error.stack,null,2)}`,
+                            error: `${error.message}\n${JSON.stringify(error.stack, null, 2)}`,
                             statusCode: error.response.status,
                         }];
                         return [{...data}, stepTrace, `Node: [${step.node.name}]: ${error.message}`];
@@ -266,11 +264,14 @@ class HttpJSONProcessor extends StepProcessor {
                         pipeline: pipelineName,
                         step: step.name,
                         nodeName: step.node.name,
+                        nodeUrl: url,
                         timeStamp: Date.now(),
                         message: `Error contacting node [${step.node.name}]`,
-                        error: `${error.message}\n${JSON.stringify(error.stack,null,2)}`,
+                        error: `${error.message}\n${JSON.stringify(error.stack, null, 2)}`,
                         statusCode: error.response.status,
                     }];
+                    console.error(`Error: ${error.message}`);
+
                     return [{...data}, stepTrace, `${error.message}`];
                 }
                 return [{...data}, stepTrace, error]
@@ -282,19 +283,49 @@ class HttpJSONProcessor extends StepProcessor {
                 nodeName: step.node.name,
                 timeStamp: Date.now(),
                 message: `Error contacting node [${step.node.name}]`,
-                error: `${e.message}\n${JSON.stringify(e.stack,null,2)}`
+                error: `${e.message}\n${JSON.stringify(e.stack, null, 2)}`
             }];
             return [{...data}, stepTrace, e];
         }
     }
 
-    basicAuthHeader(user, password)
-    {
+    basicAuthHeader(user, password) {
         const token = user + ":" + password;
         let buff = new Buffer(token);
         let hash = buff.toString('base64');
-
         return "Basic " + hash;
+    }
+
+    aggregatePayload(payload, realData) {
+        if (!payload)
+            return realData;
+
+        ///TODO do something different for strings and objects
+        let aggPayload={};
+        switch (typeof payload) {
+            case "object": {
+                // if its only one key and the value is only
+                // a datatype then validate the type and return the data
+                const keys = Object.keys(payload);
+                if (keys.length === 1) {
+                    if (!jsonTypes.validate(jsonTypes.typeMap.Object, realData)) {
+                        return [undefined, `payload element: ${keys[0]}: Bad type: should be:${jsonTypes.typeMap.Object} but found ${typeof realData} `];
+                    }
+                    return [realData];
+                }
+                //loop thru the keys and interpolate each value
+                for (const k in keys) {
+                    aggPayload = {...aggPayload, [keys[k]]: misc.interpolate(payload[keys[k]], realData)}
+                }
+                return [aggPayload];
+            }
+            case "string": {
+                return [misc.interpolate(payload, realData)];
+            }
+            default: {
+                return [payload];
+            }
+        }
     }
 
 }

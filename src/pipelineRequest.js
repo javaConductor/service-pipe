@@ -52,11 +52,14 @@ class PipelineRequest {
             //console.log(`PipelineRequest: Pipeline: [${this.pipeline.name}]\nTrace: ${JSON.stringify(history, null, 2)} `);
             return [results, history, err];
         }
-        const finalValue = (misc.hasKeys(this.pipeline.extract))
+        const [finalValue, e] = (misc.hasKeys(this.pipeline.extract))
             //TODO need to get this contentType
             ? extractor.extract("application/json", results, this.pipeline.extract)
-            : results;
+            : [results];
 
+        if(e){
+            /// add error to history
+        }
         const now = Date.now();
         const millis = new Date(now).getTime() - new Date(startTime).getTime();
         pipelineHistory = [...pipelineHistory, ...sequenceHistory, {
@@ -108,7 +111,7 @@ class PipelineRequest {
             ///TODO Add to History or send to listeners
             pipelineHistory = [...pipelineHistory, ...stepTrace];
             /// combine data from step with previous data
-            data = {...data, ...stepData.data};
+            data = {...data, ...stepData};
         }
 
         return [data, pipelineHistory];

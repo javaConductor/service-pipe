@@ -17,16 +17,17 @@ module.exports = (function (jmespath) {
                     return [extractJSON(data, dataPaths)];
                 }
                 default:
-                    throw [null, new Error(`Bad contentType: ${contentType}`)];
+                    return [null, new Error(`Bad contentType: ${contentType}`)];
             }
         }
 
         function extractJSON(obj, dataPaths) {
             if (!dataPaths || Object.keys(dataPaths).length === 0)
                 return obj;
-            return Object.keys(dataPaths).reduce((data, dataPath) => {
+            const extracted = Object.keys(dataPaths).reduce((data, dataPath) => {
                 return {...data, [dataPath]: jmespath.search(obj, dataPaths[dataPath])};
             }, {});
+            return extracted;
         }
 
         function extractXML(xmlText, dataPaths) {
