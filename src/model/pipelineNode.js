@@ -12,6 +12,7 @@ class PipelineNode {
         this.steps = nodeProps.steps;
         this.errorIndicators = nodeProps.errorIndicators;
         this.errorMessages = nodeProps.errorMessages;
+        this.authentication = nodeProps.authentication;
     }
 }
 

@@ -2,7 +2,7 @@ const jmespath = require("jmespath");
 
 const misc =  {
     interpolate: (urlTemplate, data) => {
-        const tFunc = (tpl, args) => tpl.replace(/\${(\w+)}/g, (_, v) => args[v] || '');
+        const tFunc = (tpl, args) => (tpl||"").replace(/\${(\w+)}/g, (_, v) => args[v] || '');
         return tFunc(urlTemplate, data);
     },
 

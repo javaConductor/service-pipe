@@ -84,6 +84,7 @@ class PipelineRequest {
         const pipelineName = pipeline.name;
         let pipelineHistory = [];
         let data = initialData || {};
+
         /// loop thru each node in the sequence
         for (let step in sequence) {
             const stepProcessor = processorManager.getStepProcessor(sequence[step]);
@@ -96,7 +97,10 @@ class PipelineRequest {
                 }];
                 return [data, pipelineHistory, `No step processor for [${step.name}].`];
             }
-            const [stepData, stepTrace, err] = await stepProcessor.processStep(pipeline, sequence[step], data)
+
+            const processOrAggregate = sequence[step].aggregateStep ? stepProcessor.aggregateStep : stepProcessor.processStep;
+
+            const [stepData, stepTrace, err] = await processOrAggregate(pipeline, sequence[step], data)
             if (err) {
                 return [stepData, stepTrace, (`${err}`)];
             }
