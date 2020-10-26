@@ -51,7 +51,7 @@ class PipelineRequest {
                 state: PipelineStep.StepStates.COMPLETE_WITH_ERRORS,
                 partialData: results
             }].map((trace) => ({...trace, timeStamp: new Date(trace.timeStamp)}));
-            //console.log(`PipelineRequest: Pipeline: [${this.pipeline.name}]\nTrace: ${JSON.stringify(history, null, 2)} `);
+            console.log(`PipelineRequest: Pipeline: [${this.pipeline.name}]\nTrace: ${JSON.stringify(history, null, 2)} `);
             return [results, history, err];
         }
         const [finalValue, e] = (misc.hasKeys(this.pipeline.extract))
@@ -74,7 +74,7 @@ class PipelineRequest {
         }].map((trace) => {
             return {...trace, timeStamp: new Date(trace.timeStamp)}
         });
-        //console.log(`PipelineRequest: Pipeline: [${this.pipeline.name}]\nTrace: ${JSON.stringify(pipelineHistory, null, 2)} `);
+        console.log(`PipelineRequest: Pipeline: [${this.pipeline.name}]\nTrace: ${JSON.stringify(pipelineHistory, null, 2)} `);
         return [finalValue, pipelineHistory, null];
     }
 

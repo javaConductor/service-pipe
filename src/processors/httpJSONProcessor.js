@@ -22,6 +22,9 @@ class HttpJSONProcessor extends StepProcessor {
     }
 
     async aggregateStep(pipeline, step, data) {
+        if (step.parallelStep)
+            return this.aggregateParallelStep(pipeline, step, data);
+
         const realData = {...step.node.nodeData, ...(step.data || {}), ...data};
 
         const pipelineName = pipeline.name;
@@ -39,7 +42,7 @@ class HttpJSONProcessor extends StepProcessor {
                 step: step.name,
                 nodeName: step.node.name,
                 timeStamp: Date.now(),
-                state: PipelineStep.StepStates.ERROR,
+                state: PipelineStep.StepStates.DATA_ERROR,
                 message: `Error in data.`,
                 error: `Field [${dataArrayKey}] is not an array.`
             }];
@@ -51,7 +54,6 @@ class HttpJSONProcessor extends StepProcessor {
         const aggExtractor = new AggregationExtraction(step.aggExtractionType);
         for (const idx in value) {
             ++cnt;
-
             const aggData = aggExtractor.createAggregationData(value[idx], aggregateExtract);
             console.log(`Passing element ${JSON.stringify(aggData, null, 2)}`);
             /// Process an element in the array passing the aggData and the normal data.
@@ -73,6 +75,7 @@ class HttpJSONProcessor extends StepProcessor {
             aggExtractor.accumulateExtractionResults(results);
             stepTrace = [...stepTrace, ...sequenceHistory];
         }
+
         const finalAggData = aggExtractor.getExtractionResults(dataOutputKey);
 
         stepTrace = [...stepTrace, {
@@ -80,7 +83,95 @@ class HttpJSONProcessor extends StepProcessor {
             step: step.name,
             nodeName: step.node.name,
             timeStamp: Date.now(),
+            state: PipelineStep.StepStates.STEP_COMPLETE,
             message: `Completed aggregate step.`,
+            data: finalAggData,
+            count: cnt,
+        }];
+
+        return [finalAggData, stepTrace];
+    }
+
+    async aggregateParallelStep(pipeline, step, data) {
+        const realData = {...step.node.nodeData, ...(step.data || {}), ...data};
+
+        const pipelineName = pipeline.name;
+        /// get the dataArrayProperty
+        const dataArrayKey = step.dataArrayProperty;
+        const dataOutputKey = step.outputArrayProperty;
+        const aggregateExtract = step.aggregateExtract;
+
+        let stepTrace = [];
+        let value = realData[dataArrayKey];
+
+        if (!jsonTypes.validate("array:", value)) {
+            stepTrace = [...stepTrace, {
+                pipeline: pipelineName,
+                step: step.name,
+                nodeName: step.node.name,
+                timeStamp: Date.now(),
+                state: PipelineStep.StepStates.DATA_ERROR,
+                message: `Error in data.`,
+                error: `Field [${dataArrayKey}] is not an array.`
+            }];
+            return [data, stepTrace, `Field [${dataArrayKey}] is not an array.`];
+        }
+
+        let cnt = 0;
+        const aggExtractor = new AggregationExtraction(step.aggExtractionType);
+        let promises = [];
+        for (const idx in value) {
+            ++cnt;
+            const aggData = aggExtractor.createAggregationData(value[idx], aggregateExtract);
+            console.log(`Passing element ${JSON.stringify(aggData, null, 2)}`);
+            /// Create promise for list element
+            const p = this.processStep(pipeline, step, {...realData, ...aggData});
+            promises = [...promises, p];
+        }
+
+        await Promise.all(promises).then((list)=>{
+            for (const idx in list){
+                const [results, sequenceHistory, err] = list[idx];
+                if (err) {
+                    stepTrace = [...stepTrace, ...sequenceHistory, {
+                        pipeline: pipelineName,
+                        step: step.name,
+                        nodeName: step.node.name,
+                        timeStamp: Date.now(),
+                        message: err,
+                        state: PipelineStep.StepStates.ERROR,
+                        data: {...realData, ...results},
+                        index: idx
+                    }];
+                    return [{...realData, ...results}, stepTrace, err];
+                }
+                //TODO race cond?
+                aggExtractor.accumulateExtractionResults(results);
+                stepTrace = [...stepTrace, ...sequenceHistory];
+            }
+
+        }).catch((err)=>{
+            stepTrace = [...stepTrace, ...sequenceHistory, {
+                pipeline: pipelineName,
+                step: step.name,
+                nodeName: step.node.name,
+                timeStamp: Date.now(),
+                message: err,
+                state: PipelineStep.StepStates.ERROR
+            }];
+            return [undefined, stepTrace, err];
+
+        })
+
+        const finalAggData = aggExtractor.getExtractionResults(dataOutputKey);
+
+        stepTrace = [...stepTrace, {
+            pipeline: pipelineName,
+            step: step.name,
+            nodeName: step.node.name,
+            timeStamp: Date.now(),
+            state: PipelineStep.StepStates.STEP_COMPLETE,
+            message: `Completed aggregate parallel step.`,
             data: finalAggData,
             count: cnt,
         }];
@@ -111,7 +202,7 @@ class HttpJSONProcessor extends StepProcessor {
                     step: step.name,
                     nodeName: step.node.name,
                     nodeUrl: url,
-                    state: "error",
+                    state: PipelineStep.StepStates.DATA_ERROR,
                     timeStamp: Date.now(),
                     message: `${err}`,
                     error: err

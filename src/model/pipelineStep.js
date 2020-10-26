@@ -15,6 +15,9 @@ class PipelineStep {
 
         this.aggregateStep = props.aggregateStep;
         if (this.aggregateStep) {
+
+            this.parallelStep = props.parallelStep;
+
             //TODO move all the agg stuff to its own object (except aggregateStep)
             if (!props.dataArrayProperty) {
                 throw new Error(`PipelineStep: dataArrayProperty is required.`);

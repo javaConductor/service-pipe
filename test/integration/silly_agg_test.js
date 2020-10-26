@@ -382,5 +382,130 @@ describe('Aggregation Step', function () {
                 doneFn(e);
             }
         });
+
+        it('should group results of aggregate calls as an object in parallel', function (doneFn) {
+
+            const statLinksNode = new PipelineNode({
+                    "id": 777,
+                    "name": "test.statsLink",
+                    "url": "http://localhost:3001/num_stats",
+                    "method": "GET",
+                    "headers": {
+                        "Accept": "application/json",
+                        "Cache-Control": "no-cache",
+                        "Content-Type": "application/json",
+                        "Authorization": ""
+                    },
+                    "nodeData": {},
+                    "payload": {},
+                    "errorIndicators": {
+                        "message": "error",
+                        "documentation_url": "documentation_url"
+                    },
+                    "errorMessages": {
+                        "message": "message",
+                        "documentation_url": "documentation_url"
+                    },
+                    "contentType": "application/json"
+                }
+            );
+
+            const statNode = new PipelineNode({
+                    "id": 7770,
+                    "name": "test.stat",
+                    "url": "http://localhost:3001/${statName}",
+                    "method": "POST",
+                    "headers": {
+                        "Accept": "application/json",
+                        "Cache-Control": "no-cache",
+                        "Content-Type": "application/json",
+                    },
+                    payload: {
+                        "numbers": "array:"
+                    },
+                    "errorIndicators": {
+                        "message": "error",
+                        "documentation_url": "documentation_url"
+                    },
+                    "errorMessages": {
+                        "message": "message",
+                        "documentation_url": "documentation_url"
+                    },
+                    "contentType": "application/json"
+                }
+            );
+
+            const linksStep = new PipelineStep({
+                "name": "Stat links",
+                "description": "Get the list of stat urls for a list of numbers",
+                node: statLinksNode,
+                "params": {},
+                "data": {},
+                "extract": {
+                    "links": "array:"
+                }
+            });
+
+            const statStep = new PipelineStep({
+                "name": "Stat Step",
+                "description": "Calculate a statistic of a list of numbers",
+                node: statNode,
+                "params": {},
+                "data": {
+                    stats: ["sum", "avg", "min", "max"]
+                },
+                "extract": {
+                    "sum": "sum",
+                    "min": "min",
+                    "max": "max",
+                    "avg": "avg"
+                },
+                aggregateStep: true,
+                parallelStep: true,
+                "dataArrayProperty": "stats",
+                // Key:     Key used in the data for the node call
+                // Value:   jmsepath of the value inside the element or datatype ( or "") to use whole element
+                "aggregateExtract": {
+                    "aggDataKey": "statName",
+                    aggExtractionType: AggregationExtraction.Types.AsObject
+                },
+                "outputArrayProperty": "stats",//should be a list of branchData
+            });
+
+            const pipeline = new Pipeline({
+                extract: {
+                    stats: "stats"
+                },
+                name: "Num stats",
+                "params": {},
+                "data": {},
+                steps: [linksStep, statStep]
+            });
+
+            const pipelineRequest = new PipelineRequest(pipeline, {numbers: [5, 10, 15, 20]});
+            try {
+                pipelineRequest.start().then(([response, pipelineHistory, err]) => {
+                        should.not.exist(err);
+                        expect(pipelineHistory).to.be.an('array');
+                        expect(response).to.be.an('object');
+                        expect(response.stats).to.be.an('object');
+                        expect(response.stats.sum).to.equal(50);
+                        expect(response.stats.max).to.equal(20);
+                        expect(response.stats.min).to.equal(5);
+                        expect(response.stats.avg).to.equal(12.5);
+                        expect(pipelineHistory).to.have.lengthOf(15);
+                        doneFn();
+                    },
+                    (reason) => {
+                        assert.fail(reason);
+                        doneFn(reason);
+                    }
+                );
+            } catch (e) {
+                assert.fail(e);
+                doneFn(e);
+            }
+        });
+
     })
 });
