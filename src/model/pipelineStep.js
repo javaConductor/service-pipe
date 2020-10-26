@@ -1,4 +1,4 @@
-const AggregateExtraction = require('./aggregateExtraction');
+const AggregateExtraction = require('../processors/aggregateExtraction');
 
 class PipelineStep {
     constructor(props) {

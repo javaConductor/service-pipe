@@ -5,7 +5,7 @@ const extractor = require("../extractor");
 const misc = require('../misc');
 const jsonTypes = require('../model/jsonTypes');
 const jmespath = require("jmespath");
-const AggregationExtraction = require('../model/aggregateExtraction');
+const AggregationExtraction = require('./aggregateExtraction');
 
 class HttpJSONProcessor extends StepProcessor {
 

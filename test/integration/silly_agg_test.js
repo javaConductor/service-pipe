@@ -8,15 +8,14 @@ const Pipeline = require("../../src/model/pipeline");
 const PipelineNode = require("../../src/model/pipelineNode");
 const PipelineStep = require("../../src/model/pipelineStep");
 
-const AggregationExtraction = require('../../src/model/aggregateExtraction');
+const AggregationExtraction = require('../../src/processors/aggregateExtraction');
 const Loader = require("../../src/loader");
 
 const Nodes = require("../../src/nodes");
 const testNodes = new Nodes('./test/nodes');
-
 describe('Aggregation Step', function () {
     describe('Aggregate Result Extraction', function () {
-        // noinspection DuplicatedCode
+
         it('should extract results of aggregate calls', function (doneFn) {
 
             const statLinksNode = new PipelineNode({
