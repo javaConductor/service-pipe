@@ -1,17 +1,21 @@
-class StepProcessor{
+const PipelineStep = require('../model/pipelineStep');
+
+class StepProcessor {
     constructor(processorProps) {
         this.stepType = PipelineStep.StepTypes.HTTP_JSON;
     }
 
-    canProcess(step){
+    canProcess(step) {
         throw new Error('This method must be overloaded:canProcess.');
     }
 
-    async processStep(pipeline, step, data){
+    async processStep(pipeline, step, data) {
         throw new Error('This method must be overloaded:processStep.');
     }
+
+    async aggregateStep(pipeline, step, data) {
+        throw new Error('This method must be overloaded:aggregateStep.');
+    }
 }
-StepProcessor.processors = [];
-//StepProcessor.getProcessor = (step) => (processorManager.getStepProcessor(step));
 
 module.exports = StepProcessor;

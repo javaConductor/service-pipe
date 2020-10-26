@@ -1,4 +1,3 @@
 port: 8080
 nodesFolder: /Users/lcollins2/workspace/mash/config/nodes
 pipelinesFolder: /Users/lcollins2/workspace/mash/config/pipelines
-gitHubAccessToken: 27f3331bf20f82631da0588450739b389e9f7b33
