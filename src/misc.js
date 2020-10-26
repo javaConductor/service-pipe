@@ -1,10 +1,10 @@
 const jmespath = require("jmespath");
 
-const misc =  {
+const misc = {
     interpolate: (stringValue, data) => {
-        if(typeof stringValue !== 'string')
+        if (typeof stringValue !== 'string')
             return stringValue;
-        const tFunc = (tpl, args) => (tpl||"").replace(/\${(\w+)}/g, (_, v) => args[v] || '');
+        const tFunc = (tpl, args) => (tpl || "").replace(/\${(\w+)}/g, (_, v) => args[v] || '');
         return tFunc(stringValue, data);
     },
 
@@ -20,13 +20,13 @@ const misc =  {
     interpolateValue: (value, data) => {
         if (value.startsWith('object:')) {
             const valueName = value.substr(7);
-            return (valueName.length  === 0) ? value : jmespath.search(data, valueName);
+            return (valueName.length === 0) ? value : jmespath.search(data, valueName);
         } else if (value.startsWith('array:')) {
             const valueName = value.substr(6);
-            return (valueName.length  === 0) ? value : jmespath.search(data, valueName);
+            return (valueName.length === 0) ? value : jmespath.search(data, valueName);
         } else if (value.startsWith('string:')) {
             const valueName = value.substr(7);
-            return (valueName.length  === 0) ? value : jmespath.search(data, valueName);
+            return (valueName.length === 0) ? value : jmespath.search(data, valueName);
         } else {
             return misc.interpolate(value, data);
         }
@@ -36,7 +36,15 @@ const misc =  {
         if (!obj)
             return false;
         return Object.keys(obj).length > 0;
-    }
+    },
 
+    clean(obj) {
+        return Object.keys(obj).reduce((cleanObj, key) => (
+            (obj[key]) ? {...cleanObj, [key]: obj[key]} : cleanObj
+        ), {});
+
+
+        return undefined;
+    }
 }
 module.exports = misc;

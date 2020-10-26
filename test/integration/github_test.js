@@ -69,10 +69,10 @@ describe('GitHubTest', function () {
                 pipelineRequest.start().then(([response, pipelineHistory, err]) => {
                         should.not.exist(err);
                         expect(pipelineHistory).to.be.an('array');
-                        expect(response).to.be.an('array');
+                        expect(response.allOfIt).to.be.an('array');
                         //console.log(`${JSON.stringify(pipelineHistory)}`)
                         console.log(`TEST::: ${JSON.stringify(response)}`);
-                        expect(pipelineHistory).to.have.lengthOf(4);
+                        expect(pipelineHistory).to.have.lengthOf(5);
                         doneFn();
                     },
                     (reason) => {

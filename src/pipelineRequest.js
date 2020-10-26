@@ -45,10 +45,10 @@ class PipelineRequest {
             const history = [...pipelineHistory, ...sequenceHistory, {
                 pipeline: this.pipeline.name,
                 timeStamp: now,
-                executionTimeMillis: millis,
+                pipelineTimeMillis: millis,
                 message: "Pipeline completed with error.",
                 errorMessage: err,
-                state:PipelineStep.StepStates.COMPLETE_WITH_ERRORS,
+                state: PipelineStep.StepStates.COMPLETE_WITH_ERRORS,
                 partialData: results
             }].map((trace) => ({...trace, timeStamp: new Date(trace.timeStamp)}));
             //console.log(`PipelineRequest: Pipeline: [${this.pipeline.name}]\nTrace: ${JSON.stringify(history, null, 2)} `);
@@ -59,7 +59,7 @@ class PipelineRequest {
             ? extractor.extract("application/json", results, this.pipeline.extract)
             : [results];
 
-        if(e){
+        if (e) {
             /// add error to history
         }
         const now = Date.now();
@@ -67,9 +67,9 @@ class PipelineRequest {
         pipelineHistory = [...pipelineHistory, ...sequenceHistory, {
             pipeline: this.pipeline.name,
             timeStamp: now,
-            executionTimeMillis: millis,
+            pipelineTimeMillis: millis,
             message: "Pipeline complete.",
-            state:PipelineStep.StepStates.COMPLETE,
+            state: PipelineStep.StepStates.PIPELINE_COMPLETE,
             extracted: finalValue
         }].map((trace) => {
             return {...trace, timeStamp: new Date(trace.timeStamp)}
@@ -94,18 +94,20 @@ class PipelineRequest {
         /// loop thru each node in the sequence
         for (let step in sequence) {
             const stepProcessor = processorManager.getStepProcessor(sequence[step]);
-            if (!stepProcessor){
+            if (!stepProcessor) {
                 pipelineHistory = [...pipelineHistory, {
                     pipeline: pipelineName,
                     timeStamp: Date.now(),
-                    state:PipelineStep.StepStates.ERROR,
+                    state: PipelineStep.StepStates.ERROR,
                     message: `No step processor for [${step.name}].`,
                     partialData: data
                 }];
                 return [data, pipelineHistory, `No step processor for [${step.name}].`];
             }
 
-            const processOrAggregate = sequence[step].aggregateStep ? stepProcessor.aggregateStep : stepProcessor.processStep;
+            const processOrAggregate = sequence[step].aggregateStep
+                ? stepProcessor.aggregateStep
+                : stepProcessor.processStep;
 
             const [stepData, stepTrace, err] = await processOrAggregate(pipeline, sequence[step], data)
             if (err) {
@@ -114,13 +116,10 @@ class PipelineRequest {
             pipelineHistory = [...pipelineHistory, {
                 pipeline: pipelineName,
                 timeStamp: Date.now(),
-                state:PipelineStep.StepStates.COMPLETE,
-                message: `Step [${step.name}] is completed.`,
+                state: PipelineStep.StepStates.STEP_COMPLETE,
+                message: `Step [${sequence[step].name}] is completed.`,
                 extracted: stepData
             }];
-
-
-            ///
 
             ///TODO Add to History or send to listeners
             pipelineHistory = [...pipelineHistory, ...stepTrace];

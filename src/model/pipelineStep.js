@@ -1,3 +1,5 @@
+const AggregateExtraction = require('./aggregateExtraction');
+
 class PipelineStep {
     constructor(props) {
         if (!props.name || props.name.trim().length === 0) {
@@ -5,7 +7,7 @@ class PipelineStep {
         }
         this.name = props.name;
 
-        if(!props.node && !props.nodeName){
+        if (!props.node && !props.nodeName) {
             throw new Error(`PipelineStep: node or nodeName is required.`);
         }
         this.node = props.node;
@@ -13,6 +15,7 @@ class PipelineStep {
 
         this.aggregateStep = props.aggregateStep;
         if (this.aggregateStep) {
+            //TODO move all the agg stuff to its own object (except aggregateStep)
             if (!props.dataArrayProperty) {
                 throw new Error(`PipelineStep: dataArrayProperty is required.`);
             }
@@ -28,6 +31,7 @@ class PipelineStep {
             }
             this.aggregateExtract = props.aggregateExtract;
 
+            this.aggExtractionType = props.aggregateExtract.aggExtractionType || AggregateExtraction.Types.AsNormal;
         }
 
         this.params = props.params;
@@ -44,11 +48,14 @@ PipelineStep.StepTypes = {
 };
 
 PipelineStep.StepStates = {
-    INITIALIZATION: 'state.init',
-    ERROR: 'state.error',
-    IN_PROGRESS: 'state.in.progress',
-    COMPLETE: 'state.complete',
-    COMPLETE_WITH_ERRORS: 'state.complete.w.errors',
+    INITIALIZATION: 'init',
+    ERROR: 'error',
+    COMMUNICATION_ERROR: 'error.communication',
+    DATA_ERROR: 'error.data',
+    IN_PROGRESS: 'in.progress',
+    STEP_COMPLETE: 'step.complete',
+    PIPELINE_COMPLETE: 'pipeline.complete',
+    COMPLETE_WITH_ERRORS: 'complete.w.errors',
 };
 
 module.exports = PipelineStep;

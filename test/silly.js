@@ -3,7 +3,7 @@ const bodyParser = require("body-parser");
 const app = express()
 const port = 3001
 
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
 app.get('/num_stats', (req, res) => {
@@ -17,28 +17,28 @@ app.get('/num_stats', (req, res) => {
 });
 
 app.post('/sum', (req, res) => {
-    console.log(`Summing ${ JSON.stringify( req.body.numbers) }...`);
-    const sum = req.body.numbers.reduce((sum, num)=>(sum + num), 0)
-    res.json({sum });
+    console.log(`Summing ${JSON.stringify(req.body.numbers)}...`);
+    const sum = req.body.numbers.reduce((sum, num) => (sum + num), 0)
+    res.json({sum});
 })
 
 app.post('/avg', (req, res) => {
-    console.log(`Averaging ${ JSON.stringify( req.body.numbers) }...`);
-    const sum = req.body.numbers.reduce((sum, num)=>(sum + num), 0)
-    res.json({avg: sum===0 ? 0 :sum/req.body.numbers.length });
+    console.log(`Averaging ${JSON.stringify(req.body.numbers)}...`);
+    const sum = req.body.numbers.reduce((sum, num) => (sum + num), 0)
+    res.json({avg: sum === 0 ? 0 : sum / req.body.numbers.length});
 })
 
 app.post('/min', (req, res) => {
-    console.log(`Min ${ JSON.stringify( req.body.numbers) }...`);
+    console.log(`Min ${JSON.stringify(req.body.numbers)}...`);
     const first = req.body.numbers[0];
-    const min = req.body.numbers.reduce((min, num)=>(num<min ? num : min), first);
+    const min = req.body.numbers.reduce((min, num) => (num < min ? num : min), first);
     res.json({min});
 });
 
 app.post('/max', (req, res) => {
-    console.log(`Max ${ JSON.stringify( req.body.numbers) }...`);
+    console.log(`Max ${JSON.stringify(req.body.numbers)}...`);
     const first = req.body.numbers[0];
-    const max = req.body.numbers.reduce((max, num)=>(num>max ? num : max), first);
+    const max = req.body.numbers.reduce((max, num) => (num > max ? num : max), first);
     res.json({max});
 });
 

@@ -5,12 +5,12 @@ class ForEachStep extends PipelineStep {
         super(props);
         this.stepType = PipelineStep.StepTypes.STEP_FOREACH;
 
-        if (!props.dataArrayProperty){
+        if (!props.dataArrayProperty) {
             throw new Error(`ForEachStep: dataArrayProperty is required.`);
         }
         this.dataArrayProperty = props.dataArrayProperty;
 
-        if (!props.outputArrayProperty){
+        if (!props.outputArrayProperty) {
             throw new Error(`ForEachStep: outputArrayProperty is required.`);
         }
         this.outputArrayProperty = props.outputArrayProperty;

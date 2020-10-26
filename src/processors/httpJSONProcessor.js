@@ -5,6 +5,7 @@ const extractor = require("../extractor");
 const misc = require('../misc');
 const jsonTypes = require('../model/jsonTypes');
 const jmespath = require("jmespath");
+const AggregationExtraction = require('../model/aggregateExtraction');
 
 class HttpJSONProcessor extends StepProcessor {
 
@@ -38,28 +39,23 @@ class HttpJSONProcessor extends StepProcessor {
                 step: step.name,
                 nodeName: step.node.name,
                 timeStamp: Date.now(),
-                state:PipelineStep.StepStates.ERROR,
+                state: PipelineStep.StepStates.ERROR,
                 message: `Error in data.`,
                 error: `Field [${dataArrayKey}] is not an array.`
             }];
             return [data, stepTrace, `Field [${dataArrayKey}] is not an array.`];
         }
 
-        let aggResults = [];
+        let aggResults;//= step.aggregateExtractionType===aggExtractionType. [];
         let cnt = 0;
+        const aggExtractor = new AggregationExtraction(step.aggExtractionType);
         for (const idx in value) {
             ++cnt;
-            let aggValue = value[idx], aggData;
-            if (aggregateExtract) {
-                if (aggregateExtract.dataPath) {
-                    aggValue = jmespath.search(aggValue, aggregateExtract.dataPath);
-                }
 
-                aggData = {...realData, [dataArrayKey]: undefined, [aggregateExtract.aggKey]: aggValue}
-
-                console.log(`Passing element ${JSON.stringify(aggData, null, 2)}`);
-            }
-            const [results, sequenceHistory, err] = await this.processStep(pipeline, step, aggData);
+            const aggData = aggExtractor.createAggregationData(value[idx], aggregateExtract);
+            console.log(`Passing element ${JSON.stringify(aggData, null, 2)}`);
+            /// Process an element in the array passing the aggData and the normal data.
+            const [results, sequenceHistory, err] = await this.processStep(pipeline, step, {...realData, ...aggData});
             if (err) {
                 stepTrace = [...stepTrace, ...sequenceHistory, {
                     pipeline: pipelineName,
@@ -67,15 +63,17 @@ class HttpJSONProcessor extends StepProcessor {
                     nodeName: step.node.name,
                     timeStamp: Date.now(),
                     message: err,
-                    state:PipelineStep.StepStates.ERROR,
+                    state: PipelineStep.StepStates.ERROR,
                     data: {...realData, ...results},
                     index: cnt
                 }];
                 return [{...realData, ...results}, stepTrace, err];
             }
-            aggResults = [...aggResults, results];
+
+            aggExtractor.accumulateExtractionResults(results);
             stepTrace = [...stepTrace, ...sequenceHistory];
         }
+        const finalAggData = aggExtractor.getExtractionResults(dataOutputKey);
 
         stepTrace = [...stepTrace, {
             pipeline: pipelineName,
@@ -83,11 +81,11 @@ class HttpJSONProcessor extends StepProcessor {
             nodeName: step.node.name,
             timeStamp: Date.now(),
             message: `Completed aggregate step.`,
-            data: {...data, [dataOutputKey]: aggResults},
+            data: finalAggData,
             count: cnt,
         }];
 
-        return [{[dataOutputKey]: aggResults}, stepTrace];
+        return [finalAggData, stepTrace];
     }
 
     async processStep(pipeline, step, data) {
@@ -107,7 +105,7 @@ class HttpJSONProcessor extends StepProcessor {
             }
             ///TODO do something different for strings and objects
             let [payload, err] = this.aggregatePayload(step.node.payload, realData);
-            if (err){
+            if (err) {
                 stepTrace = [...stepTrace, {
                     pipeline: pipelineName,
                     step: step.name,
@@ -128,7 +126,7 @@ class HttpJSONProcessor extends StepProcessor {
                 nodeURL: url,
                 nodeHeaders: headers,
                 timeStamp: Date.now(),
-                state:PipelineStep.StepStates.IN_PROGRESS,
+                state: PipelineStep.StepStates.IN_PROGRESS,
                 message: "Initiate request.",
                 data: payload
             }];
@@ -151,6 +149,7 @@ class HttpJSONProcessor extends StepProcessor {
                     step: step.name,
                     nodeName: step.node.name,
                     timeStamp: Date.now(),
+                    state: PipelineStep.StepStates.IN_PROGRESS,
                     message: "Request complete.",
                     data: response.data,
                     statusCode: response.status
@@ -194,7 +193,7 @@ class HttpJSONProcessor extends StepProcessor {
                             timeStamp: Date.now(),
                             message: `Error extracting data. keys: ${JSON.stringify(Object.keys(step.extract))}`,
                             data: response.data,
-                            state:PipelineStep.StepStates.ERROR,
+                            state: PipelineStep.StepStates.ERROR,
                             statusCode: response.status
                         }];
                         return [{...data, ...response.data}, stepTrace, err];
@@ -286,7 +285,7 @@ class HttpJSONProcessor extends StepProcessor {
                 nodeName: step.node.name,
                 timeStamp: Date.now(),
                 message: `Error contacting node [${step.node.name}]`,
-                state:PipelineStep.StepStates.ERROR,
+                state: PipelineStep.StepStates.ERROR,
                 error: `${e.message}\n${JSON.stringify(e.stack, null, 2)}`
             }];
             return [{...data}, stepTrace, e];
@@ -305,7 +304,7 @@ class HttpJSONProcessor extends StepProcessor {
             return realData;
 
         ///TODO do something different for strings and objects
-        let aggPayload={};
+        let aggPayload = {};
         switch (typeof payload) {
             case "object": {
                 // if its only one key and the value is only
