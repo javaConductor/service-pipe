@@ -20,7 +20,7 @@ app.post('/sum', (req, res) => {
     console.log(`${Date.now()} Summing ${JSON.stringify(req.body.numbers)}...`);
     const sum = req.body.numbers.reduce((sum, num) => (sum + num), 0)
     res.json({sum});
-})
+});
 
 app.post('/avg', (req, res) => {
     console.log(`${Date.now()} Averaging ${JSON.stringify(req.body.numbers)}...`);

@@ -37,26 +37,51 @@ class PipelineRequest {
             steps: this.pipeline.steps.map((step) => (step.name))
         }];
 
-        const [results, sequenceHistory, err] = await this._startSeq(this.pipeline, this.pipeline.steps, this.initialData);
+        let [results, sequenceHistory, err] = await this._startSeq(this.pipeline, this.pipeline.steps, this.initialData);
         if (err) {
             const now = Date.now();
             const millis = new Date(now).getTime() - new Date(startTime).getTime();
-            //TODO Maybe return the data extracted so far
             const history = [...pipelineHistory, ...sequenceHistory, {
                 pipeline: this.pipeline.name,
                 timeStamp: now,
                 pipelineTimeMillis: millis,
                 message: "Pipeline completed with error.",
                 errorMessage: err,
-                state: PipelineStep.StepStates.COMPLETE_WITH_ERRORS,
+                state: PipelineStep.StepStates.PIPELINE_COMPLETE_WITH_ERRORS,
                 partialData: results
             }].map((trace) => ({...trace, timeStamp: new Date(trace.timeStamp)}));
             console.log(`PipelineRequest: Pipeline: [${this.pipeline.name}]\nTrace: ${JSON.stringify(history, null, 2)} `);
             return [results, history, err];
         }
-        const [finalValue, e] = (misc.hasKeys(this.pipeline.extract))
-            //TODO need to get this contentType
-            ? extractor.extract("application/json", results, this.pipeline.extract)
+
+        if (this.pipeline.transformModules) {
+
+            //loop thru the transforms
+            let tData = results;
+            for (const idx in this.pipeline.transformModules.after) {
+                const tMod = this.pipeline.transformModules.after[idx];
+                const [newData, err] = tMod.stepFn(this.pipeline, null, tData);
+                if (err) {
+                    pipelineHistory = [...pipelineHistory, {
+                        pipeline: this.pipeline.name,
+                        //step: step.name,
+                        stepTransform: tMod.name,
+                        state: PipelineStep.StepStates.COMPUTE_ERROR,
+                        timeStamp: Date.now(),
+                        message: `${err}`,
+                        error: err
+                    }];
+                    return [tData, pipelineHistory, err]
+                }
+                tData = {...tData, ...newData};
+            }
+            results = tData;
+        }
+
+
+        let [finalValue, e] = (misc.hasKeys(this.pipeline.extract))
+            // Default to JSON
+            ? extractor.extract(this.pipeline.contentType || "application/json", results, this.pipeline.extract)
             : [results];
 
         if (e) {
@@ -74,6 +99,8 @@ class PipelineRequest {
         }].map((trace) => {
             return {...trace, timeStamp: new Date(trace.timeStamp)}
         });
+
+
         console.log(`PipelineRequest: Pipeline: [${this.pipeline.name}]\nTrace: ${JSON.stringify(pipelineHistory, null, 2)} `);
         return [finalValue, pipelineHistory, null];
     }

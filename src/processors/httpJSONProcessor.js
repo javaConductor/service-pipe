@@ -29,9 +29,9 @@ class HttpJSONProcessor extends StepProcessor {
 
         const pipelineName = pipeline.name;
         /// get the dataArrayProperty
-        const dataArrayKey = step.dataArrayProperty;
-        const dataOutputKey = step.outputArrayProperty;
-        const aggregateExtract = step.aggregateExtract;
+        const dataArrayKey = step.aggregation.dataArrayProperty;
+        const dataOutputKey = step.aggregation.outputArrayProperty;
+        const aggregateExtract = step.aggregation.aggregateExtract;
 
         let stepTrace = [];
         let value = realData[dataArrayKey];
@@ -49,9 +49,8 @@ class HttpJSONProcessor extends StepProcessor {
             return [data, stepTrace, `Field [${dataArrayKey}] is not an array.`];
         }
 
-        let aggResults;//= step.aggregateExtractionType===aggExtractionType. [];
         let cnt = 0;
-        const aggExtractor = new AggregationExtraction(step.aggExtractionType);
+        const aggExtractor = new AggregationExtraction(step.aggregation.aggExtractionType);
         for (const idx in value) {
             ++cnt;
             const aggData = aggExtractor.createAggregationData(value[idx], aggregateExtract);
@@ -97,9 +96,9 @@ class HttpJSONProcessor extends StepProcessor {
 
         const pipelineName = pipeline.name;
         /// get the dataArrayProperty
-        const dataArrayKey = step.dataArrayProperty;
-        const dataOutputKey = step.outputArrayProperty;
-        const aggregateExtract = step.aggregateExtract;
+        const dataArrayKey = step.aggregation.dataArrayProperty;
+        const dataOutputKey = step.aggregation.outputArrayProperty;
+        const aggregateExtract = step.aggregation.aggregateExtract;
 
         let stepTrace = [];
         let value = realData[dataArrayKey];
@@ -118,7 +117,7 @@ class HttpJSONProcessor extends StepProcessor {
         }
 
         let cnt = 0;
-        const aggExtractor = new AggregationExtraction(step.aggExtractionType);
+        const aggExtractor = new AggregationExtraction(step.aggregation.aggExtractionType);
         let promises = [];
         for (const idx in value) {
             ++cnt;
@@ -129,8 +128,8 @@ class HttpJSONProcessor extends StepProcessor {
             promises = [...promises, p];
         }
 
-        await Promise.all(promises).then((list)=>{
-            for (const idx in list){
+        await Promise.all(promises).then((list) => {
+            for (const idx in list) {
                 const [results, sequenceHistory, err] = list[idx];
                 if (err) {
                     stepTrace = [...stepTrace, ...sequenceHistory, {
@@ -145,13 +144,12 @@ class HttpJSONProcessor extends StepProcessor {
                     }];
                     return [{...realData, ...results}, stepTrace, err];
                 }
-                //TODO race cond?
                 aggExtractor.accumulateExtractionResults(results);
                 stepTrace = [...stepTrace, ...sequenceHistory];
             }
 
-        }).catch((err)=>{
-            stepTrace = [...stepTrace, ...sequenceHistory, {
+        }).catch((err) => {
+            stepTrace = [...stepTrace, {
                 pipeline: pipelineName,
                 step: step.name,
                 nodeName: step.node.name,
@@ -160,7 +158,6 @@ class HttpJSONProcessor extends StepProcessor {
                 state: PipelineStep.StepStates.ERROR
             }];
             return [undefined, stepTrace, err];
-
         })
 
         const finalAggData = aggExtractor.getExtractionResults(dataOutputKey);
@@ -194,7 +191,6 @@ class HttpJSONProcessor extends StepProcessor {
             for (const headerName in step.node.headers) {
                 headers[headerName] = misc.interpolate(step.node.headers[headerName], realData)
             }
-            ///TODO do something different for strings and objects
             let [payload, err] = this.aggregatePayload(step.node.payload, realData);
             if (err) {
                 stepTrace = [...stepTrace, {
@@ -321,6 +317,32 @@ class HttpJSONProcessor extends StepProcessor {
                         }
                     }
                 }
+                if (step.transformModules) {
+
+                    //loop thru the transforms
+                    let tData = responseData;
+                    for (const idx in step.transformModules.after) {
+                        const tMod = step.transformModules.after[idx];
+
+                        const [newData, err] = tMod.stepFn(pipeline, step, tData);
+                        if (err) {
+                            stepTrace = [...stepTrace, {
+                                pipeline: pipelineName,
+                                step: step.name,
+                                stepTransform: tMod.name,
+                                nodeName: step.node.name,
+                                nodeUrl: url,
+                                state: PipelineStep.StepStates.COMPUTE_ERROR,
+                                timeStamp: Date.now(),
+                                message: `${err}`,
+                                error: err
+                            }];
+                            return [data, stepTrace, err]
+                        }
+                        tData = {...tData, ...newData};
+                    }
+                    responseData = tData;
+                }
                 return [{...responseData}, stepTrace];
 
             }, (error) => {
@@ -394,7 +416,6 @@ class HttpJSONProcessor extends StepProcessor {
         if (!payload)
             return realData;
 
-        ///TODO do something different for strings and objects
         let aggPayload = {};
         switch (typeof payload) {
             case "object": {

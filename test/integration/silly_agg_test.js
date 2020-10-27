@@ -507,5 +507,100 @@ describe('Aggregation Step', function () {
             }
         });
 
+        it('should create string from transform', function (doneFn) {
+
+            const statNode = new PipelineNode({
+                    "id": 7770,
+                    "name": "test.stat",
+                    "url": "http://localhost:3001/${statName}",
+                    "method": "POST",
+                    "headers": {
+                        "Accept": "application/json",
+                        "Cache-Control": "no-cache",
+                        "Content-Type": "application/json",
+                    },
+                    payload: {
+                        "numbers": "array:"
+                    },
+                    "errorIndicators": {
+                        "message": "error",
+                        "documentation_url": "documentation_url"
+                    },
+                    "errorMessages": {
+                        "message": "message",
+                        "documentation_url": "documentation_url"
+                    },
+                    "contentType": "application/json"
+                }
+            );
+
+            const statStep = new PipelineStep({
+                "name": "Stat Step",
+                "description": "Calculate a statistic of a list of numbers",
+                node: statNode,
+                "params": {},
+                "data": {
+                    stats: ["sum", "avg", "min", "max"]
+                },
+                "extract": {
+                    "sum": "sum",
+                    "min": "min",
+                    "max": "max",
+                    "avg": "avg"
+                },
+                aggregateStep: true,
+                parallelStep: true,
+                "dataArrayProperty": "stats",
+                // Key:     Key used in the data for the node call
+                // Value:   jmsepath of the value inside the element or datatype ( or "") to use whole element
+                "aggregateExtract": {
+                    "aggDataKey": "statName",
+                    aggExtractionType: AggregationExtraction.Types.AsObject
+                },
+                "outputArrayProperty": "stats",//should be a list of branchData
+            });
+
+            const pipeline = new Pipeline({
+                extract: {
+                    statString: "statString"
+                },
+                name: "Num stats",
+                "params": {},
+                "data": {},
+                steps: [statStep],
+                transformModules: {
+                    after: [{
+                        name: "makeStatString",
+                        modPath: "./makeString",
+                        stepFn: (pipeline, step, data) => {
+                            const s = `Sum: ${data.stats.sum} Avg: ${data.stats.avg} Min: ${data.stats.min} Max: ${data.stats.max}`;
+                            const newData = {...data, statString: s};
+                            return [newData,];
+                        },
+                    }],
+                    before: [],
+                },
+            });
+
+            const pipelineRequest = new PipelineRequest(pipeline, {numbers: [5, 10, 15, 20]});
+            try {
+                pipelineRequest.start().then(([response, pipelineHistory, err]) => {
+                        should.not.exist(err);
+                        expect(pipelineHistory).to.be.an('array');
+                        expect(pipelineHistory).to.have.lengthOf(12);
+                        expect(response.statString).to.equal("Sum: 50 Avg: 12.5 Min: 5 Max: 20");
+                        doneFn();
+                    },
+                    (reason) => {
+                        assert.fail(reason);
+                        doneFn(reason);
+                    }
+                );
+            } catch (e) {
+                assert.fail(e);
+                doneFn(e);
+            }
+        });
+
     })
 });
