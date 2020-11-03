@@ -4,7 +4,7 @@ const should = chai.should();
 const expect = chai.expect;
 const nock = require('nock');
 const Pipeline = require("../src/model/pipeline");
-const PipelineStep = require("../src/model/pipelineStep");
+const PipelineStep = require("../src/model/pipe");
 const PipelineRequest = require("../src/pipelineRequest");
 const Loader = require("../src/loader");
 

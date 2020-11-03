@@ -17,26 +17,26 @@ app.get('/num_stats', (req, res) => {
 });
 
 app.post('/sum', (req, res) => {
-    console.log(`Summing ${JSON.stringify(req.body.numbers)}...`);
+    console.log(`${Date.now()} Summing ${JSON.stringify(req.body.numbers)}...`);
     const sum = req.body.numbers.reduce((sum, num) => (sum + num), 0)
     res.json({sum});
-})
+});
 
 app.post('/avg', (req, res) => {
-    console.log(`Averaging ${JSON.stringify(req.body.numbers)}...`);
+    console.log(`${Date.now()} Averaging ${JSON.stringify(req.body.numbers)}...`);
     const sum = req.body.numbers.reduce((sum, num) => (sum + num), 0)
     res.json({avg: sum === 0 ? 0 : sum / req.body.numbers.length});
 })
 
 app.post('/min', (req, res) => {
-    console.log(`Min ${JSON.stringify(req.body.numbers)}...`);
+    console.log(`${Date.now()} Min ${JSON.stringify(req.body.numbers)}...`);
     const first = req.body.numbers[0];
     const min = req.body.numbers.reduce((min, num) => (num < min ? num : min), first);
     res.json({min});
 });
 
 app.post('/max', (req, res) => {
-    console.log(`Max ${JSON.stringify(req.body.numbers)}...`);
+    console.log(`${Date.now()} Max ${JSON.stringify(req.body.numbers)}...`);
     const first = req.body.numbers[0];
     const max = req.body.numbers.reduce((max, num) => (num > max ? num : max), first);
     res.json({max});

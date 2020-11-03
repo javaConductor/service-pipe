@@ -1,4 +1,4 @@
-const PipelineStep = require('../model/pipelineStep');
+const PipelineStep = require('../model/pipe');
 
 class StepProcessor {
     constructor(processorProps) {

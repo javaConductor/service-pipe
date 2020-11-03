@@ -8,14 +8,6 @@ const misc = {
         return tFunc(stringValue, data);
     },
 
-    interpolateObject: (obj, realData) => {
-        return Object.keys(obj).reduce((result, key) => {
-            const value = (typeof obj[key] === "string")
-                ? misc.interpolateValue(obj[key], realData)
-                : obj[key];
-            return {...result, [key]: value}
-        }, {});
-    },
 
     interpolateValue: (value, data) => {
         if (value.startsWith('object:')) {
@@ -42,9 +34,6 @@ const misc = {
         return Object.keys(obj).reduce((cleanObj, key) => (
             (obj[key]) ? {...cleanObj, [key]: obj[key]} : cleanObj
         ), {});
-
-
-        return undefined;
     }
 }
 module.exports = misc;

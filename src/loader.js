@@ -1,14 +1,17 @@
-const config = require('../src/config');
 const fs = require('fs');
-const glob = require("glob")
 const Pipeline = require('./model/pipeline');
 
 class Loader {
 
-    constructor(nodes = require("./nodes").default) {
-        this.nodes = nodes;
+    constructor(nodeLoader = require("./nodes").default) {
+        this.nodeLoader = nodeLoader;
+        this.nodes = this.nodeLoader.loadNodes();
     }
 
+
+    getNodes(){
+        return this.nodes;
+    }
     loadPipeline(pipelineFilename) {
         if (!pipelineFilename) {
             throw new Error('Missing pipelineFilename');
