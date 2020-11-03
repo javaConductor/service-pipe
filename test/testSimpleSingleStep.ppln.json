@@ -4,7 +4,7 @@
     {
       "name": "simpleSingle",
       "description": "Test Pipeline: simple single step",
-      "nodeName": "test.simpleSingle",
+      "nodeUUID": "UUID-testSimpleSingle.node.json",
       "params": {},
       "data": {},
       "extract": {

@@ -4,6 +4,7 @@
     {
       "name": "Tdg Create User",
       "nodeName": "tdgCreateUserNode",
+      "nodeUUID": "UUID-tdgCreateUserNode.node.json",
       "params": {},
       "data": {},
       "extract": {
@@ -14,6 +15,7 @@
     {
       "name": "Tdg Login",
       "nodeName": "tdgLoginNode",
+      "nodeUUID": "UUID-tdgLoginNode.node.json",
       "params": {},
       "data": {},
       "extract": {}

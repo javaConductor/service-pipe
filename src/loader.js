@@ -1,49 +1,70 @@
-const config = require('../src/config');
 const fs = require('fs');
-const glob = require("glob")
+const glob = require("glob");
+const os = require('os');
+const {v4: uuid} = require('uuid');
+const NodeRepo = require('./nodes');
+const PipelineRepo = require('./pipelines');
+const defaultNodeRepo = NodeRepo.default;
 const Pipeline = require('./model/pipeline');
+
+const PIPELINE_FILE_EXTENSION = 'ppln.json';
 
 class Loader {
 
-    constructor(nodes = require("./nodes").default) {
-        this.nodes = nodes;
-    }
+  constructor(pipelineFolder, nodeFolder) {
+    //TODO remove the ending slash
+    this.nodeRepo = new NodeRepo(nodeFolder || this._defaultNodeFolder())
+    this.pipelineRepo = new PipelineRepo(pipelineFolder || this._defaultPipelineFolder(), this.nodeRepo)
+    //TODO remove the ending slash
+  }
 
-    loadPipeline(pipelineFilename) {
-        if (!pipelineFilename) {
-            throw new Error('Missing pipelineFilename');
-        }
-        try {
-            const jsonText = fs.readFileSync(pipelineFilename, 'utf8');
-            const pipelineData = JSON.parse(jsonText);
-            // resolve the node names in steps
-            let steps = [];
-            for (const n in pipelineData.steps) {
-                // noinspection JSUnfilteredForInLoop
-                let step = pipelineData.steps[n];
-                if (step.nodeName) {
-                    //console.info(`Step: [${step.name}] Searching for node [${step.nodeName}] for nodes ${JSON.stringify(this.nodes.availableNodes())}`);
-                    const node = this.nodes.getNode(step.nodeName);
-                    if (!node) {
-                        throw  new Error(`File: [${pipelineFilename}] Node [${step.nodeName}] not found in step [${step.name}]`)
-                    }
-                    step.node = node;
-                }
-                if (!step.node) {
-                    throw  new Error(`File: [${pipelineFilename}] Step: [${step.name}] missing node.`);
-                }
-                if (!step.nodeName) {
-                    step.nodeName = step.node.name;
-                }
-                steps = [...steps, step];
-            }
-            const pipelineInfo = {...pipelineData, steps};
-            //console.log(`Loaded pipeline ${JSON.stringify( pipeline,null,2)}`);
-            return new Pipeline(pipelineInfo);
-        } catch (e) {
-            throw new Error(`Error loading pipeline. File: [${pipelineFilename}]: ${e}`);
-        }
+  getPipelines() {
+    return this.pipelineRepo.loadPipelines();
+  }
+
+  getPipeline(pipelineUUID) {
+    return this.pipelineRepo.loadPipeline(pipelineUUID)
+  }
+
+  _defaultPipelineFolder() {
+    return `${os.homedir()}/.service-pipe/pipelines`;
+  }
+
+
+  saveNode(node) {
+    console.log(`saveNode: ${JSON.stringify(node, null, 2)}`)
+    const filename = `${node.uuid}.node.json`;
+    try {
+      fs.writeFileSync(`${this.nodesFolder}/${filename}`,
+        JSON.stringify(node, null, 2));
+      const newNodes = [...this.nodes.filter((n) => (n.uuid !== node.uuid)), node];
+      this.nodes = newNodes;
+      return [node];
+    } catch (e) {
+      return [null, e];
     }
+  }
+
+  savePipeline(pipeline) {
+    console.log(`savePipeline: ${JSON.stringify(pipeline, null, 2)}`)
+    const filename = `${pipeline.uuid}.ppln.json`;
+
+    try {
+      fs.writeFileSync(`${this.pipelineFolder}/${filename}`,
+        JSON.stringify(pipeline, null, 2));
+      const newPipelines = [...this.pipelines.filter((p) => (p.uuid !== pipeline.uuid)), pipeline];
+      this.pipelines = newPipelines;
+      return [pipeline];
+    } catch (e) {
+      return [null, e];
+    }
+  }
+
+
+  savePipeline(pipeline) {
+    return this.pipelineRepo.savePipeline(pipeline);
+  }
+
 }
 
 module.exports = Loader;

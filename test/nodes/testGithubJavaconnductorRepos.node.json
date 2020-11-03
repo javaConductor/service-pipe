@@ -1,6 +1,7 @@
 {
   "id": 777,
   "name": "test.githubReposJavaconductor",
+  "uuid": "UUID-testGithubJavaconnductorRepos.node.json",
   "url": "https://api.github.com/users/javaconductor/repos",
   "method": "GET",
   "headers": {
@@ -14,11 +15,11 @@
   },
   "errorIndicators": {
     "message": "message",
-    "documentation_url":"documentation_url"
+    "documentation_url": "documentation_url"
   },
   "errorMessages": {
     "message": "message",
-    "documentation_url":"documentation_url"
+    "documentation_url": "documentation_url"
   },
   "contentType": "application/json"
 }
