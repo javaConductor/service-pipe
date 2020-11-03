@@ -1,6 +1,6 @@
 const AggregateExtraction = require('../processors/aggregateExtraction');
 
-class PipelineStep {
+class Pipe {
     setTransformModules(transformModules) {
         if (transformModules &&
             (transformModules.before || transformModules.after)) {
@@ -55,7 +55,7 @@ class PipelineStep {
 
     constructor(props) {
         if (!props.name || props.name.trim().length === 0) {
-            throw new Error("PipelineStep name is required ")
+            throw new Error("Pipe name is required ")
         }
         this.name = props.name;
 
@@ -97,17 +97,17 @@ class PipelineStep {
         this.params = props.params;
         this.data = props.data;
         this.extract = props.extract || {};
-        this.stepType = props.stepType || PipelineStep.StepTypes.HTTP_JSON;
+        this.stepType = props.stepType || Pipe.StepTypes.HTTP_JSON;
     }
 }
 
-PipelineStep.StepTypes = {
+Pipe.StepTypes = {
     HTTP_JSON: 'http.json',
     HTTP_TEXT: 'http.text',
     STEP_FOREACH: 'step.forEach'
 };
 
-PipelineStep.StepStates = {
+Pipe.StepStates = {
     INITIALIZATION: 'init',
 
     ERROR: 'error',
@@ -123,4 +123,4 @@ PipelineStep.StepStates = {
     PIPELINE_COMPLETE_WITH_ERRORS: 'complete.pipeline.w.errors',
 };
 
-module.exports = PipelineStep;
+module.exports = Pipe;

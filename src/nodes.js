@@ -1,19 +1,23 @@
-const config = require('../src/config');
 const fs = require('fs');
-const glob = require("glob")
+const glob = require("glob");
+const os = require('os');
 const PipelineNode = require('./model/pipelineNode');
 
 class Nodes {
 
     constructor(nodeFolder) {
-        this.nodesFolder = nodeFolder || config.nodesFolder;
+        this.nodesFolder = nodeFolder || this._defaultNodeFolder();
         this.nodes = [];
         this.loadNodes();
     }
 
+    _defaultNodeFolder(){
+        return `${os.homedir()}/.service-pipe/nodes`;
+    }
+
     loadNodes() {
         if (!this.nodesFolder) {
-            throw new Error('[nodesFolder] missing from mash.yml');
+            throw new Error('[nodesFolder] missing from service-pipe.yml');
         }
         const nodeFiles = glob.sync(`*.node.json`, {cwd: this.nodesFolder});
         this.nodes = [];

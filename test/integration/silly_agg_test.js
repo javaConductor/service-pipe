@@ -6,7 +6,7 @@ const expect = chai.expect;
 const PipelineRequest = require("../../src/pipelineRequest");
 const Pipeline = require("../../src/model/pipeline");
 const PipelineNode = require("../../src/model/pipelineNode");
-const PipelineStep = require("../../src/model/pipelineStep");
+const PipelineStep = require("../../src/model/pipe");
 
 const AggregationExtraction = require('../../src/processors/aggregateExtraction');
 const Loader = require("../../src/loader");

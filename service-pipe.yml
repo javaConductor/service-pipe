@@ -1,4 +1,3 @@
 port: 8080
 nodesFolder: /Users/lcollins2/workspace/service-pipe/config/nodes
 pipelinesFolder: /Users/lcollins2/workspace/service-pipe/config/pipelines
-

@@ -1,5 +1,5 @@
 const StepProcessor = require('./stepProcessor');
-const PipelineStep = require('../model/pipelineStep');
+const PipelineStep = require('../model/pipe');
 const axios = require("axios");
 const extractor = require("../extractor");
 const misc = require('../misc');
