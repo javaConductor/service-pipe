@@ -76,7 +76,7 @@ class HttpJSONProcessor extends StepProcessor {
       stepTrace = [...stepTrace, ...sequenceHistory];
     }
 
-    const finalAggData = aggExtractor.getExtractionResults(dataOutputKey);
+  const finalAggData = aggExtractor.getExtractionResults(dataOutputKey);
 
     stepTrace = [...stepTrace, {
       pipeline: pipelineName,
@@ -88,7 +88,6 @@ class HttpJSONProcessor extends StepProcessor {
       data: finalAggData,
       count: cnt,
     }];
-
     return [finalAggData, stepTrace];
   }
 
@@ -148,7 +147,6 @@ class HttpJSONProcessor extends StepProcessor {
         aggExtractor.accumulateExtractionResults(results);
         stepTrace = [...stepTrace, ...sequenceHistory];
       }
-
     }).catch((err) => {
       stepTrace = [...stepTrace, {
         pipeline: pipelineName,
@@ -320,7 +318,6 @@ class HttpJSONProcessor extends StepProcessor {
           }
         }
         if (step.transformModules) {
-
           //loop thru the transforms
           let tData = responseData;
           for (const idx in step.transformModules.after) {

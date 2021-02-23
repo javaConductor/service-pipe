@@ -5,7 +5,6 @@ const PipelineNode = require('./model/pipelineNode');
 const NODE_FILE_EXTENSION = 'node.json';
 
 class Nodes {
-
   constructor(nodeFolder = this._defaultNodeFolder()) {
     this.nodesFolder = nodeFolder;
     this.nodeMap = {};
@@ -28,7 +27,6 @@ class Nodes {
       return [null, e];
     }
   }
-
 
   loadNodeFile(nodeFile) {
     const jsonText = fs.readFileSync(`${nodeFile}`, 'utf8');
@@ -61,7 +59,6 @@ class Nodes {
         } catch (e) {
           console.warn(`Error in node file [${nodeFile}]:\n${e}`);
         }
-
     }
     console.log(`loaded: ${JSON.stringify(nodes)}`);
     this.nodeMap = {...this.nodeMap, ...nodes};

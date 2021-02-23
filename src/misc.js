@@ -8,7 +8,6 @@ const misc = {
     return tFunc(stringValue, data);
   },
 
-
   interpolateValue: (value, data) => {
     if (value.startsWith('object:')) {
       const valueName = value.substr(7);

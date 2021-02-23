@@ -605,6 +605,5 @@ describe('Aggregation Step', function () {
         doneFn(e);
       }
     });
-
   })
 });

@@ -9,8 +9,6 @@ class Pipe {
       //throw new Error("Pipe uuid is required ");
     }
     this.uuid = props.uuid;
-
-
     if (!props.name || props.name.trim().length === 0) {
       throw new Error("Pipe name is required ")
     }
@@ -43,12 +41,10 @@ class Pipe {
         throw new Error(`Pipe: outputArrayProperty is required.`);
       }
       this.aggregation.outputArrayProperty = props.outputArrayProperty;
-
       if (!props.aggregateExtract) {
         throw new Error(`Pipe: aggregateExtract is required.`);
       }
       this.aggregation.aggregateExtract = props.aggregateExtract;
-
       this.aggregation.aggExtractionType = props.aggregateExtract.aggExtractionType || AggregateExtraction.Types.AsNormal;
     }
 

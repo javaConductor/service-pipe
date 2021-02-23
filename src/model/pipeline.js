@@ -55,6 +55,7 @@ class Pipeline {
           const mod = {name, stepFn, modPath}
           before = [...before, mod];
         }
+
       if (transformModules.after)
         for (const idx in transformModules.after) {
           const tMod = transformModules.after[idx];
@@ -81,7 +82,6 @@ class Pipeline {
     }
     return null;
   }
-
 }
 
 Pipeline.Status = {New: 'New', Active: 'Active'}

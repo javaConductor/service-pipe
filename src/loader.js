@@ -10,7 +10,6 @@ const Pipeline = require('./model/pipeline');
 const PIPELINE_FILE_EXTENSION = 'ppln.json';
 
 class Loader {
-
   constructor(pipelineFolder, nodeFolder) {
     //TODO remove the ending slash
     this.nodeRepo = new NodeRepo(nodeFolder || this._defaultNodeFolder())
@@ -48,7 +47,6 @@ class Loader {
   savePipeline(pipeline) {
     console.log(`savePipeline: ${JSON.stringify(pipeline, null, 2)}`)
     const filename = `${pipeline.uuid}.ppln.json`;
-
     try {
       fs.writeFileSync(`${this.pipelineFolder}/${filename}`,
         JSON.stringify(pipeline, null, 2));
@@ -59,7 +57,6 @@ class Loader {
       return [null, e];
     }
   }
-
 
   savePipeline(pipeline) {
     return this.pipelineRepo.savePipeline(pipeline);
