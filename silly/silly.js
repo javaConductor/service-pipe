@@ -7,41 +7,52 @@ app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
 app.get('/num_stats', (req, res) => {
-    console.log(`Num stat links.`);
-    res.json([
-        "http://localhost:3001/sum",
-        "http://localhost:3001/avg",
-        "http://localhost:3001/min",
-        "http://localhost:3001/max",
-    ]);
+  console.log(`Num stat links.`);
+  res.json([
+    "http://localhost:3001/sum",
+    "http://localhost:3001/avg",
+    "http://localhost:3001/min",
+    "http://localhost:3001/max",
+  ]);
 });
 
 app.post('/sum', (req, res) => {
-    console.log(`${Date.now()} Summing ${JSON.stringify(req.body.numbers)}...`);
-    const sum = req.body.numbers.reduce((sum, num) => (sum + num), 0)
-    res.json({sum});
+  console.log(`${Date.now()} Summing ${JSON.stringify(req.body.numbers)}...`);
+  const sum = req.body.numbers.reduce((sum, num) => (sum + num), 0)
+  res.json({sum});
 });
 
 app.post('/avg', (req, res) => {
-    console.log(`${Date.now()} Averaging ${JSON.stringify(req.body.numbers)}...`);
-    const sum = req.body.numbers.reduce((sum, num) => (sum + num), 0)
-    res.json({avg: sum === 0 ? 0 : sum / req.body.numbers.length});
+  console.log(`${Date.now()} Averaging ${JSON.stringify(req.body.numbers)}...`);
+  const sum = req.body.numbers.reduce((sum, num) => (sum + num), 0)
+  res.json({avg: sum === 0 ? 0 : sum / req.body.numbers.length});
 })
 
 app.post('/min', (req, res) => {
-    console.log(`${Date.now()} Min ${JSON.stringify(req.body.numbers)}...`);
-    const first = req.body.numbers[0];
-    const min = req.body.numbers.reduce((min, num) => (num < min ? num : min), first);
-    res.json({min});
+  console.log(`${Date.now()} Min ${JSON.stringify(req.body.numbers)}...`);
+  const first = req.body.numbers[0];
+  const min = req.body.numbers.reduce((min, num) => (num < min ? num : min), first);
+  res.json({min});
 });
 
 app.post('/max', (req, res) => {
-    console.log(`${Date.now()} Max ${JSON.stringify(req.body.numbers)}...`);
-    const first = req.body.numbers[0];
-    const max = req.body.numbers.reduce((max, num) => (num > max ? num : max), first);
-    res.json({max});
+  console.log(`${Date.now()} Max ${JSON.stringify(req.body.numbers)}...`);
+  const first = req.body.numbers[0];
+  const max = req.body.numbers.reduce((max, num) => (num > max ? num : max), first);
+  res.json({max});
+});
+
+app.get('/numbers', (req, res) => {
+  const count = +req.body.count;
+  console.log(`${Date.now()} Numbers ${JSON.stringify(count)}...`);
+  let numbers = [];
+  for (let n = 0; n < count; ++n) {
+    numbers = [...numbers, Math.round(Math.random() * 500)];
+  }
+  console.log(`${Date.now()} Numbers ${JSON.stringify(numbers)}`);
+  res.json(numbers);
 });
 
 app.listen(port, () => {
-    console.log(`Silly app listening at http://localhost:${port}`)
+  console.log(`Silly app listening at http://localhost:${port}`)
 })

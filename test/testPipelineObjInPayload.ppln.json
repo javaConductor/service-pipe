@@ -3,7 +3,7 @@
   "steps": [
     {
       "name": "single step",
-      "nodeName": "test.values",
+      "nodeUUID": "UUID-testObjInPayloadNode.node.json",
       "params": {},
       "data": {},
       "extract": {

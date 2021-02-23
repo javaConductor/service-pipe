@@ -1,6 +1,7 @@
 {
   "id": 777,
   "name": "test.simpleSingle",
+  "uuid": "UUID-testSimpleSingle.node.json",
   "url": "https://simplesingle.acme.com/",
   "method": "POST",
   "headers": {
