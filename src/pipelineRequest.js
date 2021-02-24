@@ -3,7 +3,7 @@ const misc = require('./misc');
 const extractor = require("./extractor");
 const Pipeline = require("./model/pipeline");
 const PipelineStep = require("./model/pipe");
-const jmespath = require("jmespath")
+const jmespath = require("jmespath");
 const processorManager = require('./processors/processorManager');
 const StepProcessor = require('./processors/stepProcessor');
 const nodesRepo = require('./nodes').default;
@@ -26,8 +26,11 @@ class PipelineRequest {
     this.pipeline = pipeline;
 
     this.pipeline.steps = this.pipeline.steps.map((step) => {
-      return {...step, node: nodesRepo.getNode(step.nodeUUID)}
-    })
+      if (!step.nodeUUID && !step.node) {
+        throw new Error(`PipelineRequest: Bad Pipeline: Step: ${step.uuid}: no node.`);
+      }
+      return {...step, node: step.node || nodesRepo.getNode(step.nodeUUID)}
+    });
 
     this.initialData = initialData || {};
     this.pipelineHistory = [];
@@ -154,7 +157,7 @@ class PipelineRequest {
         ? stepProcessor.aggregateStep
         : stepProcessor.processStep;
 
-      const [stepData, stepTrace, err] = await processOrAggregate(pipeline, step, {...data, ...initialData})
+      const [stepData, stepTrace, err] = await processOrAggregate(pipeline, step, {...data, ...initialData});
       if (err) {
         pipelineHistory = [...pipelineHistory, ...stepTrace, {
           pipeline: pipelineName,

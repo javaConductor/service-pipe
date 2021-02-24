@@ -33,24 +33,24 @@ describe('PipelineRequest', function () {
         });
 
       const tdgCreateUserStep = new PipelineStep({
-        name: 'Tdg Create User',
-        nodeName: "tdgCreateUserNode",
-        nodeUUID: "UUID-tdgCreateUserNode.node.json",
+          name: 'Tdg Create User',
+          nodeName: "tdgCreateUserNode",
+          nodeUUID: "tdgCreateUserNode",
 
-        node: loader.nodeRepo.getNode('UUID-tdgCreateUserNode.node.json'),
-        params: {},
-        data: {},
-        extract: {
-          org: "organization",
-          key: "apiKey"
-        }
+          node: loader.nodeRepo.getNode('tdgCreateUserNode'),
+          params: {},
+          data: {},
+          extract: {
+              org: "organization",
+              key: "apiKey"
+          }
       });
       const tdgLoginStep = new PipelineStep({
-        name: 'Tdg Login',
-        node: loader.nodeRepo.getNodeByName('tdgLoginNode'),
-        params: {},
-        data: {},
-        extract: {}
+          name: 'Tdg Login',
+          node: loader.nodeRepo.getNode('tdgLoginNode'),
+          params: {},
+          data: {},
+          extract: {}
       });
       const pipeline = new Pipeline({
         name: "TDG Pipeline 1",
@@ -151,8 +151,8 @@ describe('PipelineRequest', function () {
       const pipelineRequest = new PipelineRequest(pipeline, {});
       return pipelineRequest.start().then(([response, pipelineHistory, err]) => {
           //console.log(`Error: ${JSON.stringify(err)}`);
-          should.exist(err);
-          assert.equal(err, 'Node: [test.simpleSingle] Not Found', 'Message Should match');
+              should.exist(err);
+              assert.equal(err, 'Node target: [https://simplesingle.acme.com/] Not Found', 'Message Should match');
         },
         (reason) => {
           assert.fail(reason);
@@ -172,12 +172,12 @@ describe('PipelineRequest', function () {
       const pipeline = loader.pipelineRepo.loadPipeline("testSimpleError");
       const pipelineRequest = new PipelineRequest(pipeline, {});
       return pipelineRequest.start().then(([response, pipelineHistory, err]) => {
-          should.exist(err);
-          assert.equal(err, `${message}`);
-          expect(pipelineHistory).to.be.an('array');
-          expect(pipelineHistory).to.have.lengthOf(5); // Recommended
-          assert.equal(pipelineHistory[4].errorMessage, `${message}`);
-        },
+              should.exist(err);
+              assert.equal(err, `${message}`);
+              expect(pipelineHistory).to.be.an('array');
+              expect(pipelineHistory).to.have.lengthOf(6); // Recommended
+              assert.equal(pipelineHistory[5].errorMessage, `${message}`);
+          },
         (reason) => {
           assert.fail(reason);
         }
@@ -199,12 +199,12 @@ describe('PipelineRequest', function () {
       const pipeline = loader.pipelineRepo.loadPipelineFile("./test/testSimpleError.ppln.json");
       const pipelineRequest = new PipelineRequest(pipeline, {});
       return pipelineRequest.start().then(([response, pipelineHistory, err]) => {
-          should.exist(err);
-          assert.equal(err, `${message}`);
-          expect(pipelineHistory).to.be.an('array');
-          expect(pipelineHistory).to.have.lengthOf(5); // Recommended
-          assert.equal(pipelineHistory[4].errorMessage, `${message}`);
-        },
+              should.exist(err);
+              assert.equal(err, `${message}`);
+              expect(pipelineHistory).to.be.an('array');
+              expect(pipelineHistory).to.have.lengthOf(6); // Recommended
+              assert.equal(pipelineHistory[5].errorMessage, `${message}`);
+          },
         (reason) => {
           assert.fail(reason);
         }

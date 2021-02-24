@@ -1,7 +1,7 @@
 {
   "id": 777,
   "name": "tdgLoginNode",
-  "uuid": "UUID-tdgLoginNode.node.json",
+  "uuid": "tdgLoginNode",
   "url": "https://login.acme.com/",
   "method": "POST",
   "headers": {

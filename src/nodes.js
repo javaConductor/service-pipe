@@ -16,7 +16,7 @@ class Nodes {
   }
 
   saveNode(node) {
-    console.log(`saveNode: ${JSON.stringify(node, null, 2)}`)
+    console.log(`saveNode: ${JSON.stringify(node, null, 2)}`);
     const filename = `${node.uuid}.${NODE_FILE_EXTENSION}`;
     try {
       fs.writeFileSync(`${this.nodesFolder}/${filename}`,
@@ -77,7 +77,7 @@ class Nodes {
   }
 
   getNode(nodeUUID) {
-    return this.loadNode(nodeUUID);
+    return nodeUUID ? this.loadNode(nodeUUID) : null;
 //    return this.nodeMap[nodeUUID];
   }
 

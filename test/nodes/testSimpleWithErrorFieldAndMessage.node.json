@@ -1,7 +1,7 @@
 {
   "id": 777,
   "name": "test.simpleError",
-  "uuid": "UUID-testSimpleWithErrorFieldAndMessage.node.json",
+  "uuid": "testSimpleWithErrorFieldAndMessage",
   "url": "https://simplerror.acme.com/",
   "method": "POST",
   "headers": {
