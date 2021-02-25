@@ -1,26 +1,23 @@
 {
-  "id": 777,
-  "name": "test.simpleError",
-  "uuid": "testSimpleWithErrorFieldAndMessage",
-  "url": "https://simplerror.acme.com/",
+  "id": 7770,
+  "uuid": "UUID_7770",
+  "name": "test.stat",
+  "url": "http://localhost:3001/${statName}",
   "method": "POST",
   "headers": {
     "Accept": "application/json",
     "Cache-Control": "no-cache",
     "Content-Type": "application/json"
   },
-  "nodeData": {},
   "payload": {
-    "testData": {
-      "a": 1,
-      "b": 2
-    }
   },
   "errorIndicators": {
-    "error": ""
+    "message": "error",
+    "documentation_url": "documentation_url"
   },
   "errorMessages": {
-    "message": "message"
+    "message": "message",
+    "documentation_url": "documentation_url"
   },
   "contentType": "application/json"
 }

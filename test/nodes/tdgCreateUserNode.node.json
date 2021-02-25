@@ -1,7 +1,7 @@
 {
   "id": 777,
   "name": "tdgCreateUserNode",
-  "uuid": "UUID-tdgCreateUserNode.node.json",
+  "uuid": "tdgCreateUserNode",
   "url": "https://createuser.acme.com",
   "method": "POST",
   "headers": {

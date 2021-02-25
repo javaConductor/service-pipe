@@ -32,8 +32,8 @@ class Nodes {
 
   loadNodeFile(nodeFile) {
     const jsonText = fs.readFileSync(`${nodeFile}`, 'utf8');
-    const nodeData = JSON.parse(jsonText);
-    return new PipelineNode(nodeData)
+    const jsonNode = JSON.parse(jsonText);
+    return new PipelineNode(jsonNode)
   }
 
   loadNode(nodeUUID) {
@@ -50,18 +50,21 @@ class Nodes {
       //const nodeFile = nodeFiles[idx];
 
       // const jsonText = fs.readFileSync(`${this.nodesFolder}/${nodeFile}`, 'utf8');
-      const loadedNode = this.loadNodeFile(`${this.nodesFolder}/${nodeFile}`);
-      //const nodeData = JSON.parse(jsonText);
-      nodes = {...nodes, [loadedNode.uuid]: loadedNode};
 
-      if (loadedNode.uuid)
-        try {
-          console.log(`Loaded node: ${loadedNode.name}(${loadedNode.uuid})`);
-          nodes = {...nodes, [loadedNode.uuid]: loadedNode};
-        } catch (e) {
-          console.warn(`Error in node file [${nodeFile}]:\n${e}`);
-        }
 
+      try {
+        const loadedNode = this.loadNodeFile(`${this.nodesFolder}/${nodeFile}`);
+        //const nodeData = JSON.parse(jsonText);
+        if (loadedNode.uuid)
+          try {
+            console.log(`Loaded node: ${loadedNode.name}(${loadedNode.uuid})`);
+            nodes = {...nodes, [loadedNode.uuid]: loadedNode};
+          } catch (e) {
+            console.warn(`Error in node file [${nodeFile}]:\n${e}`);
+          }
+      } catch (e) {
+
+      }
     }
     //console.log(`loaded: ${JSON.stringify(nodes)}`);
     this.nodeMap = {...this.nodeMap, ...nodes};

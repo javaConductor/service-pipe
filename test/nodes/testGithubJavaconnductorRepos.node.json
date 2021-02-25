@@ -1,7 +1,7 @@
 {
   "id": 777,
   "name": "test.githubReposJavaconductor",
-  "uuid": "UUID-testGithubJavaconnductorRepos.node.json",
+  "uuid": "testGithubJavaconnductorRepos",
   "url": "https://api.github.com/users/javaconductor/repos",
   "method": "GET",
   "headers": {

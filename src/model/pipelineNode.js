@@ -8,8 +8,8 @@ class PipelineNode {
 
   constructor(nodeProps) {
     if (!nodeProps.uuid) {
-      this.uuid = uuid();
-//        throw Error(`pipeline node requires uuid.`)
+      //this.uuid = uuid();
+      throw Error(`pipeline node requires uuid.`)
     } else {
       this.uuid = nodeProps.uuid;
     }

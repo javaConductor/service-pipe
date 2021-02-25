@@ -17,20 +17,22 @@ describe('Aggregation Step', function () {
     it('should extract results of aggregate calls', function (doneFn) {
 
       const statLinksNode = new PipelineNode({
-          "id": 777,
-          "name": "test.statsLink",
-          "url": "http://localhost:3001/num_stats",
-          "method": "GET",
-          "headers": {
-            "Accept": "application/json",
-            "Cache-Control": "no-cache",
-            "Content-Type": "application/json",
-            "Authorization": ""
-          },
-          "nodeData": {},
-          "payload": {},
-          "errorIndicators": {
-            "message": "error",
+        "id": 777,
+        "name": "test.statsLink",
+        "uuid": "test.statsLink",
+        "url": "http://localhost:3001/num_stats",
+        "method": "GET",
+        "uuid": "UUID_777",
+        "headers": {
+          "Accept": "application/json",
+          "Cache-Control": "no-cache",
+          "Content-Type": "application/json",
+          "Authorization": ""
+        },
+        "nodeData": {},
+        "payload": {},
+        "errorIndicators": {
+          "message": "error",
             "documentation_url": "documentation_url"
           },
           "errorMessages": {
@@ -43,6 +45,7 @@ describe('Aggregation Step', function () {
 
       const statNode = new PipelineNode({
           "id": 7770,
+          "uuid": "UUID_7770",
           "name": "test.stat",
           "url": "http://localhost:3001/${statName}",
           "method": "POST",
@@ -51,9 +54,7 @@ describe('Aggregation Step', function () {
             "Cache-Control": "no-cache",
             "Content-Type": "application/json",
           },
-          payload: {
-            "numbers": "array:"
-          },
+          payload: {},
           "errorIndicators": {
             "message": "error",
             "documentation_url": "documentation_url"
@@ -140,16 +141,18 @@ describe('Aggregation Step', function () {
     it('should group results of aggregate calls as an array', function (doneFn) {
 
       const statLinksNode = new PipelineNode({
-          "id": 777,
-          "name": "test.statsLink",
-          "url": "http://localhost:3001/num_stats",
-          "method": "GET",
-          "headers": {
-            "Accept": "application/json",
-            "Cache-Control": "no-cache",
-            "Content-Type": "application/json",
-            "Authorization": ""
-          },
+        "id": 777,
+        "uuid": "UUID_777",
+
+        "name": "test.statsLink",
+        "url": "http://localhost:3001/num_stats",
+        "method": "GET",
+        "headers": {
+          "Accept": "application/json",
+          "Cache-Control": "no-cache",
+          "Content-Type": "application/json",
+          "Authorization": ""
+        },
           "nodeData": {},
           "payload": {},
           "errorIndicators": {
@@ -166,6 +169,7 @@ describe('Aggregation Step', function () {
 
       const statNode = new PipelineNode({
           "id": 7770,
+          "uuid": "UUID_7770",
           "name": "test.stat",
           "url": "http://localhost:3001/${statName}",
           "method": "POST",
@@ -174,9 +178,7 @@ describe('Aggregation Step', function () {
             "Cache-Control": "no-cache",
             "Content-Type": "application/json",
           },
-          payload: {
-            "numbers": "array:"
-          },
+          payload: {},
           "errorIndicators": {
             "message": "error",
             "documentation_url": "documentation_url"
@@ -262,18 +264,19 @@ describe('Aggregation Step', function () {
     it('should group results of aggregate calls as an object', function (doneFn) {
 
       const statLinksNode = new PipelineNode({
-          "id": 777,
-          "name": "test.statsLink",
-          "url": "http://localhost:3001/num_stats",
-          "method": "GET",
-          "headers": {
-            "Accept": "application/json",
-            "Cache-Control": "no-cache",
-            "Content-Type": "application/json",
-            "Authorization": ""
-          },
-          "nodeData": {},
-          "payload": {},
+        "id": 777,
+        "name": "test.statsLink",
+        "uuid": "test.statsLink",
+        "url": "http://localhost:3001/num_stats",
+        "method": "GET",
+        "headers": {
+          "Accept": "application/json",
+          "Cache-Control": "no-cache",
+          "Content-Type": "application/json",
+          "Authorization": ""
+        },
+        "nodeData": {},
+        "payload": {},
           "errorIndicators": {
             "message": "error",
             "documentation_url": "documentation_url"
@@ -287,19 +290,18 @@ describe('Aggregation Step', function () {
       );
 
       const statNode = new PipelineNode({
-          "id": 7770,
-          "name": "test.stat",
-          "url": "http://localhost:3001/${statName}",
-          "method": "POST",
-          "headers": {
-            "Accept": "application/json",
-            "Cache-Control": "no-cache",
-            "Content-Type": "application/json",
-          },
-          payload: {
-            "numbers": "array:"
-          },
-          "errorIndicators": {
+        "id": 7770,
+        "name": "test.stat",
+        "uuid": "test.stat",
+        "url": "http://localhost:3001/${statName}",
+        "method": "POST",
+        "headers": {
+          "Accept": "application/json",
+          "Cache-Control": "no-cache",
+          "Content-Type": "application/json",
+        },
+        payload: {},
+        "errorIndicators": {
             "message": "error",
             "documentation_url": "documentation_url"
           },
@@ -386,18 +388,19 @@ describe('Aggregation Step', function () {
     it('should group results of aggregate calls as an object in parallel', function (doneFn) {
 
       const statLinksNode = new PipelineNode({
-          "id": 777,
-          "name": "test.statsLink",
-          "url": "http://localhost:3001/num_stats",
-          "method": "GET",
-          "headers": {
-            "Accept": "application/json",
-            "Cache-Control": "no-cache",
-            "Content-Type": "application/json",
-            "Authorization": ""
-          },
-          "nodeData": {},
-          "payload": {},
+        "id": 777,
+        "name": "test.statsLink",
+        "uuid": "test.statsLink",
+        "url": "http://localhost:3001/num_stats",
+        "method": "GET",
+        "headers": {
+          "Accept": "application/json",
+          "Cache-Control": "no-cache",
+          "Content-Type": "application/json",
+          "Authorization": ""
+        },
+        "nodeData": {},
+        "payload": {},
           "errorIndicators": {
             "message": "error",
             "documentation_url": "documentation_url"
@@ -413,6 +416,7 @@ describe('Aggregation Step', function () {
       const statNode = new PipelineNode({
           "id": 7770,
           "name": "test.stat",
+          "uuid": "test.stat",
           "url": "http://localhost:3001/${statName}",
           "method": "POST",
           "headers": {
@@ -420,9 +424,7 @@ describe('Aggregation Step', function () {
             "Cache-Control": "no-cache",
             "Content-Type": "application/json",
           },
-          payload: {
-            "numbers": "array:"
-          },
+          payload: {},
           "errorIndicators": {
             "message": "error",
             "documentation_url": "documentation_url"
@@ -476,6 +478,7 @@ describe('Aggregation Step', function () {
         extract: {
           stats: "stats"
         },
+        uuid: "Num stats",
         name: "Num stats",
         "params": {},
         "data": {},
@@ -516,6 +519,7 @@ describe('Aggregation Step', function () {
       const statNode = new PipelineNode({
           "id": 7770,
           "name": "test.stat",
+          "uuid": "test.stat",
           "url": "http://localhost:3001/${statName}",
           "method": "POST",
           "headers": {
@@ -523,9 +527,7 @@ describe('Aggregation Step', function () {
             "Cache-Control": "no-cache",
             "Content-Type": "application/json",
           },
-          payload: {
-            "numbers": "array:"
-          },
+          payload: {},
           "errorIndicators": {
             "message": "error",
             "documentation_url": "documentation_url"
@@ -569,6 +571,7 @@ describe('Aggregation Step', function () {
           statString: "statString"
         },
         name: "Num stats",
+        uuid: "Num stats",
         "params": {},
         "data": {},
         steps: [statStep],

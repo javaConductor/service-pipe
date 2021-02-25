@@ -4,7 +4,7 @@
     {
       "name": "simpleError",
       "description": "Test Pipeline: simple error",
-      "nodeUUID": "UUID-testSimpleWithErrorFieldAndMessage.node.json",
+      "nodeUUID": "testSimpleWithErrorFieldAndMessage",
       "params": {},
       "data": {},
       "extract": {
