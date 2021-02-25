@@ -8,11 +8,51 @@ const cors = require('cors');
 const app = express()
 const port = 9999
 const loader = new Loader();
+const swaggerJsDoc = require('swagger-jsdoc');
+const swaggerUI = require('swagger-ui-express');
+
+//Swagger Stuff
+const swaggerOptions = {
+  swaggerDefinition: {
+    info: {
+      title: "Restful Traveler",
+      description: "API for creating and executing pipelines.",
+      version: '1.0.0',
+      license: {
+        name: 'Licensed Under MIT',
+        url: 'https://spdx.org/licenses/MIT.html',
+      },
+      contact: {
+        name: 'Lee Collins',
+        email: 'javaconductor@yahoo.com',
+      },
+      servers: [{
+        url: 'http://localhost:9999',
+        description: 'Development server',
+      },
+      ],
+    }
+  },
+  apis: ['./*.js']
+} //?
+
+const swaggerDocs = swaggerJsDoc(swaggerOptions);
+app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 app.use(cors());
 
+/**
+ *
+ * @swagger
+ * /pipeline:
+ *   get:
+ *     description: Returns the current pipelines for current user
+ *     responses:
+ *       '200':
+ *         description: Successfully returned pipelines
+ */
 app.get('/pipeline', (req, res) => {
   const pipelines = loader.getPipelines();
   res.json(pipelines);
