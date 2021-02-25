@@ -76,8 +76,8 @@ class PipelineRequest {
 
       //loop thru the transforms
       let tData = results;
-      for (const idx in this.pipeline.transformModules.after) {
-        const tMod = this.pipeline.transformModules.after[idx];
+      for (const tMod of this.pipeline.transformModules.after) {
+        // const tMod = this.pipeline.transformModules.after[idx];
         const [newData, err] = tMod.stepFn(this.pipeline, null, tData);
         if (err) {
           pipelineHistory = [...pipelineHistory, {

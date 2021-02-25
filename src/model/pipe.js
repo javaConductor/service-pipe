@@ -64,8 +64,8 @@ class Pipe {
       this.transformModules = transformModules;
       let before = [], after = [];
       if (transformModules.before)
-        for (const idx in transformModules.before) {
-          const tMod = this.transformModules.before[idx];
+        for (const tMod of transformModules.before) {
+          //const tMod = this.transformModules.before[idx];
           let {name, stepFn, modPath} = tMod;
           if (!name) {
             throw new Error(`Pipe: [${this.name}]: Before Module [${idx}]: name missing.`);
@@ -84,8 +84,8 @@ class Pipe {
           before = [...before, mod];
         }
       if (transformModules.after)
-        for (const idx in transformModules.after) {
-          const tMod = this.transformModules.after[idx];
+        for (const tMod of transformModules.after) {
+          //const tMod = this.transformModules.after[idx];
           let {name, stepFn, modPath} = tMod;
           if (!name) {
             throw new Error(`Pipe: [${this.name}]: After Module [${idx}]: name missing.`);

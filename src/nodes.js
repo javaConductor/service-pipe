@@ -46,8 +46,8 @@ class Nodes {
     }
     const nodeFiles = glob.sync(`*.${NODE_FILE_EXTENSION}`, {cwd: this.nodesFolder});
     let nodes = {};
-    for (const idx in nodeFiles) {
-      const nodeFile = nodeFiles[idx];
+    for (const nodeFile of nodeFiles) {
+      //const nodeFile = nodeFiles[idx];
 
       // const jsonText = fs.readFileSync(`${this.nodesFolder}/${nodeFile}`, 'utf8');
       const loadedNode = this.loadNodeFile(`${this.nodesFolder}/${nodeFile}`);
@@ -63,7 +63,7 @@ class Nodes {
         }
 
     }
-    console.log(`loaded: ${JSON.stringify(nodes)}`);
+    //console.log(`loaded: ${JSON.stringify(nodes)}`);
     this.nodeMap = {...this.nodeMap, ...nodes};
 
     return this.nodeMap;

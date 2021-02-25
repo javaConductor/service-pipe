@@ -36,8 +36,8 @@ class Pipeline {
       this.transformModules = transformModules;
       let before = [], after = [];
       if (transformModules.before)
-        for (const idx in transformModules.before) {
-          const tMod = props.transformModules.before[idx];
+        for (const tMod of transformModules.before) {
+          //const tMod = props.transformModules.before[idx];
           let {name, stepFn, modPath} = tMod;
           if (!name) {
             throw new Error(`PipelineStep: [${this.name}]: Before Module [${idx}]: name missing.`);
@@ -56,8 +56,8 @@ class Pipeline {
           before = [...before, mod];
         }
       if (transformModules.after)
-        for (const idx in transformModules.after) {
-          const tMod = transformModules.after[idx];
+        for (const tMod of transformModules.after) {
+          //const tMod = transformModules.after[idx];
           let {name, stepFn, modPath} = tMod;
           if (!name) {
             throw new Error(`Pipeline: [${this.name}]: After Module [${idx}]: name missing.`);

@@ -26,10 +26,10 @@ class Pipelines {
       const pipelineData = JSON.parse(jsonText);
       // resolve the node names in steps
       let steps = [];
-      for (const n in pipelineData.steps) {
+      for (const step of pipelineData.steps) {
 
         // noinspection JSUnfilteredForInLoop
-        let step = pipelineData.steps[n];
+        //let step = pipelineData.steps[n];
 
         if (!step.uuid) {
           step.uuid = uuid();
@@ -78,12 +78,10 @@ class Pipelines {
     }
     const pipelineFiles = glob.sync(`*.${PIPELINE_FILE_EXTENSION}`, {cwd: this.pipelineFolder});
     let pipelines = [];
-    for (const idx in pipelineFiles) {
-      const pipelineFile = pipelineFiles[idx];
-
+    for (const pipelineFile of pipelineFiles) {
       try {
         const pipeline = this.loadPipelineFile(`${this.pipelineFolder}/${pipelineFile}`);
-        console.log(`Loaded pipeline: ${pipeline.name}`);
+        console.log(`Loaded pipeline: ${pipeline.toString()}`);
         pipelines = [...pipelines, pipeline];
       } catch (e) {
         console.warn(`Error in pipeline file [${pipelineFile}]:\n${e}`);

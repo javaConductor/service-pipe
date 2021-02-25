@@ -323,8 +323,8 @@ class HttpJSONProcessor extends StepProcessor {
 
           //loop thru the transforms
           let tData = responseData;
-          for (const idx in step.transformModules.after) {
-            const tMod = step.transformModules.after[idx];
+          for (const tMod of step.transformModules.after) {
+            //const tMod = step.transformModules.after[idx];
 
             const [newData, err] = tMod.stepFn(pipeline, step, tData);
             if (err) {
@@ -437,8 +437,8 @@ class HttpJSONProcessor extends StepProcessor {
           return [payload];
         }
         //loop thru the keys and interpolate each value
-        for (const k in keys) {
-          aggPayload = {...aggPayload, [keys[k]]: misc.interpolate(payload[keys[k]], realData)}
+        for (const key of keys) {
+          aggPayload = {...aggPayload, [key]: misc.interpolate(payload[key], realData)}
         }
         return [aggPayload];
       }
