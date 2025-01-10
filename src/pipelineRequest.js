@@ -27,7 +27,7 @@ class PipelineRequest {
 
     this.pipeline.steps = this.pipeline.steps.map((step) => {
       if (!step.nodeUUID && !step.node) {
-        throw new Error(`PipelineRequest: Bad Pipeline: Step: ${step.uuid}: no node.`);
+        throw new Error(`PipelineRequest: Bad Pipeline: Step: ${step.name}: no node.`);
       }
       return {...step, node: step.node || nodesRepo.getNode(step.nodeUUID)}
     });
@@ -106,7 +106,7 @@ class PipelineRequest {
       : [results];
 
     if (e) {
-      /// add error to history
+      ///TODO add error to history
     }
     const now = Date.now();
     const millis = new Date(now).getTime() - new Date(startTime).getTime();

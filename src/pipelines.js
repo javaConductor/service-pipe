@@ -1,9 +1,11 @@
 const fs = require('fs');
+//const pAZth = require('path');
 const glob = require("glob");
 const os = require('os');
 const {v4: uuid} = require('uuid');
 const defaultNodeRepo = require('./nodes').default;
 const Pipeline = require('./model/pipeline');
+const {sep} = require("node:path");
 
 const PIPELINE_FILE_EXTENSION = 'ppln.json';
 
@@ -30,12 +32,6 @@ class Pipelines {
 
         // noinspection JSUnfilteredForInLoop
         let step = pipelineData.steps[n];
-
-        if (!step.uuid) {
-          step.uuid = uuid();
-          console.log(`loadPipeline: File: [${pipelineFilename}] Step: ${JSON.stringify(step.name)} has no UUID. Assigning!`);
-        }
-
         if (step.nodeUUID) {
           step.node = this.nodeRepo.getNode(step.nodeUUID);
         }
@@ -44,7 +40,7 @@ class Pipelines {
         }
         if (!step.node) {
           console.log(``)
-          throw new Error(`File: [${pipelineFilename}] Step: [${step.name}](${step.uuid}) missing node.`);
+          throw new Error(`File: [${pipelineFilename}] Step: [${step.name}] missing node.`);
         }
         step.nodeUUID = step.node.uuid;
         if (!step.nodeName) {
@@ -69,7 +65,8 @@ class Pipelines {
     }
 
     const pipelineFile = `${pipelineUUID}.${PIPELINE_FILE_EXTENSION}`
-    return this.loadPipelineFile(`${this.pipelineFolder}/${pipelineFile}`);
+    return this.loadPipelineFile(
+        `${this.pipelineFolder}${path.sep}${pipelineFile}`);
   }
 
   loadPipelines() {
@@ -82,7 +79,8 @@ class Pipelines {
       const pipelineFile = pipelineFiles[idx];
 
       try {
-        const pipeline = this.loadPipelineFile(`${this.pipelineFolder}/${pipelineFile}`);
+        const pipeline = this.loadPipelineFile(
+            `${this.pipelineFolder}${sep}${pipelineFile}`);
         console.log(`Loaded pipeline: ${pipeline.name}`);
         pipelines = [...pipelines, pipeline];
       } catch (e) {

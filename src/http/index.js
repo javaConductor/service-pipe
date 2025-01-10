@@ -7,7 +7,9 @@ const bodyParser = require("body-parser");
 const cors = require('cors');
 const app = express()
 const port = 9999
-const loader = new Loader();
+const loader = new Loader(
+    "C:\\Users\\Administrator\\workspace\\service-pipe\\config\\pipelines",
+    "C:\\Users\\Administrator\\workspace\\service-pipe\\config\\nodes");
 
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());

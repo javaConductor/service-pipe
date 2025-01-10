@@ -1,36 +1,39 @@
 {
-  "name": "TDG Pipeline 1",
+  "name": "Number Stats Pipeline 1",
+  "uuid": "ead89426-cd1b-4cea-861d-6b1de3f436c7",
   "steps": [
     {
-      "name": "Tdg Create User",
-      "node": {
-        "id": 777,
-        "name": "tdgCreateUserNode",
-        "url": "https://createuser.acme.com/",
-        "method": "POST",
-        "headers": {
-          "Accept": "application/json",
-          "Cache-Control": "no-cache",
-          "Content-Type": "application/json"
-        },
-        "nodeData": {},
-        "payload": {
-          "type": "createAccount",
-          "organization": "$dev2$",
-          "password": "${password}",
-          "email": "${username}",
-          "status": "Active",
-          "num": 23
-        },
-        "contentType": "application/json"
-      },
-      "nodeName": "tdgCreateUserNode",
+      "name": "Stat links",
+      "description": "Get the list of stat urls for a list of numbers",
+      node: statLinksNode,
       "params": {},
       "data": {},
       "extract": {
-        "org": "organization",
-        "key": "apiKey"
-      }
+        "links": "array:"
+      },
+    {
+      "name": "Stat Step",
+      "description": "Calculate a statistic of a list of numbers",
+      nodeUUIDF:  "b5c621d9-7540-47d3-87d5-2d5fbe46380d",
+      "params": {},
+      "data": {
+        stats: ["sum", "avg", "min", "max"]
+      },
+      "extract": {
+        "sum": "sum",
+        "min": "min",
+        "max": "max",
+        "avg": "avg"
+      },
+      aggregateStep: true,
+      "dataArrayProperty": "stats",
+      // Key:     Key used in the data for the node call
+      // Value:   jmsepath of the value inside the element or datatype ( or "") to use whole element
+      "aggregateExtract": {
+        "aggDataKey": "statName",
+      },
+      "outputArrayProperty": "stats",//should be a list of branchData
+    },
     },
     {
       "name": "Tdg Login",

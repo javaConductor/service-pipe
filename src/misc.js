@@ -29,6 +29,11 @@ const misc = {
     return Object.keys(obj).length > 0;
   },
 
+  /**
+   * Removes null  values from object
+   * @param obj
+   * @returns {*|{[p: string]: *}|{}}
+   */
   clean(obj) {
     return Object.keys(obj).reduce((cleanObj, key) => (
       (obj[key]) ? {...cleanObj, [key]: obj[key]} : cleanObj

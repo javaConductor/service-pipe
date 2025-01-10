@@ -60,7 +60,7 @@ class Nodes {
           console.warn(`Error in node file [${nodeFile}]:\n${e}`);
         }
     }
-    console.log(`loaded: ${JSON.stringify(nodes)}`);
+    console.log(`loaded: ${JSON.stringify(nodes, null, 2)}`);
     this.nodeMap = {...this.nodeMap, ...nodes};
 
     return this.nodeMap;

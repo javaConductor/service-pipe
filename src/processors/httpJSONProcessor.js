@@ -191,21 +191,8 @@ class HttpJSONProcessor extends StepProcessor {
       for (const headerName in step.node.headers) {
         headers[headerName] = misc.interpolate(step.node.headers[headerName], realData)
       }
-      let [payload, err] = this.aggregatePayload(step.node.payload, realData);
-      if (err) {
-        stepTrace = [...stepTrace, {
-          pipeline: pipelineName,
-          step: step.name,
-          nodeName: step.node.name,
-          nodeUrl: url,
-          state: PipelineStep.StepStates.DATA_ERROR,
-          timestamp: Date.now(),
-          message: `${err}`,
-          error: err
-        }];
-        return [data, stepTrace, err]
-      }
 
+      let payload = realData;
       stepTrace = [...stepTrace, {
         pipeline: pipelineName,
         step: step.name,
@@ -224,17 +211,20 @@ class HttpJSONProcessor extends StepProcessor {
         authHeaders = {Authorization: this.basicAuthHeader(step.node.authentication.basic.username, step.node.authentication.basic.password)};
       }
 
+      headers = this.addAuthenticationHeaderValues(headers, step.node.authentication)
+
       ///  Make the CALL
       return axios({
         method: step.node.method,
         url: url,
         data: payload,
-        config: {headers: {'Content-Type': step.node.contentType, ...headers, ...authHeaders}}
+        config: {headers: {'Content-Type': step.node.contentType, ...headers}}
       }).then((response) => {
         stepTrace = [...stepTrace, {
           pipeline: pipelineName,
           step: step.name,
           nodeName: step.node.name,
+          nodeURL: url,
           timestamp: Date.now(),
           state: PipelineStep.StepStates.IN_PROGRESS,
           message: "Request complete.",
@@ -246,7 +236,7 @@ class HttpJSONProcessor extends StepProcessor {
         if (misc.hasKeys(step.extract)) {
           /// if the first and only value is a datatype designation(string:,object:,array:)
           // alone then
-          // validate the type and assignn it the data as [key]
+          // validate the type and assign it the data as [key]
           if (Object.keys(step.extract).length === 1) {
             const name = Object.keys(step.extract)[0];
             const value = step.extract[name];
@@ -323,7 +313,7 @@ class HttpJSONProcessor extends StepProcessor {
           for (const idx in step.transformModules.after) {
             const tMod = step.transformModules.after[idx];
 
-            const [newData, err] = tMod.stepFn(pipeline, step, tData);
+            const [newData, err] = tMod.stepFn(pipeline, step, tData);//TODO test this thoroughly!!!
             if (err) {
               stepTrace = [...stepTrace, {
                 pipeline: pipelineName,
@@ -404,50 +394,24 @@ class HttpJSONProcessor extends StepProcessor {
     }
   }
 
+  addAuthenticationHeaderValues(headers, nodeAuthentication)  {
+    let authHeaders = {};
+    /// Add auth headers if any
+    if (!nodeAuthentication ) return headers;
+
+    if (nodeAuthentication.basic) {
+      authHeaders = {Authorization: this.basicAuthHeader(nodeAuthentication.basic.username, nodeAuthentication.basic.password)};
+    }
+
+    return {...headers, ...authHeaders};
+  }
+
   basicAuthHeader(user, password) {
     const token = user + ":" + password;
     let buff = new Buffer(token);
     let hash = buff.toString('base64');
     return "Basic " + hash;
   }
-
-  /**
-   *
-   * @param payload
-   * @param realData
-   * @returns {string[]|*[]|Object[]|{}[]}
-   */
-  aggregatePayload(payload, realData) {
-    if (!payload || Object.keys(payload).length === 0)
-      return [realData];
-
-    let aggPayload = {};
-    switch (typeof payload) {
-      case "object": {
-        // if its only one key and the value is only
-        // a datatype then validate the type and return the data
-        const keys = Object.keys(payload);
-        if (keys.length === 1) {
-          if (!jsonTypes.validate(jsonTypes.typeMap.Object, realData)) {
-            return [undefined, `payload element: ${keys[0]}: Bad type: should be:${jsonTypes.typeMap.Object} but found ${typeof realData} `];
-          }
-          return [payload];
-        }
-        //loop thru the keys and interpolate each value
-        for (const k in keys) {
-          aggPayload = {...aggPayload, [keys[k]]: misc.interpolate(payload[keys[k]], realData)}
-        }
-        return [aggPayload];
-      }
-      case "string": {
-        return [misc.interpolate(payload, realData)];
-      }
-      default: {
-        return [payload];
-      }
-    }
-  }
-
 }
 
 module.exports = HttpJSONProcessor;

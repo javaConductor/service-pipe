@@ -1,0 +1,24 @@
+{
+  "id": 777,
+  "name": "test.statsLink",
+  "uuid": "cacc1bea-d0d8-4c0d-8121-10c8f9f7474a",
+  "url": "http://localhost:3001/num_stats",
+  "method": "GET",
+  "headers": {
+    "Accept": "application/json",
+    "Cache-Control": "no-cache",
+    "Content-Type": "application/json",
+    "Authorization": ""
+  },
+  "nodeData": {},
+  "payload": {},
+  "errorIndicators": {
+    "message": "error",
+    "documentation_url": "documentation_url"
+  },
+  "errorMessages": {
+    "message": "message",
+    "documentation_url": "documentation_url"
+  },
+  "contentType": "application/json"
+}

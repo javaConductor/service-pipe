@@ -1,0 +1,24 @@
+{
+  "id": 7770,
+  "name": "test.stat",
+  "uuid": "b5c621d9-7540-47d3-87d5-2d5fbe46380d",
+  "url": "http://localhost:3001/${statName}",
+  "method": "POST",
+  "headers": {
+    "Accept": "application/json",
+    "Cache-Control": "no-cache",
+    "Content-Type": "application/json"
+  },
+  "payload": {
+    "numbers": "array:"
+  },
+  "errorIndicators": {
+    "message": "error",
+    "documentation_url": "documentation_url"
+  },
+  "errorMessages": {
+    "message": "message",
+    "documentation_url": "documentation_url"
+  },
+  "contentType": "application/json"
+}
