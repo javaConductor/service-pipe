@@ -1,6 +1,6 @@
 const AggregateExtraction = require('../processors/aggregateExtraction');
 const {v4: uuid} = require('uuid');
-
+// also called a step
 class Pipe {
   constructor(props) {
 
