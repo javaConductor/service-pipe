@@ -4,7 +4,6 @@ const axios = require("axios");
 const extractor = require("../extractor");
 const misc = require('../misc');
 const jsonTypes = require('../model/jsonTypes');
-const jmespath = require("jmespath");
 const AggregationExtraction = require('./aggregateExtraction');
 
 class HttpJSONProcessor extends StepProcessor {
@@ -22,11 +21,25 @@ class HttpJSONProcessor extends StepProcessor {
     return !step.node.contentType || step.node.contentType === "application/json";
   }
 
+  /**
+   * Loops through some data element and executes step with each value
+   * usxes aggregation property of the step
+   *  "aggregation": {
+   *      dataArrayProperty //  name of the value to aggregate over
+   *      outputArrayProperty // TODO explain
+   *      aggregateExtract // TODO explain
+   *  }
+   * @param pipeline
+   * @param step
+   * @param data
+   * @returns {Promise<[*,[...*[],{pipeline: *, nodeName, step, state: string, message: string, error: string, timestamp: number}],string]|[{}|{}|[],[...*[],{pipeline: *, nodeName, data: ({}|{}|[]), count: number, step, state: string, message: string, timestamp: number}]]|(*|[...*[],{pipeline: *, nodeName, step, state: string, message: string, error: string, timestamp: number}]|string)[]|({}|{}|[]|[...*[],{pipeline: *, nodeName, data: ({}|{}|[]), count: number, step, state: string, message: string, timestamp: number}])[]|[{[p: string]: *},[...*[],...*,{pipeline: *, nodeName, data: {[p: string]: *}, index: number, step, state: string, message: *, timestamp: number}],*]>}
+   */
   async aggregateStep(pipeline, step, data) {
     if (step.parallelStep)
       return this.aggregateParallelStep(pipeline, step, data);
 
     const realData = {...step.node.nodeData, ...(step.data || {}), ...data};
+    console.log(`aggregateStep: ${pipeline.toString()} -> ${step.name} -> ${JSON.stringify(realData)}`);
 
     const pipelineName = pipeline.name;
     /// get the dataArrayProperty
@@ -204,12 +217,6 @@ class HttpJSONProcessor extends StepProcessor {
         message: "Initiate request.",
         data: payload
       }];
-
-      let authHeaders = {};
-      /// Add auth headers if any
-      if (step.node.authentication && step.node.authentication.basic) {
-        authHeaders = {Authorization: this.basicAuthHeader(step.node.authentication.basic.username, step.node.authentication.basic.password)};
-      }
 
       headers = this.addAuthenticationHeaderValues(headers, step.node.authentication)
 

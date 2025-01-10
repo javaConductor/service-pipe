@@ -1,9 +1,8 @@
-const axios = require("axios");
 const misc = require('./misc');
 const extractor = require("./extractor");
-const Pipeline = require("./model/pipeline");
+// const Pipeline = require("./model/pipeline");
 const PipelineStep = require("./model/pipe");
-const jmespath = require("jmespath");
+// const jmespath = require("jmespath");
 const processorManager = require('./processors/processorManager');
 const StepProcessor = require('./processors/stepProcessor');
 const nodesRepo = require('./nodes').default;
@@ -64,7 +63,7 @@ class PipelineRequest {
       const millis = new Date(now).getTime() - new Date(startTime).getTime();
       const history = [...pipelineHistory, ...sequenceHistory, {
         pipeline: this.pipeline.name,
-        timestamp: now,
+        timestamp: Date.now(),
         pipelineTimeMillis: millis,
         message: "Pipeline completed with error.",
         errorMessage: err,
@@ -99,14 +98,22 @@ class PipelineRequest {
       results = tData;
     }
 
-
     let [finalValue, e] = (misc.hasKeys(this.pipeline.extract))
       // Default to JSON
       ? extractor.extract(this.pipeline.contentType || "application/json", results, this.pipeline.extract)
       : [results];
 
     if (e) {
-      ///TODO add error to history
+      pipelineHistory = [...pipelineHistory, {
+        pipeline: this.pipeline.name,
+        //step: step.name,
+        stepTransform: "extractor.extract",
+        state: PipelineStep.StepStates.ERROR,
+        timestamp: Date.now(),
+        message: `Error extracting data ${err}`,
+        error: err
+      }];
+      return [results, pipelineHistory, err];
     }
     const now = Date.now();
     const millis = new Date(now).getTime() - new Date(startTime).getTime();
@@ -150,7 +157,8 @@ class PipelineRequest {
           message: msg,
           partialData: data
         }];
-        return [data, pipelineHistory, msg];
+        new Error(msg)
+        return [data, pipelineHistory, new Error(msg)];
       }
 
       const processOrAggregate = step.aggregateStep

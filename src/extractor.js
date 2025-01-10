@@ -5,9 +5,15 @@ module.exports = (function (jmespath) {
     /**
      * Extracts values from data object
      *
-     * @param contentType
-     * @param data
-     * @param dataPaths
+     * for each key/value in dataPaths {
+     *     find data[dataPath.key]
+     *     add to extracted[dataPath.key]
+     * }
+     * return the extracted
+     *
+     * @param contentType only supports "application/json
+     * @param data DATA to extract from using dataPath.value
+     * @param dataPaths  objects like {"pathToStore" : "pathToExtract"}
      * @returns {*[data, error]}
      */
     function extract(contentType, data, dataPaths = {}) {
@@ -30,9 +36,9 @@ module.exports = (function (jmespath) {
       return extracted;
     }
 
-    function extractXML(xmlText, dataPaths) {
-      throw new Error('Not Implemented YET!!');
-    }
+    // function extractXML(xmlText, dataPaths) {
+    //   throw new Error('Not Implemented YET!!');
+    // }
 
     return {extract};
   }
