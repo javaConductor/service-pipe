@@ -24,8 +24,14 @@ const getAllPipelines = () => {
     return mongo.getDatabase()
         .then((db) => {
             //console.log(db);
-
-            const coll = db.db().collection("pipelines");
+// db.db().collections().then((collections) => {
+//
+//     collections.forEach((col) => {
+//         console.log("getAllPipelines() Collection ->" + JSON.stringify(col));
+//     });
+//
+// });
+             const coll = db.db().collection("pipelines");
             return coll.find().toArray().then((rows) => {
                 // log the rows
                 rows.forEach(row => {

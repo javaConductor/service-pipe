@@ -83,10 +83,13 @@ class Validator {
     aggregation() {
         return Joi.object().keys({
             dataArrayProperty: Joi.string().required(),
-            aggregateExtract: Joi.object(
-            //    this.aggregateExtract()
-            )
-        });
+            outputArrayProperty: Joi.string().required(),
+            aggregateExtract: Joi.object().keys({
+                "aggDataKey": Joi.string().required(),
+                }
+            ),
+
+    });
     }
 
     authentication() {
