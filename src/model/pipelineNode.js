@@ -1,4 +1,4 @@
-const {v4: uuid} = require('uuid');
+const uuid = require('uuid').v4;
 
 class PipelineNode {
 
@@ -21,7 +21,6 @@ class PipelineNode {
     this.nodeData = nodeProps.nodeData;
     this.payload = nodeProps.payload;
     this.contentType = nodeProps.contentType;
-    this.steps = nodeProps.steps;
     this.errorIndicators = nodeProps.errorIndicators;
     this.errorMessages = nodeProps.errorMessages;
     this.authentication = nodeProps.authentication;

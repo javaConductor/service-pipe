@@ -28,24 +28,23 @@ class Pipe {
 
     this.aggregateStep = props.aggregateStep;
     if (this.aggregateStep) {
-      this.aggregation = {};
 
       this.aggregation.parallelStep = props.parallelStep;
 
-      if (!props.dataArrayProperty) {
+      if (!props.aggregation.dataArrayProperty) {
         throw new Error(`Pipe: dataArrayProperty is required.`);
       }
-      this.aggregation.dataArrayProperty = props.dataArrayProperty;
+      this.aggregation.dataArrayProperty = props.aggregation.dataArrayProperty;
 
-      if (!props.outputArrayProperty) {
+      if (!props.aggregation.outputArrayProperty) {
         throw new Error(`Pipe: outputArrayProperty is required.`);
       }
-      this.aggregation.outputArrayProperty = props.outputArrayProperty;
+      this.aggregation.outputArrayProperty = props.aggregation.outputArrayProperty;
       if (!props.aggregateExtract) {
         throw new Error(`Pipe: aggregateExtract is required.`);
       }
-      this.aggregation.aggregateExtract = props.aggregateExtract;
-      this.aggregation.aggExtractionType = props.aggregateExtract.aggExtractionType || AggregateExtraction.Types.AsNormal;
+      this.aggregation.aggregateExtract = props.aggregation.aggregateExtract;
+      this.aggregation.aggExtractionType = props.aggregation.aggregateExtract.aggExtractionType || AggregateExtraction.Types.AsNormal;
     }
 
     this.params = props.params;
@@ -87,14 +86,7 @@ class Pipe {
             throw new Error(`Pipe: [${this.name}]: After Module [${idx}]: name missing.`);
           }
           if (!stepFn) {
-            if (!modPath) {
               throw new Error(`Pipe: [${this.name}] After Module: [${name}]: path is required`);
-            }
-            try {
-              stepFn = require(modPath);
-            } catch (e) {
-              throw new Error(`Pipe: [${this.name}] After Module: [${tMod.name}]: Could not load module: [${e.message}`);
-            }
           }
           const mod = {name, stepFn, modPath}
           after = [...after, mod];

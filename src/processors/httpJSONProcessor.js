@@ -286,13 +286,13 @@ class HttpJSONProcessor extends StepProcessor {
 
           /// Check for error conditions
           if (misc.hasKeys(step.node.errorIndicators)) {
-            for (const ind in step.node.errorIndicators) {
-              if (response.data[ind]) {
+            for (const errorIndicatorsKey in step.node.errorIndicators) {
+              if (response.data[errorIndicatorsKey]) {
                 /// loop thru the errorMessages
                 let messages = [];
                 if (misc.hasKeys(step.node.errorMessages)) {
-                  for (const key in step.node.errorMessages) {
-                    const msg = responseData[key];
+                  for (const errorMessagesKey in step.node.errorMessages) {
+                    const msg = responseData[errorMessagesKey];
                     if (msg && msg.length > 0) {
                       messages = [...messages, msg];
                     }

@@ -27,11 +27,13 @@
         "avg": "avg"
       },
       "aggregateStep": true,
-      "dataArrayProperty": "stats",
-      "aggregateExtract": {
-        "aggDataKey": "statName"
-      },
-      "outputArrayProperty": "stats"
+      "aggregation": {
+        "dataArrayProperty": "stats",
+        "aggregateExtract": {
+          "aggDataKey": "statName"
+        },
+        "outputArrayProperty": "stats"
+      }
     }
   ]
 }

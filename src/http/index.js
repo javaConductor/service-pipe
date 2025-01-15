@@ -13,16 +13,32 @@ const loader = new Loader(
 
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
-app.use(cors());
+
+
+var corsOptions = {
+  // origin: 'http://example.com',
+  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+}
+app.use(cors(corsOptions));
+
+const options = {
+  setHeaders: function (res, path, stat) {
+    res.set('Access-Control-Allow-Origin', "*")
+  }
+};
+
+app.use(express.static('public', options))
 
 app.get('/pipeline', (req, res) => {
   const pipelines = loader.getPipelines();
+  res.set("Access-Control-Allow-Origin", "*");
   res.json(pipelines);
 });
 
 app.post('/pipeline', (req, res) => {
   const pipeline = req.body;
   if (!pipeline.uuid || !pipeline.name) {
+    res.append("Access-Control-Allow-Origin", "*");
     res.status(400).send(JSON.stringify({error: `Pipeline name and uuid required`}));
   }
   try {
@@ -43,6 +59,7 @@ app.get('/pipeline/:uuid', (req, res) => {
 
 app.get('/node', (req, res) => {
   const nodes = Object.values(loader.nodeRepo.getNodes());
+  res.set("Access-Control-Allow-Origin", "*");
   res.json(nodes);
 });
 
@@ -83,13 +100,6 @@ app.delete('/node/:uuid', (req, res) => {
 
   res.json(uuid);
 });
-
-/* */
-const req = {
-  username: "",
-  apiKey: "",
-  data: {}
-}
 
 app.post('/pipeline/:uuid/execute', (req, res) => {
   const uuid = req.params.uuid;

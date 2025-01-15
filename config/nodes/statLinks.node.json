@@ -3,6 +3,7 @@
   "name": "test.statsLink",
   "uuid": "cacc1bea-d0d8-4c0d-8121-10c8f9f7474a",
   "url": "http://localhost:3001/num_stats",
+  "accessType": "HTTP",
   "method": "GET",
   "headers": {
     "Accept": "application/json",
@@ -12,13 +13,13 @@
   },
   "nodeData": {},
   "payload": {},
-  "errorIndicators": {
-    "message": "error",
-    "documentation_url": "documentation_url"
-  },
-  "errorMessages": {
-    "message": "message",
-    "documentation_url": "documentation_url"
-  },
+  "errorIndicators": [
+    "error",
+    "documentation_url"
+  ],
+  "errorMessages": [
+    "message",
+    "documentation_url"
+  ],
   "contentType": "application/json"
 }

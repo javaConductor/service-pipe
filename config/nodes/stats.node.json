@@ -12,13 +12,14 @@
   "payload": {
     "numbers": "array:"
   },
-  "errorIndicators": {
-    "message": "error",
-    "documentation_url": "documentation_url"
-  },
-  "errorMessages": {
-    "message": "message",
-    "documentation_url": "documentation_url"
-  },
+  "errorIndicators": [
+    "error",
+    "documentation_url"
+  ],
+  "errorMessages": [
+    "error",
+    "documentation_url"
+  ],
+
   "contentType": "application/json"
 }

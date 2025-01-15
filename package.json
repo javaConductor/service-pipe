@@ -2,8 +2,9 @@
   "name": "service-pipe",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
+    "run": "node app.js",
     "test": "mocha --full-trace --inline-diffs",
     "fullTest": "mocha --full-trace --inline-diffs --recursive",
     "integrationTest": "mocha --timeout 5000 --full-trace --inline-diffs test/integration/"
@@ -14,20 +15,23 @@
   "author": "javaConductor",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.20.0",
-    "body-parser": "^1.19.0",
+    "axios": "1.7.4",
+    "body-parser": "1.20.3",
     "chai": "^4.2.0",
     "cors": "^2.8.5",
-    "express": "^4.17.1",
+    "dotenv": "^16.4.7",
+    "express": "5.0.0",
     "fs": "^0.0.1-security",
     "glob": "^7.1.6",
     "jmespath": "^0.15.0",
+    "joi": "^17.13.3",
     "js-yaml": "^3.14.0",
     "mocha": "^8.1.3",
+    "mongodb": "^6.12.0",
     "nock": "^13.0.4",
     "path": "^0.12.7",
     "uuid": "^8.3.1",
-    "xmldom": "^0.3.0",
+    "xmldom": "^0.6.0",
     "xpath": "^0.0.30"
   }
 }

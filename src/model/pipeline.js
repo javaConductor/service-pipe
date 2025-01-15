@@ -2,7 +2,6 @@ const {v4: uuid} = require('uuid');
 
 class Pipeline {
 
-
   toString() {
     return `[${this.name}](${this.steps.length}):${this.uuid}`;
   }
