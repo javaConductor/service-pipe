@@ -10,12 +10,12 @@ const getAllNodes = () => {
                 rows.forEach(row => {
                     console.log("getAllNodes() Node document ->" + JSON.stringify(row));
                 });
-                return rows;
+                return [null, rows];
             });
         })
         .catch((err) => {
             console.log(err);
-            return err;
+            return [err];
         });
 };
 
@@ -23,26 +23,18 @@ const getAllNodes = () => {
 const getAllPipelines = () => {
     return mongo.getDatabase()
         .then((db) => {
-            //console.log(db);
-// db.db().collections().then((collections) => {
-//
-//     collections.forEach((col) => {
-//         console.log("getAllPipelines() Collection ->" + JSON.stringify(col));
-//     });
-//
-// });
-             const coll = db.db().collection("pipelines");
+            const coll = db.db().collection("pipelines");
             return coll.find().toArray().then((rows) => {
                 // log the rows
                 rows.forEach(row => {
                     console.log("Pipeline document ->" + JSON.stringify(row));
                 });
-                return rows;
+                return [null, rows];
             });
         })
         .catch((err) => {
             console.log(err);
-            return err;
+            return [err];
         });
 }
 
@@ -56,12 +48,12 @@ const getNodeByUUID = (nodeUUID) => {
             return coll.findOne({"uuid": nodeUUID}).toArray().then((row) => {
                 // log the rows
                 console.log("getNodeByUUID ->" + JSON.stringify(row));
-                return row;
+                return [null, row];
             });
         })
         .catch((err) => {
             console.log(err);
-            return err;
+            return [err];
         });
 };
 
@@ -76,16 +68,19 @@ const getPipelineByUUID = (pipelineUUID) => {
                 .then((row) => {
                     // log the row
                     console.log("getPipelineByUUID -> " + JSON.stringify(row));
-                    return row;
+                    if (row == null) {
+                        return [new Error("Pipeline not found: " + pipelineUUID)];
+                    }
+                    return [null, row];
                 })
                 .catch((err) => {
                     console.log(err);
-                    return err;
+                    return [err];
                 });
         })
         .catch((err) => {
             console.log(err);
-            return err;
+            return [err];
         });
 };
 
@@ -96,16 +91,17 @@ const savePipeline = (pipelineDoc) => {
             new Pipeline(pipelineDoc);// validate
             return coll.insertOne(pipelineDoc)
                 .then((result) => {
+                    pipelineDoc._id = result.insertedId;
                     console.log("savePipeline: result: " + JSON.stringify(result));
-                    return result;
+                    return [null, pipelineDoc];
                 })
                 .catch((err) => {
                     console.log(err);
-                    return err;
+                    return [err];
                 });
         })
         .catch((err) => {
-            throw err;
+            throw [err];
         })
 };
 
@@ -117,15 +113,15 @@ const saveNode = (nodeDoc) => {
             return coll.insertOne(nodeDoc)
                 .then((result) => {
                     console.log("saveNode result: " + JSON.stringify(result));
-                    return result;
+                    return [null, result];
                 })
                 .catch((err) => {
                     console.log(err);
-                    return err;
+                    return [err];
                 });
         })
         .catch((err) => {
-            throw err;
+            return [err];
         })
 };
 
