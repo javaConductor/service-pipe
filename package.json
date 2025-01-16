@@ -2,10 +2,10 @@
   "name": "service-pipe",
   "version": "1.0.0",
   "description": "",
-  "main": "app.js",
+  "main": "server.js",
   "scripts": {
-    "devStart": "nodemon src/app.js",
-    "run": "node app.js",
+    "devStart": "nodemon server.js",
+    "run": "node server.js",
     "test": "mocha --full-trace --inline-diffs",
     "fullTest": "mocha --full-trace --inline-diffs --recursive",
     "integrationTest": "mocha --timeout 5000 --full-trace --inline-diffs test/integration/"

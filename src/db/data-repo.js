@@ -8,7 +8,7 @@ const getAllNodes = () => {
             return coll.find().toArray().then((rows) => {
                 // log the rows
                 rows.forEach(row => {
-                    console.log("getAllNodes() Node document ->" + JSON.stringify(row));
+                    console.log(`getAllNodes() -> + ${(row.length)} rows.`);
                 });
                 return [null, rows];
             });
@@ -27,7 +27,7 @@ const getAllPipelines = () => {
             return coll.find().toArray().then((rows) => {
                 // log the rows
                 rows.forEach(row => {
-                    console.log("Pipeline document ->" + JSON.stringify(row));
+                    console.log(`getAllPipelines() -> + ${(row.length)} rows.`);
                 });
                 return [null, rows];
             });
@@ -45,9 +45,9 @@ const getNodeByUUID = (nodeUUID) => {
         .then((db) => {
 
             const coll = db.db().collection("nodes");
-            return coll.findOne({"uuid": nodeUUID}).toArray().then((row) => {
+            return coll.findOne({"uuid": nodeUUID}).then((row) => {
                 // log the rows
-                console.log("getNodeByUUID ->" + JSON.stringify(row));
+                console.debug(`getNodeByUUID(${nodeUUID})-> ${JSON.stringify(row)}`);
                 return [null, row];
             });
         })
@@ -67,10 +67,7 @@ const getPipelineByUUID = (pipelineUUID) => {
             return coll.findOne({"uuid": pipelineUUID})
                 .then((row) => {
                     // log the row
-                    console.log("getPipelineByUUID -> " + JSON.stringify(row));
-                    if (row == null) {
-                        return [new Error("Pipeline not found: " + pipelineUUID)];
-                    }
+                    console.debug(`getPipelineByUUID(${pipelineUUID})-> ${JSON.stringify(row)}`);
                     return [null, row];
                 })
                 .catch((err) => {

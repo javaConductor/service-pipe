@@ -1,5 +1,4 @@
 {
-  "id": 7770,
   "name": "test.stat",
   "uuid": "b5c621d9-7540-47d3-87d5-2d5fbe46380d",
   "url": "http://localhost:3001/${statName}",

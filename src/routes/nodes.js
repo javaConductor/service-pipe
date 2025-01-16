@@ -12,7 +12,7 @@ const validateDoc = (schema) => (req, res, next) => {
 };
 const inspect = require( "util").inspect;
 const mwDebug   = (req, res, next) => {
-    console.log("route:debug ->"+inspect( req ));
+    console.log("route:debug ->"+inspect( req.rawHeaders ));
     next();
 }
 

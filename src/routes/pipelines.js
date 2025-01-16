@@ -14,5 +14,6 @@ const validateDoc = (schema) => (req, res, next) => {
 router.get('/', pipelineController.getAllPipelines);
 router.get('/:uuid', pipelineController.getPipelineByUUID);
 router.post('/',  validateDoc(validator.pipelineSchema), pipelineController.savePipeline);
+router.post('/:uuid/execute', pipelineController.executePipeline);
 
 module.exports = router;
