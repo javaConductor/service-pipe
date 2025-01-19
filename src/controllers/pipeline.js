@@ -69,6 +69,22 @@ module.exports = {
      * @param res
      * @param next
      */
+    removePipeline: (req, res, next) => {
+        const uuid = req.params.uuid;
+        dataRepo.removePipeline(uuid).then(([err, nodes]) => {
+            //if (err) return next(err);
+            res.json([err, uuid]);
+        }).catch((err) => {
+            next(err);
+        });
+    },
+
+    /**
+     *
+     * @param req
+     * @param res
+     * @param next
+     */
     getAllNodes: (req, res, next) => {
         dataRepo.getAllNodes().then(([err, nodes]) => {
             if (err) return next(err);
@@ -105,6 +121,26 @@ module.exports = {
             //res.status(500).json({error: err});
         });
     },
+
+
+    /**
+     *
+     * @param req
+     * @param res
+     * @param next
+     */
+    removeNode: (req, res, next) => {
+        const uuid = req.params.uuid;
+
+        dataRepo.removeNode(uuid).then(([err, nodes]) => {
+            //if (err) return next(err);
+            res.json([err, uuid]);
+        }).catch((err) => {
+            next(err);
+            // res.status(500).json({error: err});
+        });
+    },
+
 
     /**
      *

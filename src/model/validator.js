@@ -7,6 +7,7 @@ class Validator {
     constructor() {
 
         this.pipelineSchema = Joi.object().keys({
+            _id: Joi.string(),
             name: Joi.string().required(),
             uuid: Joi.string().guid({version: 'uuidv4'}),
             status: Joi.string().valid(
@@ -65,7 +66,14 @@ class Validator {
             ),
             extract: Joi.object(),
             aggregateStep: Joi.boolean(),
-            aggregation: this.aggregation(),
+            //    a: Joi.any().when('b', { is: 5, then: Joi.required(), otherwise: Joi.optional() }),
+            aggregation: Joi.alternatives()
+                .conditional('aggregateStep', [
+                    {is: true, then: this.aggregation()},
+                    {is: false, then: Joi.object()},
+
+                ])
+
         });
     }
 

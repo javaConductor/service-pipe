@@ -145,6 +145,9 @@ class PipelineRequest {
     let pipelineHistory = [];
     let data = initialData || {};
 
+    ///TODO run the pipeline transformModule.before function on data if exists
+
+
     /// loop thru each node in the sequence
     for (let step of sequence) {
       const stepProcessor = processorManager.getStepProcessor(step);
@@ -188,6 +191,10 @@ class PipelineRequest {
       /// combine data from step with previous data
       data = {...data, ...stepData};
     }
+
+    ///TODO run the pipeline transformModule.after function on data if exists
+
+
     return [data, pipelineHistory];
   }
 }
