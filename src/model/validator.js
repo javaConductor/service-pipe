@@ -9,8 +9,8 @@ class Validator {
 
         this.pipelineSchema = Joi.object().keys({
             _id: Joi.string(),
-            name: Joi.string().required(),
             uuid: Joi.string().guid({version: 'uuidv4'}),
+            name: Joi.string().required(),
             status: Joi.string().valid(
                 Pipeline.Status.Active,
                 Pipeline.Status.New),
@@ -37,13 +37,14 @@ class Validator {
         });
 
         this.nodeSchema = Joi.object().keys({
+            _id: Joi.string(),
+            uuid: Joi.string().guid({version: 'uuidv4'}),
             name: Joi.string().required(),
             accessType: Joi.string().valid("HTTP").default("HTTP"),
-            uuid: Joi.string().guid({version: 'uuidv4'}),
             url: Joi.string().uri(),
             method: Joi.string().valid("POST", "GET", "PUT"),
             contentType: Joi.string(),
-            headers: Joi.object().keys([this.httpHeaderName()]),
+            headers: Joi.object(),//.keys([this.httpHeaderName()]),
             authenticationType:Joi.string().valid(
                 authenticationTypes.None,
                 authenticationTypes.Basic,
