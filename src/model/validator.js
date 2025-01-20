@@ -1,6 +1,7 @@
 const Joi = require("joi");
 const AggregationExtraction = require("../processors/aggregateExtraction");
 const Pipeline = require("../model/pipeline");
+const authenticationTypes = require("../model/authenticationTypes");
 
 class Validator {
 
@@ -43,7 +44,18 @@ class Validator {
             method: Joi.string().valid("POST", "GET", "PUT"),
             contentType: Joi.string(),
             headers: Joi.object().keys([this.httpHeaderName()]),
-            authentication: this.authentication(),
+            authenticationType:Joi.string().valid(
+                authenticationTypes.None,
+                authenticationTypes.Basic,
+                authenticationTypes.Token,
+                ),
+
+            authentication: Joi.alternatives()
+                .conditional('authenticationType', [
+                    {is: authenticationTypes.None, then: Joi.forbidden()},
+                    {is: authenticationTypes.Basic, then: this.basicAuthentication()},
+                    {is: authenticationTypes.Token, then: this.tokenAuthentication()},
+                ]),
             nodeData: Joi.object(),// required data for the node to function
             payload: Joi.object(),// data being sent to the node (perhaps from the previous step)
             extract: Joi.object(),// {key: value} where 'key' is the key to store extracted value
@@ -100,13 +112,19 @@ class Validator {
     });
     }
 
-    authentication() {
+    basicAuthentication() {
         return Joi.object().keys({
             basic: Joi.object().keys({
                 username: Joi.string().required(),
                 password: Joi.string().required(),
             }),
         });
+    }
+
+    tokenAuthentication() {
+        return Joi.object().keys({
+            token: Joi.string().required(),
+            });
     }
 
     httpHeaderName() {
