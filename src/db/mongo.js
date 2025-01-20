@@ -1,5 +1,6 @@
 require('dotenv').config();// load environment vars
 const {MongoClient} = require('mongodb');
+const {createInvalidArgumentTypeError} = require("mocha/lib/errors");
 
 const dbUsername = process.env.MONGODB_USERNAME;
 const dbPassword = process.env.MONGODB_PASSWORD;
@@ -18,18 +19,41 @@ var theDb = null;
 
 async function getDatabase() {
     if (theDb == null) {
-        return MongoClient.connect(connectionURL, function (err, db) {
-            if (err) throw err;
-            console.log("Database created!");
+        return MongoClient.connect(connectionURL)
+            .then((db) => {
+            console.debug("Database created!");
             theDb = db;
             db.db().collections().then((collections) => {
                 collections.forEach((col) => {
-                    console.log("getDatabase() Collection ->" + JSON.stringify(col));
+                    console.debug("getDatabase() Collection ->" + (col.collectionName));
                 })
+            });
+            db.db().collection("nodes")
+                .createIndex({uuid: 1}, (err, result) => {
+                    if (err) {
+                        console.error('Error creating index on [uuid]:', err);
+                        return;
+                    }
+
+                    console.log('Index created successfully:', result);
+                });
+
+            db.db().collection("pipelines")
+                .createIndex({uuid: 1}, (err, result) => {
+                    if (err) {
+                        console.error('Error creating index on [uuid]:', err);
+                        return;
+                    }
+
+                    console.log('Index created successfully:', result);
                 });
 
             return db;
-        });
+        })
+            .catch((err) => {
+                console.error(`Error connected to database at [${connectionURL}]: ${err}`);
+                throw err;
+            })
     } else {
         return (async () => {
             return theDb

@@ -1,35 +1,43 @@
 ###
-GET http://localhost:3001/num_stats
+POST http://localhost:8080/pipeline
 Accept: application/json
 Cache-Control: no-cache
 Content-Type: application/json
 
-[
-  202,
-  4,
-  6,
-  36,
-  235,
-  46,
-  57,
-  6,
-  43,
-  2554,
-  7,
-  46,
-  234,
-  46,
-  568,
-  353,
-  54,
-  7,
-  76,
-  45,
-  ".",
-  54,
-  4,
-  5,
-  547,
-  76,
-  5356
-]
+{
+  "name": "Number Stats Pipeline 1",
+  "uuid": "2672fba2-4e88-46d6-b6b7-b14d2b658ed2",
+  "steps": [
+    {
+      "name": "Stat links",
+      "description": "Get the list of stat urls for a list of numbers",
+      "nodeUUID": "cacc1bea-d0d8-4c0d-8121-10c8f9f7474a",
+      "data": {},
+      "extract": {
+        "links": "array:"
+      }
+    },
+    {
+      "name": "Stat Step",
+      "description": "Calculate a statistic of a list of numbers",
+      "nodeUUID":  "b5c621d9-7540-47d3-87d5-2d5fbe46380d",
+      "data": {
+        "stats": ["sum", "avg", "min", "max"]
+      },
+      "extract": {
+        "sum": "sum",
+        "min": "min",
+        "max": "max",
+        "avg": "avg"
+      },
+      "aggregateStep": true,
+      "aggregation": {
+        "dataArrayProperty": "stats",
+        "aggregateExtract": {
+          "aggDataKey": "statName"
+        },
+        "outputArrayProperty": "stats"
+      }
+    }
+  ]
+}
