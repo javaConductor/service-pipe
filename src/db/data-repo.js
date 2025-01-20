@@ -7,9 +7,7 @@ const getAllNodes = () => {
             const coll = db.db().collection("nodes");
             return coll.find().toArray().then((rows) => {
                 // log the rows
-                rows.forEach(row => {
-                    console.log(`getAllNodes() -> + ${(row.length)} rows.`);
-                });
+                    console.log(`getAllNodes() -> + ${(rows.length)} rows.`);
                 return [null, rows];
             });
         })
@@ -26,9 +24,7 @@ const getAllPipelines = () => {
             const coll = db.db().collection("pipelines");
             return coll.find().toArray().then((rows) => {
                 // log the rows
-                rows.forEach(row => {
-                    console.log(`getAllPipelines() -> + ${(row.length)} rows.`);
-                });
+                    console.log(`getAllPipelines() -> + ${(rows.length)} rows.`);
                 return [null, rows];
             });
         })
