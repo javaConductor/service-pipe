@@ -45,11 +45,11 @@ class Validator {
             method: Joi.string().valid("POST", "GET", "PUT"),
             contentType: Joi.string(),
             headers: Joi.object(),//.keys([this.httpHeaderName()]),
-            authenticationType:Joi.string().valid(
+            authenticationType: Joi.string().valid(
                 authenticationTypes.None,
                 authenticationTypes.Basic,
                 authenticationTypes.Token,
-                ),
+            ),
 
             authentication: Joi.alternatives()
                 .conditional('authenticationType', [
@@ -83,13 +83,10 @@ class Validator {
             aggregation: Joi.alternatives()
                 .conditional('aggregateStep', [
                     {is: true, then: this.aggregation()},
-                    {is: false, then: Joi.object()},
-
+                    {is: false, then: Joi.object().optional()},
                 ])
-
         });
     }
-
 
     aggregateExtract() {
         return Joi.object().keys({
@@ -106,11 +103,11 @@ class Validator {
             dataArrayProperty: Joi.string().required(),
             outputArrayProperty: Joi.string().required(),
             aggregateExtract: Joi.object().keys({
-                "aggDataKey": Joi.string().required(),
+                    "aggDataKey": Joi.string().required(),
                 }
             ),
 
-    });
+        });
     }
 
     basicAuthentication() {
@@ -125,7 +122,7 @@ class Validator {
     tokenAuthentication() {
         return Joi.object().keys({
             token: Joi.string().required(),
-            });
+        });
     }
 
     httpHeaderName() {
@@ -133,18 +130,20 @@ class Validator {
     }
 
     /**
+     *  Validates pipeline properties
      *
      * @param pipelineDoc
-     * @returns {err, pipelineDoc}
+     * @returns {(Object)}
      */
     validatePipeline(pipelineDoc) {
         return this.pipelineSchema.validate(pipelineDoc);
     }
 
     /**
+     * Validates node properties
      *
      * @param nodeDoc
-     * @returns {err, nodeDoc}
+     * @returns {(Object)}
      */
     validateNodeDoc(nodeDoc) {
         return this.nodeSchema.validate(nodeDoc);
