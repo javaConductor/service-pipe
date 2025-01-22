@@ -12,7 +12,10 @@ module.exports = (function (misc, jmespath) {
           break;
         }
         default:
-          throw new Error(`No such ExtractionType: [${aggExtractionType}]`);
+          this.aggExtractionType = AggregationExtraction.Types.AsNormal;
+          this.aggData = {};
+          break;
+          // throw new Error(`No such ExtractionType: [${aggExtractionType}]`);
       }
       this.aggExtractionType = aggExtractionType;
 
@@ -32,6 +35,9 @@ module.exports = (function (misc, jmespath) {
 
     accumulateExtractionResults(results) {
 
+
+      console.debug(`AggregationExtraction.accumulateExtractionResults(): aggData:${JSON.stringify(this.aggData)} from results:${JSON.stringify(results)}`);
+
       switch (this.aggExtractionType) {
         case AggregationExtraction.Types.AsArray: {
           if (typeof results === 'object')
@@ -40,13 +46,15 @@ module.exports = (function (misc, jmespath) {
           break;
         }
         case AggregationExtraction.Types.AsObject:
-        case AggregationExtraction.Types.AsNormal: {
+        case AggregationExtraction.Types.AsNormal:
+        default: {
           if (typeof results === 'object')
             results = misc.clean(results);
           this.aggData = {...this.aggData, ...results};
           break;
         }
       }
+      console.debug(`AggregationExtraction.accumulateExtractionResults(): new aggData:${JSON.stringify(this.aggData)}`);
     }
 
     getExtractionResults(dataOutputKey) {
@@ -56,6 +64,7 @@ module.exports = (function (misc, jmespath) {
         case AggregationExtraction.Types.AsObject:
           return {[dataOutputKey]: this.aggData};
         case AggregationExtraction.Types.AsNormal:
+        default:
           return this.aggData;
       }
     }

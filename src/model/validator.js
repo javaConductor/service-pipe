@@ -1,11 +1,11 @@
 const Joi = require("joi");
 const AggregationExtraction = require("../processors/aggregateExtraction");
-const Pipeline = require("../model/pipeline");
 const authenticationTypes = require("../model/authenticationTypes");
-
+const jsonTypes = require("../model/jsonTypes")
 class Validator {
 
     constructor() {
+        const Pipeline = require("../model/pipeline");
 
         this.pipelineSchema = Joi.object().keys({
             _id: Joi.string(),
@@ -77,14 +77,28 @@ class Validator {
                 Joi.array(),
                 Joi.object()
             ),
+            singleValueExtract: Joi.boolean(),
+            aggregateSingle: Joi.alternatives()
+                .conditional('singleValueExtract', [
+                    {is: true, then: Joi.object().keys({
+                                extractSingleKey: Joi.string(),
+                                extractSingleType: Joi.string().valid(
+                                    jsonTypes.typeMap.Date,
+                                    jsonTypes.typeMap.Object,
+                                    jsonTypes.typeMap.Array,
+                                    jsonTypes.typeMap.Number,
+                                    jsonTypes.typeMap.String,
+                                )
+                            })},
+                    {is: false, then: Joi.optional()}
+                ]),
             extract: Joi.object(),
             aggregateStep: Joi.boolean(),
-            //    a: Joi.any().when('b', { is: 5, then: Joi.required(), otherwise: Joi.optional() }),
             aggregation: Joi.alternatives()
                 .conditional('aggregateStep', [
                     {is: true, then: this.aggregation()},
                     {is: false, then: Joi.object().optional()},
-                ])
+                ]),
         });
     }
 
@@ -100,6 +114,12 @@ class Validator {
 
     aggregation() {
         return Joi.object().keys({
+
+            aggExtractionType: Joi.string().valid(
+                AggregationExtraction.Types.AsNormal,
+                AggregationExtraction.Types.AsArray,
+                AggregationExtraction.Types.AsObject
+            ),
             dataArrayProperty: Joi.string().required(),
             outputArrayProperty: Joi.string().required(),
             aggregateExtract: Joi.object().keys({

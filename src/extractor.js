@@ -33,6 +33,7 @@ module.exports = (function (jmespath) {
       const extracted = Object.keys(dataPaths).reduce((data, dataPath) => {
         return {...data, [dataPath]: jmespath.search(obj, dataPaths[dataPath])};
       }, {});
+      console.debug(`extractJSON(${JSON.stringify(obj)}, ${JSON.stringify(dataPaths)}) -> ${JSON.stringify(extracted)}`)
       return extracted;
     }
 

@@ -17,7 +17,7 @@ app.get('/num_stats', (req, res) => {
 });
 
 app.post('/sum', (req, res) => {
-  console.log(`${Date.now()} Summing ${JSON.stringify(req.body.numbers)}...`);
+  console.log(`/sum: ${Date.now()} Summing ${JSON.stringify(req.body.numbers)}...`);
   const sum = req.body.numbers.reduce((sum, num) => (sum + num), 0)
   res.json({sum});
 });

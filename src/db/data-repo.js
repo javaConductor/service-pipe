@@ -1,5 +1,4 @@
 const mongo = require('./mongo');
-const {Pipeline} = require("../../index");
 
 const getAllNodes = () => {
     return mongo.getDatabase()
@@ -34,7 +33,7 @@ const getAllPipelines = () => {
         });
 }
 
-const getNodeByUUID = (nodeUUID) => {
+const getNodeByUUID = async (nodeUUID) => {
     console.log("getNodeByUUID uuid: " + nodeUUID);
 
     return mongo.getDatabase()
@@ -81,8 +80,7 @@ const savePipeline = (pipelineDoc) => {
     return mongo.getDatabase()
         .then((db) => {
             const coll = db.db().collection("pipelines");
-            new Pipeline(pipelineDoc);// validate
-
+            // new Pipeline(pipelineDoc);// validate
             const noId = {...pipelineDoc};
             delete noId._id;
 

@@ -10,13 +10,13 @@ const misc = {
 
   interpolateValue: (value, data) => {
     if (value.startsWith('object:')) {
-      const valueName = value.substr(7);
+      const valueName = value.substring(7);
       return (valueName.length === 0) ? value : jmespath.search(data, valueName);
     } else if (value.startsWith('array:')) {
-      const valueName = value.substr(6);
+      const valueName = value.substring(6);
       return (valueName.length === 0) ? value : jmespath.search(data, valueName);
     } else if (value.startsWith('string:')) {
-      const valueName = value.substr(7);
+      const valueName = value.substring(7);
       return (valueName.length === 0) ? value : jmespath.search(data, valueName);
     } else {
       return misc.interpolate(value, data);
@@ -30,7 +30,7 @@ const misc = {
   },
 
   /**
-   * Removes null  values from object
+   * Removes null values from object
    * @param obj
    * @returns {*|{[p: string]: *}|{}}
    */
