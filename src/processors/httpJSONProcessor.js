@@ -73,7 +73,7 @@ class HttpJSONProcessor extends StepProcessor {
         for (const idx in dataArrayElement) {
             ++cnt;
             const aggValues = aggExtractor.createAggregationData(dataArrayElement[idx], aggregateExtract);
-            const [err, results] = await this.processStep(pipeline, step,{...realData, ...aggValues});
+            const [err, results] = await this.processStep(pipeline, step, {...realData, ...aggValues});
             if (err) {
                 addTrace({
                     pipeline: pipelineName,
@@ -256,7 +256,7 @@ class HttpJSONProcessor extends StepProcessor {
                         // return [responseData, stepTrace, errMsg]
                         // } else {
                         const results = {[name]: responseData};
-                        console.debug(`processStep(): Pipeline:${pipeline.name} -> Step:${step.name} -> response:${JSON.stringify(results)}`);
+                        console.debug(`processStep(): Pipeline:${pipeline.name} -> Step:${step.name} -> extract:${JSON.stringify(results)}`);
                         return [null, results];
                     }
                 }
@@ -278,7 +278,7 @@ class HttpJSONProcessor extends StepProcessor {
                 [err, responseData] = this.postProcessStepResults(step, responseData)
 
                 /////////////// Return response data and history ///////////////
-                if(err) {
+                if (err) {
                     console.warn(`processStep(): Pipeline:${pipeline.name} -> Step:${step.name}: Error -> ${JSON.stringify(err)}\n`);
                 } else {
                     console.debug(`processStep(): Pipeline:${pipeline.name} -> Step:${step.name}: response -> ${JSON.stringify(responseData)}\n`);

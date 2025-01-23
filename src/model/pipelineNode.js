@@ -55,7 +55,7 @@ class PipelineNode {
 
     basicAuthHeader(user, password) {
         const token = user + ":" + password;
-        let buff = new Buffer(token);
+        let buff = Buffer.from(token);
         let hash = buff.toString('base64');
         return "Basic " + hash;
     }
@@ -126,7 +126,7 @@ class PipelineNode {
                         });
                         const errMsg = `Node target: [${step.node.url}] Not Found`;
                         console.warn(errMsg);
-                        return [ errMsg ];
+                        return [errMsg];
                     }
 
                     if (error.response.status === 500) {
@@ -141,7 +141,7 @@ class PipelineNode {
                         });
                         const errMsg = `Node: [${step.node.name}]: ${error.message}`;
                         console.warn(errMsg);
-                        return [errMsg ];
+                        return [errMsg];
                     }
 
                     const errMsg = `Error contacting node url: [${this.method}:${url}]: ${error.message}`;

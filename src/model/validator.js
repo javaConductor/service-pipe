@@ -2,6 +2,7 @@ const Joi = require("joi");
 const AggregationExtraction = require("../processors/aggregateExtraction");
 const authenticationTypes = require("../model/authenticationTypes");
 const jsonTypes = require("../model/jsonTypes")
+
 class Validator {
 
     constructor() {
@@ -80,16 +81,18 @@ class Validator {
             singleValueExtract: Joi.boolean(),
             aggregateSingle: Joi.alternatives()
                 .conditional('singleValueExtract', [
-                    {is: true, then: Joi.object().keys({
-                                extractSingleKey: Joi.string(),
-                                extractSingleType: Joi.string().valid(
-                                    jsonTypes.typeMap.Date,
-                                    jsonTypes.typeMap.Object,
-                                    jsonTypes.typeMap.Array,
-                                    jsonTypes.typeMap.Number,
-                                    jsonTypes.typeMap.String,
-                                )
-                            })},
+                    {
+                        is: true, then: Joi.object().keys({
+                            extractSingleKey: Joi.string(),
+                            extractSingleType: Joi.string().valid(
+                                jsonTypes.typeMap.Date,
+                                jsonTypes.typeMap.Object,
+                                jsonTypes.typeMap.Array,
+                                jsonTypes.typeMap.Number,
+                                jsonTypes.typeMap.String,
+                            )
+                        })
+                    },
                     {is: false, then: Joi.optional()}
                 ]),
             extract: Joi.object(),

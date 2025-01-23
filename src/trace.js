@@ -1,7 +1,6 @@
-
 const traceElements = [];
-let lastElement= {};
-module.exports =   {
+let lastElement = {};
+module.exports = {
 
     addTrace: (traceData) => {
         lastElement = {...lastElement, ...traceData}

@@ -3,6 +3,7 @@ const PipelineRequest = require("../pipelineRequest");
 const dbRepo = require("../db/data-repo");
 const {addTrace} = require('../trace')
 const PipelineNode = require('../model/pipelineNode')
+const app = require("express");
 
 class PipelineExecutor {
 
@@ -46,18 +47,20 @@ class PipelineExecutor {
             return addPipelineNodes(pipeline).then((p) => {
                 const x = p;
                 const pr = new PipelineRequest(pipeline, initialData);
-                console.log(`PipelineExecutor.executePipeline: pipelineRequest: ${JSON.stringify(pr)}`);
+                console.debug(`PipelineExecutor.executePipeline: pipelineRequest: ${JSON.stringify(pr)}\n`);
                 return pr.start().then(([err, results]) => {
                     if (err) {
-                        console.log(`pipelineExecutor:getPipelineByUUID: Error: ${JSON.stringify(err)}`);
+                        console.warn(`pipelineExecutor:getPipelineByUUID: Error: ${JSON.stringify(err)}`);
                         // console.log(`pipelineExecutor:getPipelineByUUID: History: ${JSON.stringify(history, null, 2)}`);
                         const errMsg = `[${pr.pipeline.name}]:${pr.pipeline.uuid}: ${err.toString()}`;
                         return [errMsg, uuid];
                     }
+
                     //TODO Store the execution History
                     return [null, uuid, results];
+
                 }, (e) => {
-                    const msg = `pipelineExecutor:getPipelineByUUID:Execution error ${e.toString()}:\n${e.stack}\n${pipeline}`;
+                    const msg = `pipelineExecutor:getPipelineByUUID:Execution error ${e.toString()}:\n${e.stack}`;
                     console.log(msg);
                     return [msg, uuid];
                 })

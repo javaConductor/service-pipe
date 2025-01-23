@@ -6,12 +6,12 @@ const getAllNodes = () => {
             const coll = db.db().collection("nodes");
             return coll.find().toArray().then((rows) => {
                 // log the rows
-                    console.log(`getAllNodes() -> + ${(rows.length)} rows.`);
+                console.debug(`getAllNodes() -> + ${(rows.length)} rows.`);
                 return [null, rows];
             });
         })
         .catch((err) => {
-            console.log(err);
+            console.warn(err);
             return [err];
         });
 };
@@ -23,18 +23,18 @@ const getAllPipelines = () => {
             const coll = db.db().collection("pipelines");
             return coll.find().toArray().then((rows) => {
                 // log the rows
-                    console.log(`getAllPipelines() -> + ${(rows.length)} rows.`);
+                console.debug(`getAllPipelines() -> + ${(rows.length)} rows.`);
                 return [null, rows];
             });
         })
         .catch((err) => {
-            console.log(err);
+            console.debug(err);
             return [err];
         });
 }
 
 const getNodeByUUID = async (nodeUUID) => {
-    console.log("getNodeByUUID uuid: " + nodeUUID);
+    console.debug("getNodeByUUID uuid: " + nodeUUID);
 
     return mongo.getDatabase()
         .then((db) => {
@@ -53,7 +53,7 @@ const getNodeByUUID = async (nodeUUID) => {
 };
 
 const getPipelineByUUID = (pipelineUUID) => {
-    console.log("getPipelineByUUID uuid: " + pipelineUUID);
+    console.debug("getPipelineByUUID uuid: " + pipelineUUID);
 
     return mongo.getDatabase()
         .then((db) => {
@@ -87,11 +87,11 @@ const savePipeline = (pipelineDoc) => {
             //console.log("savePipeline: saveOrUpdate: " + JSON.stringify(noId, null, 2));
 
             return (pipelineDoc._id
-                ? coll.updateOne({uuid:pipelineDoc.uuid}, {"$set": noId})
+                ? coll.updateOne({uuid: pipelineDoc.uuid}, {"$set": noId})
                 : coll.insertOne(pipelineDoc))
                 .then((result) => {
                     pipelineDoc._id = result.insertedId;
-                    console.log("savePipeline: result: " + JSON.stringify(result));
+                    console.debug("savePipeline: result: " + JSON.stringify(result));
                     return [null, pipelineDoc];
                 })
                 .catch((err) => {
@@ -106,7 +106,7 @@ const savePipeline = (pipelineDoc) => {
 
 const removePipeline = (uuid) => {
     return mongo.getDatabase()
-        .then((db) =>{
+        .then((db) => {
             const coll = db.db().collection("pipelines");
             coll.deleteOne({"uuid": uuid})
                 .then((result) => {
@@ -132,7 +132,7 @@ const saveNode = (nodeDoc) => {
             delete noId._id;
 
             return (nodeDoc._id
-                ? coll.updateOne({uuid:nodeDoc.uuid}, {"$set": noId})
+                ? coll.updateOne({uuid: nodeDoc.uuid}, {"$set": noId})
                 : coll.insertOne(nodeDoc))
                 .then((result) => {
                     console.log("saveNode result: " + JSON.stringify(result));
@@ -152,7 +152,7 @@ const saveNode = (nodeDoc) => {
 
 const removeNode = (uuid) => {
     return mongo.getDatabase()
-        .then((db) =>{
+        .then((db) => {
             const coll = db.db().collection("nodes");
             coll.deleteOne({"uuid": uuid})
                 .then((result) => {
@@ -169,7 +169,6 @@ const removeNode = (uuid) => {
             return [err];
         })
 };
-
 
 
 module.exports = {
