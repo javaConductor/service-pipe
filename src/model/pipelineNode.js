@@ -1,7 +1,6 @@
 const misc = require("../misc");
 const PipelineStep = require("./pipe");
 const axios = require("axios");
-const uuid = require('uuid').v4;
 const validator = require('./validator')
 const {addTrace, getTrace} = require('../trace')
 const authenticationTypes = require("./authenticationTypes");
@@ -13,11 +12,9 @@ class PipelineNode {
     }
 
     constructor(nodeProps) {
-
         const {err, warning, value} = validator.validateNodeDoc(nodeProps)
         Object.assign(this, value);
     }
-
 
     addAuthenticationHeaderValues(headers,
                                   nodeAuthenticationType,

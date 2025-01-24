@@ -9,10 +9,8 @@ const cors = require("cors");
 // }else{
 //     process.env.DEBUG = false;
 // }
-const DEBUG = false;
 if (!process.env.DEBUG){
     console.debug = () => {
-
     }
 }
 /// Routes

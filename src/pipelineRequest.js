@@ -6,7 +6,7 @@ const PipelineStep = require("./model/pipe");
 const processorManager = require('./processors/processorManager');
 const StepProcessor = require('./processors/stepProcessor');
 const dbRepo = require("./db/data-repo");
-const {addTrace, getTrace} = require('./trace')
+const {addTrace} = require('./trace')
 
 /**
  *
@@ -33,8 +33,6 @@ class PipelineRequest {
         });
 
         this.initialData = initialData || {};
-        this.pipelineHistory = [];
-        this.stepProcessor = new StepProcessor({});
     }
 
     toString() {
@@ -47,10 +45,6 @@ class PipelineRequest {
      */
     async start() {
         const startTime = Date.now();
-
-        // console.log(`PipelineRequest.start: ${JSON.stringify(this.pipeline, null, 2)}.`);
-        // console.log(`PipelineRequest.start: Steps: ${this.pipeline.steps.map((step) => (step.node.uuid))}`);
-
         ///////////////////// Create History /////////////////////
         addTrace({
             pipeline: this.pipeline.name,
@@ -79,7 +73,6 @@ class PipelineRequest {
             return [err];
         }
 
-
         ///////////////////// Successfully return pipeline output /////////////////////
         //TODO extract values
         if (this.pipeline.extract && misc.hasKeys(this.pipeline.extract)) {
@@ -100,7 +93,6 @@ class PipelineRequest {
      */
     async _startSeq(pipeline, initialData) {
         const pipelineName = pipeline.name;
-        let pipelineHistory = [];
         let data = initialData || {};
         let sequence = pipeline.steps;
         ///TODO run the pipeline transformModule.before function on data if exists
@@ -160,12 +152,6 @@ class PipelineRequest {
 
         ///TODO run the pipeline transformModule.after function on data if exists
         console.debug(`pipelineRequest._startSeq(): Pipeline:${pipeline.name}: Data added from ${pipeline.steps.length} Step(s): -> ${JSON.stringify(data)}`);
-
-        // //TODO extract values
-        // if (pipeline.extract && misc.hasKeys(pipeline.extract)){
-        //   results = extractor.extract(pipeline.contentType || 'application/json', results,  pipeline.extract);
-        // }
-
         return [null, results];
     }// _startSeq
 }

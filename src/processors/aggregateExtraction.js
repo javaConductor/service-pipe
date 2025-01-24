@@ -29,8 +29,7 @@ module.exports = (function (misc, jmespath) {
             if (aggregateExtract && aggregateExtract.dataPath) {
                 aggValue = jmespath.search(aggValue, aggregateExtract.dataPath);
             }
-            const aggData = {[aggregateExtract.aggDataKey]: aggValue};
-            return aggData;
+          return {[aggregateExtract.aggDataKey]: aggValue};
         }
 
         accumulateExtractionResults(results) {

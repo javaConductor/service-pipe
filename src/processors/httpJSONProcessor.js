@@ -212,9 +212,33 @@ class HttpJSONProcessor extends StepProcessor {
         try {
             /// use the data from the node in the step to make the HTTP call
             const realData = {...step.node.nodeData, ...(step.data || {}), ...data};// don't add nodeData.
+            let stepInput;
+            /// if step.inputExtract then extract the values needed as input into this step execution else send ALL data
+            if (misc.hasKeys(step.inputExtract)) {
+                const [inputData, err] = extractor.extract(
+                    pipeline.contentType || step.node.contentType, realData, step.inputExtract);
+                if (err) {
+                    addTrace({
+                        pipeline: pipelineName,
+                        step: step.name,
+                        nodeName: step.node.name,
+                        timestamp: Date.now(),
+                        message: `Error extracting input data. keys: ${JSON.stringify(Object.keys(step.inputExtract))}`,
+                        data: realData,
+                        state: PipelineStep.StepStates.ERROR,
+                    });
+                    console.warn(`processStep(): Pipeline:${pipeline.name} -> Step:${step.name}: Error -> ${JSON.stringify(err)}`);
+                    return [err];
+                }
 
-            console.debug(`processStep(): Pipeline:${pipeline.name} -> Step:${step.name} -> payload:${JSON.stringify(realData)}`);
-            return step.node.execute(step, realData).then(([err, responseData]) => {
+                /// Set the data to the extracted data
+                stepInput = inputData;
+            } else {
+                stepInput = realData;
+            }
+
+            console.debug(`processStep(): Pipeline:${pipeline.name} -> Step:${step.name} -> payload:${JSON.stringify(stepInput)}`);
+            return step.node.execute(step, stepInput).then(([err, responseData]) => {
                 if (err) {
                     addTrace({
                         pipeline: pipelineName,
@@ -269,8 +293,20 @@ class HttpJSONProcessor extends StepProcessor {
                     const [newData, err] = extractor.extract(
                         pipeline.contentType || step.node.contentType, responseData, step.extract);
 
-                    /// Add extract error to history
-
+                    ///TODO Add extract error to history
+                    if (err) {
+                        addTrace({
+                            pipeline: pipelineName,
+                            step: step.name,
+                            nodeName: step.node.name,
+                            timestamp: Date.now(),
+                            message: `Error extracting data. keys: ${JSON.stringify(Object.keys(step.extract))}`,
+                            data: responseData,
+                            state: PipelineStep.StepStates.ERROR,
+                        });
+                        console.warn(`processStep(): Pipeline:${pipeline.name} -> Step:${step.name}: Error -> ${JSON.stringify(err)}`);
+                        return [err];
+                    }
                     /// Set the data to the extracted data
                     responseData = newData;
                 }

@@ -1,9 +1,7 @@
 const dataRepo = require("../db/data-repo");
 const PipelineRequest = require("../pipelineRequest");
 const dbRepo = require("../db/data-repo");
-const {addTrace} = require('../trace')
 const PipelineNode = require('../model/pipelineNode')
-const app = require("express");
 
 class PipelineExecutor {
 
@@ -45,7 +43,6 @@ class PipelineExecutor {
 
             // this adds the node objects to the stepsx
             return addPipelineNodes(pipeline).then((p) => {
-                const x = p;
                 const pr = new PipelineRequest(pipeline, initialData);
                 console.debug(`PipelineExecutor.executePipeline: pipelineRequest: ${JSON.stringify(pr)}\n`);
                 return pr.start().then(([err, results]) => {

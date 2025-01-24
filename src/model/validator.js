@@ -95,6 +95,7 @@ class Validator {
                     },
                     {is: false, then: Joi.optional()}
                 ]),
+            inputExtract: Joi.object(),
             extract: Joi.object(),
             aggregateStep: Joi.boolean(),
             aggregation: Joi.alternatives()
