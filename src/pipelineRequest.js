@@ -4,9 +4,8 @@ const extractor = require("./extractor");
 const PipelineStep = require("./model/pipe");
 // const jmespath = require("jmespath");
 const processorManager = require('./processors/processorManager');
-const StepProcessor = require('./processors/stepProcessor');
 const dbRepo = require("./db/data-repo");
-const {addTrace} = require('./trace')
+const {addTrace, clearTrace} = require('./trace')
 
 /**
  *
@@ -46,6 +45,7 @@ class PipelineRequest {
     async start() {
         const startTime = Date.now();
         ///////////////////// Create History /////////////////////
+        clearTrace()
         addTrace({
             pipeline: this.pipeline.name,
             timestamp: Date.now(),

@@ -84,7 +84,7 @@ class PipelineNode {
             nodeURL: url,
             nodeHeaders: headers,
             timestamp: Date.now(),
-            state: PipelineStep.StepStates.IN_PROGRESS,
+            state: PipelineStep.StepStates.NODE_ACCESS,
             message: "Initiate request.",
             data: requestData
         });
@@ -153,10 +153,10 @@ class PipelineNode {
                     });
 
                     console.warn(`PipelineNode.execute(): Step:${step.name}: Error -> ${errMsg}`);
-                    return [error, {...data}];
+                    return [error];
                 }
                 console.warn(`PipelineNode.execute(): Step:${step.name}: Error -> ${JSON.stringify(error)}`);
-                return [error, {...data}]
+                return [error]
             })
 
     }

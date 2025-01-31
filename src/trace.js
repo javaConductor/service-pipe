@@ -1,4 +1,4 @@
-const traceElements = [];
+let traceElements = [];
 let lastElement = {};
 module.exports = {
 
@@ -13,7 +13,7 @@ module.exports = {
     },
 
     clearTrace: () => {
-        traceElements.slice(0, traceElements.length)
+        traceElements = []
     }
 
 }

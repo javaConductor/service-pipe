@@ -178,9 +178,9 @@ module.exports = {
      */
     executePipeline: (req, res, next) => {
         const uuid = req.params.uuid;
-        const addTrace = (req.query.trace === "true")
+        const sendTrace = (req.query.trace === "true")
 
-        console.debug(`controller:executePipeline: ${uuid}:${addTrace}`)
+        console.debug(`controller:executePipeline: ${uuid}:${sendTrace}`)
         const pipelineExecutor = new PipelineExecutor();
         pipelineExecutor.executePipeline(req.params.uuid, {})
             .then(([error, pipelineUUID, results]) => {
@@ -201,7 +201,7 @@ module.exports = {
                     error: null,
                     results: results,
                     "pipeline-uuid": uuid,
-                    trace: addTrace ? getTrace() : undefined
+                    trace: sendTrace ? getTrace() : undefined
                 });
             }).catch((error) => {
             console.warn(`POST /pipeline/:uuid/execute: Error: ${JSON.stringify(error)}`);
