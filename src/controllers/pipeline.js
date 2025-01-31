@@ -178,10 +178,12 @@ module.exports = {
      */
     executePipeline: (req, res, next) => {
         const uuid = req.params.uuid;
-        console.debug(`controller:executePipeline: ${uuid}`)
+        const addTrace = (req.query.trace === "true")
+
+        console.debug(`controller:executePipeline: ${uuid}:${addTrace}`)
         const pipelineExecutor = new PipelineExecutor();
         pipelineExecutor.executePipeline(req.params.uuid, {})
-            .then(([error, pipeline, results]) => {
+            .then(([error, pipelineUUID, results]) => {
                 if (error) {
                     console.warn(`POST /pipeline/:uuid/execute: Error: ${JSON.stringify(error)}`);
                     // console.log(`POST /pipeline/:uuid/execute: History: ${JSON.stringify(history, null, 2)}`);
@@ -194,11 +196,12 @@ module.exports = {
                     };
                     return res.status(500).json(errResponse);
                 }
+
                 return res.json({
                     error: null,
                     results: results,
                     "pipeline-uuid": uuid,
-                    trace: process.env.DEBUG ? getTrace() : []
+                    trace: addTrace ? getTrace() : undefined
                 });
             }).catch((error) => {
             console.warn(`POST /pipeline/:uuid/execute: Error: ${JSON.stringify(error)}`);
@@ -207,7 +210,7 @@ module.exports = {
             const errResponse = {
                 error: message,
                 'pipeline-uuid': req.params.uuid,
-                trace: process.env.DEBUG ? getTrace() : []
+                trace: getTrace()
             };
             return res.status(500).json(errResponse);
         });

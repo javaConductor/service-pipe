@@ -130,7 +130,6 @@ class Validator {
                     "aggDataKey": Joi.string().required(),
                 }
             ),
-
         });
     }
 

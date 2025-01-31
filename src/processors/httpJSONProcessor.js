@@ -1,6 +1,5 @@
 const StepProcessor = require('./stepProcessor');
 const PipelineStep = require('../model/pipe');
-const axios = require("axios");
 const extractor = require("../extractor");
 const misc = require('../misc');
 const jsonTypes = require('../model/jsonTypes');
@@ -153,7 +152,7 @@ class HttpJSONProcessor extends StepProcessor {
 
         await Promise.all(promises).then((list) => {
             for (const idx in list) {
-                const [results, sequenceHistory, err] = list[idx];
+                const [results, err] = list[idx];
                 if (err) {
                     addTrace({
                         pipeline: pipelineName,
@@ -227,7 +226,8 @@ class HttpJSONProcessor extends StepProcessor {
                         data: realData,
                         state: PipelineStep.StepStates.ERROR,
                     });
-                    console.warn(`processStep(): Pipeline:${pipeline.name} -> Step:${step.name}: Error -> ${JSON.stringify(err)}`);
+                    console.warn(`processStep(): Pipeline:${pipeline.name} -> Step:${step.name}: 
+                        Error -> ${JSON.stringify(err)}`);
                     return [err];
                 }
 
