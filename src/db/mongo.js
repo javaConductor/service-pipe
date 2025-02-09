@@ -62,6 +62,11 @@ async function getDatabase() {
 }
 
 function getConnectionURL() {
+
+    if (process.env.MONGO_URL){
+        return process.env.MONGO_URL;
+    }
+
     var connectionURL = `mongodb+srv://${dbUsername}:${dbPassword}@lessons-cluster.gs5vn.mongodb.net/service-pipe`;
 
     switch (CURRENT_DB) {

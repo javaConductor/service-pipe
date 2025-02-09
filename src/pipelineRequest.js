@@ -149,10 +149,26 @@ class PipelineRequest {
             results = {...results, ...stepResults};
             data = {...data, ...stepResults};
         }
-
+// extract the relevant data if extract is defined
+        const [extractedData,extractErr ] = extractor.extract(pipeline.contentType || 'application/json', results, pipeline.extract)
+        if (extractErr) {
+            addTrace({
+                pipeline: pipelineName,
+                timestamp: Date.now(),
+                state: PipelineStep.StepStates.PIPELINE_COMPLETE_WITH_ERRORS,
+                message: ` ${extractErr.toString()} .`,
+                error: extractErr,
+                data: results,
+                extract: pipeline.extract
+            });
+            console.debug(`pipelineRequest._startSeq(): Pipeline:${pipeline.name}: Error in Pipeline:${pipelineName}
+             -> ${JSON.stringify(extractErr)}`);
+            return [extractErr];
+        }
         ///TODO run the pipeline transformModule.after function on data if exists
-        console.debug(`pipelineRequest._startSeq(): Pipeline:${pipeline.name}: Data added from ${pipeline.steps.length} Step(s): -> ${JSON.stringify(data)}`);
-        return [null, results];
+        console.log(`pipelineRequest._startSeq(): Pipeline:${pipeline.name}: 
+        Data added from ${pipeline.steps.length} Step(s): -> ${JSON.stringify(extractedData)}`);
+        return [null, extractedData];
     }// _startSeq
 }
 

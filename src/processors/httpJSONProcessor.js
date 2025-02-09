@@ -1,10 +1,8 @@
 const StepProcessor = require('./stepProcessor');
 const PipelineStep = require('../model/pipe');
 const extractor = require("../extractor");
-const misc = require('../misc');
 const jsonTypes = require('../model/jsonTypes');
 const AggregationExtraction = require('./aggregateExtraction');
-const authenticationTypes = require('../model/authenticationTypes');
 const {addTrace} = require('../trace')
 
 class HttpJSONProcessor extends StepProcessor {
@@ -33,7 +31,7 @@ class HttpJSONProcessor extends StepProcessor {
      * @param pipeline
      * @param step
      * @param data
-     * @returns {Promise<[error, stepData]>}
+     * @returns {Promise{[error, stepData]>}
      */
     async aggregateStep(pipeline, step, data) {
         if (step.parallelStep)
@@ -49,6 +47,7 @@ class HttpJSONProcessor extends StepProcessor {
         const dataOutputKey = step.aggregation.outputArrayProperty;
         const aggregateExtract = step.aggregation.aggregateExtract;
 
+        /// get the array value to iterate over
         let dataArrayElement = realData[dataArrayKey];
 
         /// DAtaArrayElement MUST be an array
@@ -72,23 +71,23 @@ class HttpJSONProcessor extends StepProcessor {
         for (const idx in dataArrayElement) {
             ++cnt;
             const aggValues = aggExtractor.createAggregationData(dataArrayElement[idx], aggregateExtract);
-            const [err, results] = await this.processStep(pipeline, step, {...realData, ...aggValues});
-            if (err) {
+            const [errStep, stepResults] = await this.processStep(pipeline, step, {...realData, ...aggValues});
+            if (errStep) {
                 addTrace({
                     pipeline: pipelineName,
                     step: step.name,
                     nodeName: step.node.name,
                     timestamp: Date.now(),
-                    message: err,
+                    message: errStep,
                     state: PipelineStep.StepStates.ERROR,
-                    data: {...realData, ...results},
+                    data: {...realData, ...stepResults},
                     index: cnt
                 });
-                console.debug(`aggregateStep: ${pipeline.toString()} -> ${step.name}: Error -> ${err.toString()}`);
-                return [err, {...realData, ...results}];
+                console.debug(`aggregateStep: ${pipeline.toString()} -> ${step.name}: Error -> ${errStep.toString()}`);
+                return [errStep];
             }
             // Adds values extracted from step output to extractor
-            aggExtractor.accumulateExtractionResults(results);
+            aggExtractor.accumulateExtractionResults(stepResults);
         }
 
         /// get accumulated extraction data
@@ -104,7 +103,8 @@ class HttpJSONProcessor extends StepProcessor {
             data: finalAggData,
             count: cnt,
         });
-        console.log(`aggregateStep: ${pipeline.name} -> ${step.name}: Results -> ${JSON.stringify(finalAggData)}`);
+        console.log(`aggregateStep: ${pipeline.name} -> ${step.name}: 
+        Results -> ${JSON.stringify(finalAggData)}`);
         return [null, finalAggData];
     }
 
@@ -211,116 +211,80 @@ class HttpJSONProcessor extends StepProcessor {
         try {
             /// use the data from the node in the step to make the HTTP call
             const realData = {...step.node.nodeData, ...(step.data || {}), ...data};// don't add nodeData.
-            let stepInput;
             /// if step.inputExtract then extract the values needed as input into this step execution else send ALL data
-            if (misc.hasKeys(step.inputExtract)) {
-                const [inputData, err] = extractor.extract(
-                    pipeline.contentType || step.node.contentType, realData, step.inputExtract);
-                if (err) {
-                    addTrace({
-                        pipeline: pipelineName,
-                        step: step.name,
-                        nodeName: step.node.name,
-                        timestamp: Date.now(),
-                        message: `Error extracting input data. keys: ${JSON.stringify(Object.keys(step.inputExtract))}`,
-                        data: realData,
-                        state: PipelineStep.StepStates.ERROR,
-                    });
-                    console.warn(`processStep(): Pipeline:${pipeline.name} -> Step:${step.name}: 
+            let [stepInput, err] = extractor.extract(
+                pipeline.contentType || step.node.contentType, realData, step.inputExtract);
+            if (err) {
+                addTrace({
+                    pipeline: pipelineName,
+                    step: step.name,
+                    nodeName: step.node.name,
+                    timestamp: Date.now(),
+                    message: `Error extracting input data. keys: ${JSON.stringify(Object.keys(step.inputExtract))}`,
+                    data: realData,
+                    state: PipelineStep.StepStates.ERROR,
+                });
+                console.warn(`processStep(): Pipeline:${pipeline.name} -> Step:${step.name}: 
                         Error -> ${JSON.stringify(err)}`);
-                    return [err];
-                }
-
-                /// Set the data to the extracted data
-                stepInput = inputData;
-            } else {
-                stepInput = realData;
+                return [err];
             }
 
-            console.debug(`processStep(): Pipeline:${pipeline.name} -> Step:${step.name} -> payload:${JSON.stringify(stepInput)}`);
-            return step.node.execute(step, stepInput).then(([err, responseData]) => {
-                if (err) {
-                    addTrace({
-                        pipeline: pipelineName,
-                        step: step.name,
-                        nodeName: step.node.name,
-                        timestamp: Date.now(),
-                        message: `Error extracting data. keys: ${JSON.stringify(Object.keys(step.extract))}`,
-                        data: responseData,
-                        state: PipelineStep.StepStates.ERROR,
-                    });
-                    console.warn(`processStep(): Pipeline:${pipeline.name} -> Step:${step.name}: Error -> ${JSON.stringify(err)}`);
-                    return [err, {...data, ...responseData}];
-                }
+            console.debug(`processStep(): 
+                Pipeline:${pipeline.name} -> Step:${step.name}
+                -> payload:${JSON.stringify(stepInput)}`);
 
-                ///////////////////// Process Node Response /////////////////////
-                ///////////////////// Process Node Response /////////////////////
-                console.debug(`processStep(): Pipeline:${pipeline.name} -> Step:${step.name} -> response:${JSON.stringify(responseData)}`);
-                ///////////////////// If extractions are defined extract data from step output /////////////////////
-                ///////////////////// If extractions are to be done /////////////////////
-                // if singleValueExtract is true
-                //  then the entire output will be extracted into a single value
-                //  with key 'extractSingleKey' as type 'extractSingleType'
-                if (step.singleValueExtract) {
-                    // if (Object.keys(step.extract).length === 1) {
-                    const name = step.aggregateSingle.extractSingleKey;
-                    const value = step.aggregateSingle.extractSingleType;
-                    if (jsonTypes.isType(value)) {
-                        // if (!jsonTypes.validate(value, responseData) && responseData) {
-                        //      const errMsg = `Type [${typeof responseData}] does not match extract designation [${value}]`;
-                        //      stepTrace = [...stepTrace, {
-                        //          pipeline: pipelineName,
-                        //          step: step.name,
-                        //          nodeName: step.node.name,
-                        //          nodeUrl: url,
-                        //          timestamp: Date.now(),
-                        //          message: `Extract datatype mismatch`,
-                        //          error: errMsg
-                        //      }];
-                        // return [responseData, stepTrace, errMsg]
-                        // } else {
-                        const results = {[name]: responseData};
-                        console.debug(`processStep(): Pipeline:${pipeline.name} -> Step:${step.name} -> extract:${JSON.stringify(results)}`);
-                        return [null, results];
-                    }
-                }
+            const [errNode, nodeOutput] = await step.node.execute(step, stepInput);
+            if (err) {
+                addTrace({
+                    pipeline: pipelineName,
+                    step: step.name,
+                    nodeName: step.node.name,
+                    timestamp: Date.now(),
+                    message: `Error extracting data: ${errNode}`,
+                    data: nodeOutput,
+                    state: PipelineStep.StepStates.ERROR,
+                });
+                console.warn(`processStep(): 
+                    Pipeline:${pipeline.name} -> 
+                    Step:${step.name}: 
+                    Error -> ${JSON.stringify(err)}`);
+                return [errNode];
+            }
 
-                if (misc.hasKeys(step.extract)) {
-                    /// extract data
-                    /// if singleValueExtract is false
-                    ///     then the extract data using each key/value pairs
-                    /// {extractKey: 'jmsePath of data in step output'}
-                    const [newData, err] = extractor.extract(
-                        pipeline.contentType || step.node.contentType, responseData, step.extract);
+            console.debug(`processStep(): Pipeline:${pipeline.name} 
+            -> Step:${step.name} 
+            -> response:${JSON.stringify(nodeOutput)}`);
+            ///////////////////// If extractions are defined extract data from step output /////////////////////
+            ///////////////////// If extractions are to be done /////////////////////
+            /// extract data
+            const [stepResults, errExtract] = extractor.extract(
+                pipeline.contentType || step.node.contentType,
+                nodeOutput, step.extract);
 
-                    ///TODO Add extract error to history
-                    if (err) {
-                        addTrace({
-                            pipeline: pipelineName,
-                            step: step.name,
-                            nodeName: step.node.name,
-                            timestamp: Date.now(),
-                            message: `Error extracting data. keys: ${JSON.stringify(Object.keys(step.extract))}`,
-                            data: responseData,
-                            state: PipelineStep.StepStates.ERROR,
-                        });
-                        console.warn(`processStep(): Pipeline:${pipeline.name} -> Step:${step.name}: Error -> ${JSON.stringify(err)}`);
-                        return [err];
-                    }
-                    /// Set the data to the extracted data
-                    responseData = newData;
-                }
+            ///TODO Add extract error to history
+            if (errExtract) {
+                addTrace({
+                    pipeline: pipelineName,
+                    step: step.name,
+                    nodeName: step.node.name,
+                    timestamp: Date.now(),
+                    message: `Error extracting data. keys: ${JSON.stringify(Object.keys(step.extract))}`,
+                    data: nodeOutput,
+                    state: PipelineStep.StepStates.ERROR,
+                });
+                console.warn(`processStep(): Pipeline:${pipeline.name} -> Step:${step.name}: Error -> ${JSON.stringify(errExtract)}`);
+                return [errExtract];
+            }
+            /// Set the data to the extracted data
 
-                [err, responseData] = this.postProcessStepResults(step, responseData)
+            /////////////// Return response data and history ///////////////
+            // if (err) {
+            //     console.warn(`processStep(): Pipeline:${pipeline.name} -> Step:${step.name}: Error -> ${JSON.stringify(err)}\n`);
+            // } else {
+            //     console.debug(`processStep(): Pipeline:${pipeline.name} -> Step:${step.name}: response -> ${JSON.stringify(nodeResults)}\n`);
+            // }
 
-                /////////////// Return response data and history ///////////////
-                if (err) {
-                    console.warn(`processStep(): Pipeline:${pipeline.name} -> Step:${step.name}: Error -> ${JSON.stringify(err)}\n`);
-                } else {
-                    console.debug(`processStep(): Pipeline:${pipeline.name} -> Step:${step.name}: response -> ${JSON.stringify(responseData)}\n`);
-                }
-                return [err, responseData];
-            });
+            return [null, stepResults];
         } catch (e) { // outer try
             addTrace({
                 pipeline: pipelineName,
@@ -335,67 +299,6 @@ class HttpJSONProcessor extends StepProcessor {
             return [e];
         }
     }
-
-    postProcessStepResults(step, stepResults) {
-
-        /// Check for error conditions
-        if (false) { // not doing this right now
-            if (misc.hasKeys(step.node.errorIndicators)) {
-                for (const errorIndicatorsKey in step.node.errorIndicators) {
-                    if (stepResults[errorIndicatorsKey]) {
-                        /// loop thru the errorMessages
-                        let messages = [];
-                        if (misc.hasKeys(step.node.errorMessages)) {
-                            for (const errorMessagesKey in step.node.errorMessages) {
-                                const msg = stepResults[errorMessagesKey];
-                                if (msg && msg.length > 0) {
-                                    messages = [...messages, msg];
-                                }
-                            }
-                        }
-
-                        addTrace({
-                            step: step.name,
-                            nodeName: step.node.name,
-                            timestamp: Date.now(),
-                            message: `Error in response`,
-                            responseErrors: messages
-                        });
-                        return [messages];
-                    }
-                }// for
-            }
-        }
-
-        if (step.transformModules && false) { //Not doing this yet
-            //loop thru the transforms
-            let tData = stepResults;
-            for (const idx in step.transformModules.after) {
-                const tMod = step.transformModules.after[idx];
-
-                const [newData, err] = tMod.stepFn(pipeline, step, tData);//TODO test this thoroughly!!!
-                if (err) {
-                    addTrace({
-                        pipeline: pipelineName,
-                        step: step.name,
-                        stepTransform: tMod.name,
-                        nodeName: step.node.name,
-                        nodeUrl: url,
-                        state: PipelineStep.StepStates.COMPUTE_ERROR,
-                        timestamp: Date.now(),
-                        message: `${err}`,
-                        error: err
-                    });
-                    return [err]
-                }
-                tData = {...tData, ...newData};
-            }
-            stepResults = tData;
-        }
-
-        return [null, stepResults];
-    }
-
 }
 
 module.exports = HttpJSONProcessor;

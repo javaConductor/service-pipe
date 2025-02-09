@@ -51,16 +51,21 @@ module.exports = {
      */
     savePipeline: (req, res, next) => {
         const pipeline = req.body;
-        if (!pipeline.uuid || !pipeline.name) {
-            res.status(400).send(JSON.stringify({error: `Pipeline name and uuid required`}));
-        }
+        const isNew = !pipeline._id
+
         dbRepo.savePipeline(pipeline)
             .then(([err, savedPipeline]) => {
-                if (err) return next(err);
-                res.json(savedPipeline);
+              //  if (err) return next(err);
+                if (!err) {
+                    console.log(`${isNew ? 'Created' : 'Updated'} pipeline ${savedPipeline.uuid} `)
+                }
+                else{
+                    console.warn(`Error ${isNew ? 'Creating' : 'Updating'} pipeline ${pipeline.uuid}: ${err} `)
+                }
+                res.json([err, err ? undefined : savedPipeline]);
             })
             .catch((err) => {
-                res.status(500).send(JSON.stringify({error: `${err}`}));
+                res.status(500).json(err);
             });
     },
 
@@ -180,7 +185,7 @@ module.exports = {
         const uuid = req.params.uuid;
         const sendTrace = (req.query.trace === "true")
 
-        console.debug(`controller:executePipeline: ${uuid}:${sendTrace}`)
+        console.log(`controller:executePipeline: ${uuid}:${sendTrace}`)
         const pipelineExecutor = new PipelineExecutor();
         pipelineExecutor.executePipeline(req.params.uuid, {})
             .then(([error, pipelineUUID, results]) => {

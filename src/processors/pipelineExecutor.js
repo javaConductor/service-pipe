@@ -41,6 +41,13 @@ class PipelineExecutor {
             };
             if (err) return re(err);
 
+            /// check if pipeline exists
+            if (!pipeline){
+                const msg = `No such pipeline: ${uuid}`;
+                console.warn(`executePipeline: ${msg}`)
+                return [msg, uuid]
+            }
+
             // this adds the node objects to the stepsx
             return addPipelineNodes(pipeline).then((p) => {
                 const pr = new PipelineRequest(pipeline, initialData);

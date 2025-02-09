@@ -3,6 +3,11 @@ const AggregationExtraction = require("../processors/aggregateExtraction");
 const authenticationTypes = require("../model/authenticationTypes");
 const jsonTypes = require("../model/jsonTypes")
 
+let extractObject = Joi.object().keys({
+    destinationElement: Joi.string().required(),
+    sourceJmesPath: Joi.string().required(),
+})
+
 class Validator {
 
     constructor() {
@@ -17,24 +22,26 @@ class Validator {
                 Pipeline.Status.New),
             contentType: Joi.string(),
             //.regex(/^\d{3}-\d{3}-\d{4}$/).required(),
+            inputExtract: Joi.array().items(extractObject),
+            extract: Joi.array().items(extractObject),
             steps: Joi.array().items(this.stepSchema()),
-            transformModules: Joi.object().keys({
-                before: Joi.object().keys({
-                    name: Joi.string().required(),
-                    stepFn: Joi.alternatives().try(
-                        Joi.function(),
-                        Joi.string(),
-                    ).required(),
-                }),
-                after: Joi.object().keys({
-                    name: Joi.string().required(),
-                    stepFn: Joi.alternatives().try(
-                        Joi.function(),
-                        Joi.string(),
-                    ).required(),
-
-                }),
-            }),
+            // transformModules: Joi.object().keys({
+            //     before: Joi.object().keys({
+            //         name: Joi.string().required(),
+            //         stepFn: Joi.alternatives().try(
+            //             Joi.function(),
+            //             Joi.string(),
+            //         ).required(),
+            //     }),
+            //     after: Joi.object().keys({
+            //         name: Joi.string().required(),
+            //         stepFn: Joi.alternatives().try(
+            //             Joi.function(),
+            //             Joi.string(),
+            //         ).required(),
+            //
+            //     }),
+            // }),
         });
 
         this.nodeSchema = Joi.object().keys({
@@ -60,7 +67,7 @@ class Validator {
                 ]),
             nodeData: Joi.object(),// required data for the node to function
             payload: Joi.object(),// data being sent to the node (perhaps from the previous step)
-            extract: Joi.object(),// {key: value} where 'key' is the key to store extracted value
+            extract: Joi.array().items(extractObject),// {key: extracted element, value:jmesPath where 'key' is the key to store extracted value
             // and 'value' is the JmsPath location of the data returned from the node
             //.regex(/^\d{3}-\d{3}-\d{4}$/).required(),
             errorIndicators: Joi.array().items(Joi.string()),
@@ -74,34 +81,17 @@ class Validator {
             name: Joi.string().required(),
             description: Joi.string(),
             nodeUUID: Joi.string().guid({version: 'uuidv4'}),
+            node: Joi.optional(),
             data: Joi.alternatives().try(
                 Joi.array(),
                 Joi.object()
             ),
-            singleValueExtract: Joi.boolean(),
-            aggregateSingle: Joi.alternatives()
-                .conditional('singleValueExtract', [
-                    {
-                        is: true, then: Joi.object().keys({
-                            extractSingleKey: Joi.string(),
-                            extractSingleType: Joi.string().valid(
-                                jsonTypes.typeMap.Date,
-                                jsonTypes.typeMap.Object,
-                                jsonTypes.typeMap.Array,
-                                jsonTypes.typeMap.Number,
-                                jsonTypes.typeMap.String,
-                            )
-                        })
-                    },
-                    {is: false, then: Joi.optional()}
-                ]),
-            inputExtract: Joi.object(),
-            extract: Joi.object(),
+            extract: Joi.array().items(extractObject),// {key: extracted element, value:jmesPath where 'key' is the key to store extracted value
+            inputExtract: Joi.array().items(extractObject),
             aggregateStep: Joi.boolean(),
             aggregation: Joi.alternatives()
                 .conditional('aggregateStep', [
-                    {is: true, then: this.aggregation()},
-                    {is: false, then: Joi.object().optional()},
+                    {is: true, then: this.aggregation(), otherwise: Joi.optional()},
                 ]),
         });
     }
