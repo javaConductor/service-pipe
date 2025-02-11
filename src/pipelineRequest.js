@@ -4,199 +4,173 @@ const extractor = require("./extractor");
 const PipelineStep = require("./model/pipe");
 // const jmespath = require("jmespath");
 const processorManager = require('./processors/processorManager');
-const StepProcessor = require('./processors/stepProcessor');
-const nodesRepo = require('./nodes').default;
+const dbRepo = require("./db/data-repo");
+const {addTrace, clearTrace} = require('./trace')
 
 /**
  *
  */
 class PipelineRequest {
 
-  /**
-   *
-   * @param pipeline {Pipeline}
-   * @param initialData Data from request
-   */
-  constructor(pipeline, initialData) {
-    if (!pipeline.uuid)
-      throw new Error(`PipelineRequest: Bad Pipeline: no uuid`);
-    if (!pipeline.steps || pipeline.steps.length === 0)
-      throw new Error(`PipelineRequest: Bad Pipeline: no uuid`);
-    this.pipeline = pipeline;
+    /**
+     *
+     * @param pipeline {Pipeline}
+     * @param initialData Data from request
+     */
+    constructor(pipeline, initialData) {
+        if (!pipeline.uuid)
+            throw new Error(`PipelineRequest: Bad Pipeline: no uuid`);
+        if (!pipeline.steps || pipeline.steps.length === 0)
+            throw new Error(`PipelineRequest: Bad Pipeline: no uuid`);
+        this.pipeline = pipeline;
 
-    this.pipeline.steps = this.pipeline.steps.map((step) => {
-      if (!step.nodeUUID && !step.node) {
-        throw new Error(`PipelineRequest: Bad Pipeline: Step: ${step.name}: no node.`);
-      }
-      return {...step, node: step.node || nodesRepo.getNode(step.nodeUUID)}
-    });
+        this.pipeline.steps = this.pipeline.steps.map((step) => {
+            if (!step.nodeUUID && !step.node) {
+                throw new Error(`PipelineRequest: Bad Pipeline: Step: ${step.name}: no node.`);
+            }
+            return {...step, node: step.node || dbRepo.getNodeByUUID(step.nodeUUID)}
+        });
 
-    this.initialData = initialData || {};
-    this.pipelineHistory = [];
-    this.stepProcessor = new StepProcessor({});
-  }
-
-  toString() {
-    return `[${this.pipeline.name}]:${this.pipeline.uuid}${this.initialData ? ": using: " + JSON.stringify(this.initialData) : ""}`
-  }
-
-  /**
-   *
-   * @returns {Promise<[*][]>}
-   */
-  async start() {
-    const startTime = Date.now();
-
-    console.log(`PipelineRequest.start: ${JSON.stringify(this.pipeline, null, 2)}.`);
-    console.log(`PipelineRequest.start: Steps: ${this.pipeline.steps.map((step) => (step.node.uuid))}`);
-
-    let pipelineHistory = [{
-      pipeline: this.pipeline.name,
-      timestamp: startTime,
-      message: "Start pipeline.",
-      steps: this.pipeline.steps.map((step) => (step.name))
-    }];
-
-    let [results, sequenceHistory, err] = await this._startSeq(this.pipeline, this.pipeline.steps, this.initialData);
-    if (err) {
-      const now = Date.now();
-      const millis = new Date(now).getTime() - new Date(startTime).getTime();
-      const history = [...pipelineHistory, ...sequenceHistory, {
-        pipeline: this.pipeline.name,
-        timestamp: Date.now(),
-        pipelineTimeMillis: millis,
-        message: "Pipeline completed with error.",
-        errorMessage: err,
-        state: PipelineStep.StepStates.PIPELINE_COMPLETE_WITH_ERRORS,
-        partialData: results
-      }].map((trace) => ({...trace, timestamp: new Date(trace.timestamp)}));
-      //console.log(`PipelineRequest: Pipeline: [${this.pipeline.name}]\nTrace: ${JSON.stringify(history, null, 2)} `);
-      return [results, history, err];
+        this.initialData = initialData || {};
     }
 
-    if (this.pipeline.transformModules) {
+    toString() {
+        return `[${this.pipeline.name}]:${this.pipeline.uuid}${this.initialData ? ": using: " + JSON.stringify(this.initialData) : ""}`
+    }
 
-      //loop thru the transforms
-      let tData = results;
-      for (const idx in this.pipeline.transformModules.after) {
-        const tMod = this.pipeline.transformModules.after[idx];
-        const [newData, err] = tMod.stepFn(this.pipeline, null, tData);
-        if (err) {
-          pipelineHistory = [...pipelineHistory, {
+    /**
+     *
+     * @returns {Promise<[error, data]>}
+     */
+    async start() {
+        const startTime = Date.now();
+        ///////////////////// Create History /////////////////////
+        clearTrace()
+        addTrace({
             pipeline: this.pipeline.name,
-            //step: step.name,
-            stepTransform: tMod.name,
-            state: PipelineStep.StepStates.COMPUTE_ERROR,
             timestamp: Date.now(),
-            message: `${err}`,
-            error: err
-          }];
-          return [tData, pipelineHistory, err]
+            message: "Start pipeline.",
+            steps: this.pipeline.steps.map((step) => (step.name))
+        });
+
+        ///////////////////// Run Pipeline Steps /////////////////////
+        ///////////////////// Run Pipeline Steps /////////////////////
+        ///////////////////// Run Pipeline Steps /////////////////////
+        let [err, results] = await this._startSeq(this.pipeline, this.initialData);
+        if (err) {
+            const now = Date.now();
+            const millis = new Date(now).getTime() - new Date(startTime).getTime();
+            addTrace({
+                pipeline: this.pipeline.name,
+                timestamp: Date.now(),
+                pipelineTimeMillis: millis,
+                message: "Pipeline completed with error.",
+                errorMessage: err,
+                state: PipelineStep.StepStates.PIPELINE_COMPLETE_WITH_ERRORS,
+                partialData: results
+            });
+            console.warn(`PipelineRequest.start(): Pipeline:${this.pipeline.name}: Error -> ${JSON.stringify(err)}\n`);
+            return [err];
         }
-        tData = {...tData, ...newData};
-      }
-      results = tData;
-    }
 
-    let [finalValue, e] = (misc.hasKeys(this.pipeline.extract))
-      // Default to JSON
-      ? extractor.extract(this.pipeline.contentType || "application/json", results, this.pipeline.extract)
-      : [results];
+        ///////////////////// Successfully return pipeline output /////////////////////
+        //TODO extract values
+        if (this.pipeline.extract && misc.hasKeys(this.pipeline.extract)) {
+            results = extractor.extract(this.pipeline.contentType || 'application/json', results, this.pipeline.extract);
+        }
 
-    if (e) {
-      pipelineHistory = [...pipelineHistory, {
-        pipeline: this.pipeline.name,
-        //step: step.name,
-        stepTransform: "extractor.extract",
-        state: PipelineStep.StepStates.ERROR,
-        timestamp: Date.now(),
-        message: `Error extracting data ${err}`,
-        error: err
-      }];
-      return [results, pipelineHistory, err];
-    }
-    const now = Date.now();
-    const millis = new Date(now).getTime() - new Date(startTime).getTime();
-    pipelineHistory = [...pipelineHistory, ...sequenceHistory, {
-      pipeline: this.pipeline.name,
-      timestamp: now,
-      pipelineTimeMillis: millis,
-      message: "Pipeline complete.",
-      state: PipelineStep.StepStates.PIPELINE_COMPLETE,
-      extracted: finalValue
-    }].map((trace) => {
-      return {...trace, timestamp: new Date(trace.timestamp)}
-    });
+        console.debug(`PipelineRequest.start: Pipeline: [${this.pipeline.name}]\n
+    Results: ${JSON.stringify(results, null, 2)} `);
+        return [null, results];
+    }//start
 
-    console.log(`PipelineRequest: Pipeline: [${this.pipeline.name}]\nTrace: ${JSON.stringify(pipelineHistory, null, 2)} `);
-    return [finalValue, pipelineHistory, null];
-  }
+    /**
+     *
+     * @param pipeline Pipeline
+     * @param initialData
+     * @returns {Promise<[error, stepResults]>}
+     * @private
+     */
+    async _startSeq(pipeline, initialData) {
+        const pipelineName = pipeline.name;
+        let data = initialData || {};
+        let sequence = pipeline.steps;
+        ///TODO run the pipeline transformModule.before function on data if exists
 
-  /**
-   *
-   * @param pipeline Pipeline
-   * @param sequence
-   * @param initialData
-   * @returns {Promise<*|{}>}
-   * @private
-   */
-  async _startSeq(pipeline, sequence, initialData) {
-    const pipelineName = pipeline.name;
-    let pipelineHistory = [];
-    let data = initialData || {};
+        let results = {};
+        /// execute each step
+        for (let step of sequence) {
+            ///////////////////// Get Step Processor /////////////////////
+            const stepProcessor = processorManager.getStepProcessor(step);
+            if (!stepProcessor) {
+                const msg = `No step processor for [${step.name}].`;
+                addTrace({
+                    pipeline: pipelineName,
+                    timestamp: Date.now(),
+                    state: PipelineStep.StepStates.ERROR,
+                    message: msg,
+                    partialData: data
+                });
+                return [(msg)];
+            }
+            ``
+            ///////////////////// Select Step Processor Function /////////////////////
+            const processOrAggregate = step.aggregateStep
+                ? stepProcessor.aggregateStep
+                : stepProcessor.processStep;
 
-    ///TODO run the pipeline transformModule.before function on data if exists
+            ///////////////////// Run Step Processor Function /////////////////////
+            const [err, stepResults] = await processOrAggregate(
+                pipeline,
+                step,
+                {...data, ...initialData});
+            if (err) {
+                addTrace({
+                    pipeline: pipelineName,
+                    timestamp: Date.now(),
+                    state: PipelineStep.StepStates.STEP_COMPLETE_WITH_ERRORS,
+                    message: `Error in Step [${step.name}]: ${err.toString()} .`,
+                    error: err,
+                    payload: {...data, ...initialData}
+                });
+                console.debug(`pipelineRequest._startSeq(): Pipeline:${pipeline.name}: Error in Step:${step.name} -> ${JSON.stringify(err)}`);
+                return [err, stepResults];
+            }
+            addTrace({
+                pipeline: pipelineName,
+                timestamp: Date.now(),
+                state: PipelineStep.StepStates.STEP_COMPLETE,
+                message: `Step [${step.name}] is completed.`,
+                extracted: stepResults
+            });
 
+            /// combine data from step with previous data
+            console.debug(`pipelineRequest._startSeq(): Pipeline:${pipeline.name}: Data added from Step:${step.name} -> ${JSON.stringify(stepResults)}`);
+            results = {...results, ...stepResults};
+            data = {...data, ...stepResults};
+        }
+// extract the relevant data if extract is defined
+        const [extractedData,extractErr ] = extractor.extract(pipeline.contentType || 'application/json', results, pipeline.extract)
+        if (extractErr) {
+            addTrace({
+                pipeline: pipelineName,
+                timestamp: Date.now(),
+                state: PipelineStep.StepStates.PIPELINE_COMPLETE_WITH_ERRORS,
+                message: ` ${extractErr.toString()} .`,
+                error: extractErr,
+                data: results,
+                extract: pipeline.extract
+            });
+            console.debug(`pipelineRequest._startSeq(): Pipeline:${pipeline.name}: Error in Pipeline:${pipelineName}
+             -> ${JSON.stringify(extractErr)}`);
+            return [extractErr];
+        }
+        ///TODO run the pipeline transformModule.after function on data if exists
+        console.log(`pipelineRequest._startSeq(): Pipeline:${pipeline.name}: 
+        Data added from ${pipeline.steps.length} Step(s): -> ${JSON.stringify(extractedData)}`);
+        return [null, extractedData];
+    }// _startSeq
 
-    /// loop thru each node in the sequence
-    for (let step of sequence) {
-      const stepProcessor = processorManager.getStepProcessor(step);
-      if (!stepProcessor) {
-        const msg = `No step processor for [${step.name}].`;
-        pipelineHistory = [...pipelineHistory, {
-          pipeline: pipelineName,
-          timestamp: Date.now(),
-          state: PipelineStep.StepStates.ERROR,
-          message: msg,
-          partialData: data
-        }];
-        new Error(msg)
-        return [data, pipelineHistory, new Error(msg)];
-      }
-
-      const processOrAggregate = step.aggregateStep
-        ? stepProcessor.aggregateStep
-        : stepProcessor.processStep;
-
-      const [stepData, stepTrace, err] = await processOrAggregate(pipeline, step, {...data, ...initialData});
-      if (err) {
-        pipelineHistory = [...pipelineHistory, ...stepTrace, {
-          pipeline: pipelineName,
-          timestamp: Date.now(),
-          state: PipelineStep.StepStates.STEP_COMPLETE_WITH_ERRORS,
-          message: `Error in Step [${step.name}]: ${err.toString()} .`,
-          error: err,
-          payload: {...data, ...initialData}
-        }];
-        return [stepData, pipelineHistory, (`${err}`)];
-      }
-      pipelineHistory = [...pipelineHistory, ...stepTrace, {
-        pipeline: pipelineName,
-        timestamp: Date.now(),
-        state: PipelineStep.StepStates.STEP_COMPLETE,
-        message: `Step [${step.name}] is completed.`,
-        extracted: stepData
-      }];
-
-      /// combine data from step with previous data
-      data = {...data, ...stepData};
-    }
-
-    ///TODO run the pipeline transformModule.after function on data if exists
-
-
-    return [data, pipelineHistory];
-  }
 }
 
 module.exports = PipelineRequest;

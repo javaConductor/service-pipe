@@ -1,7 +1,7 @@
 const fs = require('fs');
 const glob = require("glob");
 const os = require('os');
-const PipelineNode = require('./model/pipelineNode');
+const PipelineNode = require('../src/model/pipelineNode');
 const NODE_FILE_EXTENSION = 'node.json';
 
 class Nodes {

@@ -3,6 +3,16 @@ const bodyParser = require("body-parser");
 const app = express();
 const cors = require("cors");
 
+// if (process.env.DEBUG){
+//     process.env.DEBUG = eval(process.env.DEBUG);
+// }else{
+//     process.env.DEBUG = false;
+// }
+if (!process.env.DEBUG){
+    console.debug = () => {
+    }
+}
+
 /// Routes
 const pipelineRoutes = require('./src/routes/pipelines') ;
 const nodeRoutes = require('./src/routes/nodes') ;

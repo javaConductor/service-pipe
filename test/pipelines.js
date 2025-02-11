@@ -4,7 +4,7 @@ const glob = require("glob");
 const os = require('os');
 const {v4: uuid} = require('uuid');
 const defaultNodeRepo = require('./nodes').default;
-const Pipeline = require('./model/pipeline');
+const Pipeline = require('../src/model/pipeline');
 const {sep} = require("node:path");
 
 const PIPELINE_FILE_EXTENSION = 'ppln.json';

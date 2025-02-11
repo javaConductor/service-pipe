@@ -5,7 +5,7 @@ const {v4: uuid} = require('uuid');
 const NodeRepo = require('./nodes');
 const PipelineRepo = require('./pipelines');
 const defaultNodeRepo = NodeRepo.default;
-const Pipeline = require('./model/pipeline');
+const Pipeline = require('../src/model/pipeline');
 
 const PIPELINE_FILE_EXTENSION = 'ppln.json';
 

@@ -1,0 +1,4 @@
+### GET request to example server
+POST http://localhost:8080/pipeline/b212c49c-4447-452b-947f-5ca4ecf18418/execute
+
+###

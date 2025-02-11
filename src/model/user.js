@@ -1,8 +1,5 @@
+class User {
 
 
- class User {
+}
 
-
-
-
- }

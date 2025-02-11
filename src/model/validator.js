@@ -1,11 +1,18 @@
 const Joi = require("joi");
 const AggregationExtraction = require("../processors/aggregateExtraction");
-const Pipeline = require("../model/pipeline");
 const authenticationTypes = require("../model/authenticationTypes");
+const jsonTypes = require("../model/jsonTypes")
+
+let extractObject = Joi.object().keys({
+    destinationElement: Joi.string().required(),
+    sourceJmesPath: Joi.string().required(),
+})
+
 
 class Validator {
 
     constructor() {
+        const Pipeline = require("../model/pipeline");
 
         this.pipelineSchema = Joi.object().keys({
             _id: Joi.string(),
@@ -16,24 +23,26 @@ class Validator {
                 Pipeline.Status.New),
             contentType: Joi.string(),
             //.regex(/^\d{3}-\d{3}-\d{4}$/).required(),
+            inputExtract: Joi.array().items(extractObject),
+            extract: Joi.array().items(extractObject),
             steps: Joi.array().items(this.stepSchema()),
-            transformModules: Joi.object().keys({
-                before: Joi.object().keys({
-                    name: Joi.string().required(),
-                    stepFn: Joi.alternatives().try(
-                        Joi.function(),
-                        Joi.string(),
-                    ).required(),
-                }),
-                after: Joi.object().keys({
-                    name: Joi.string().required(),
-                    stepFn: Joi.alternatives().try(
-                        Joi.function(),
-                        Joi.string(),
-                    ).required(),
-
-                }),
-            }),
+            // transformModules: Joi.object().keys({
+            //     before: Joi.object().keys({
+            //         name: Joi.string().required(),
+            //         stepFn: Joi.alternatives().try(
+            //             Joi.function(),
+            //             Joi.string(),
+            //         ).required(),
+            //     }),
+            //     after: Joi.object().keys({
+            //         name: Joi.string().required(),
+            //         stepFn: Joi.alternatives().try(
+            //             Joi.function(),
+            //             Joi.string(),
+            //         ).required(),
+            //
+            //     }),
+            // }),
         });
 
         this.nodeSchema = Joi.object().keys({
@@ -45,11 +54,11 @@ class Validator {
             method: Joi.string().valid("POST", "GET", "PUT"),
             contentType: Joi.string(),
             headers: Joi.object(),//.keys([this.httpHeaderName()]),
-            authenticationType:Joi.string().valid(
+            authenticationType: Joi.string().valid(
                 authenticationTypes.None,
                 authenticationTypes.Basic,
                 authenticationTypes.Token,
-                ),
+            ),
 
             authentication: Joi.alternatives()
                 .conditional('authenticationType', [
@@ -59,7 +68,7 @@ class Validator {
                 ]),
             nodeData: Joi.object(),// required data for the node to function
             payload: Joi.object(),// data being sent to the node (perhaps from the previous step)
-            extract: Joi.object(),// {key: value} where 'key' is the key to store extracted value
+            extract: Joi.array().items(extractObject),// {key: extracted element, value:jmesPath where 'key' is the key to store extracted value
             // and 'value' is the JmsPath location of the data returned from the node
             //.regex(/^\d{3}-\d{3}-\d{4}$/).required(),
             errorIndicators: Joi.array().items(Joi.string()),
@@ -73,23 +82,21 @@ class Validator {
             name: Joi.string().required(),
             description: Joi.string(),
             nodeUUID: Joi.string().guid({version: 'uuidv4'}),
+            node: Joi.optional(),
             data: Joi.alternatives().try(
                 Joi.array(),
                 Joi.object()
             ),
-            extract: Joi.object(),
+            extract: Joi.array().items(extractObject),// {key: extracted element, value:jmesPath where 'key' is the key to store extracted value
+            inputExtract: Joi.array().items(extractObject),
             aggregateStep: Joi.boolean(),
-            //    a: Joi.any().when('b', { is: 5, then: Joi.required(), otherwise: Joi.optional() }),
             aggregation: Joi.alternatives()
                 .conditional('aggregateStep', [
-                    {is: true, then: this.aggregation()},
-                    {is: false, then: Joi.object()},
-
-                ])
+                    {is: true, then: this.aggregation(), otherwise: Joi.optional()},
+                ]),
 
         });
     }
-
 
     aggregateExtract() {
         return Joi.object().keys({
@@ -103,14 +110,19 @@ class Validator {
 
     aggregation() {
         return Joi.object().keys({
+
+            aggExtractionType: Joi.string().valid(
+                AggregationExtraction.Types.AsNormal,
+                AggregationExtraction.Types.AsArray,
+                AggregationExtraction.Types.AsObject
+            ),
             dataArrayProperty: Joi.string().required(),
             outputArrayProperty: Joi.string().required(),
             aggregateExtract: Joi.object().keys({
-                "aggDataKey": Joi.string().required(),
+                    "aggDataKey": Joi.string().required(),
                 }
             ),
-
-    });
+        });
     }
 
     basicAuthentication() {
@@ -125,7 +137,8 @@ class Validator {
     tokenAuthentication() {
         return Joi.object().keys({
             token: Joi.string().required(),
-            });
+        });
+
     }
 
     httpHeaderName() {
@@ -133,18 +146,20 @@ class Validator {
     }
 
     /**
+     *  Validates pipeline properties
      *
      * @param pipelineDoc
-     * @returns {err, pipelineDoc}
+     * @returns {(Object)}
      */
     validatePipeline(pipelineDoc) {
         return this.pipelineSchema.validate(pipelineDoc);
     }
 
     /**
+     * Validates node properties
      *
      * @param nodeDoc
-     * @returns {err, nodeDoc}
+     * @returns {(Object)}
      */
     validateNodeDoc(nodeDoc) {
         return this.nodeSchema.validate(nodeDoc);

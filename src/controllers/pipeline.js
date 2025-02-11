@@ -1,9 +1,9 @@
-const dataRepo = require("../db/data-repo");
+const dbRepo = require("../db/data-repo");
 const PipelineRequest = require("../pipelineRequest");
-
+const PipelineExecutor = require("../processors/pipelineExecutor");
+const {addTrace, getTrace} = require('../trace')
 
 module.exports = {
-
     /**
      *
      * @param req
@@ -11,7 +11,7 @@ module.exports = {
      * @param next
      */
     getAllPipelines: (req, res, next) => {
-        dataRepo.getAllPipelines().then(([err, pipelines]) => {
+        dbRepo.getAllPipelines().then(([err, pipelines]) => {
             if (err) return next(err);
             res.json(pipelines);
         }).catch((err) => {
@@ -29,7 +29,9 @@ module.exports = {
      */
     getPipelineByUUID: (req, res, next) => {
         const uuid = req.params.uuid;
-        dataRepo.getPipelineByUUID(uuid).then(([err, pipeline]) => {
+
+        dbRepo.getPipelineByUUID(uuid).then(([err, pipeline]) => {
+
             if (err) return next(err);
             if (!pipeline) {
                 res.status(404).send(JSON.stringify({error: `Pipeline ${uuid} not found.`}));
@@ -37,7 +39,7 @@ module.exports = {
                 res.json(pipeline);
             }
         }).catch((err) => {
-            console.log("controller:getPipelineByUUID:error ->" + JSON.stringify(err));
+            console.warn("controller:getPipelineByUUID:error ->" + JSON.stringify(err));
             next(err);
         });
     },
@@ -50,16 +52,22 @@ module.exports = {
      */
     savePipeline: (req, res, next) => {
         const pipeline = req.body;
-        if (!pipeline.uuid || !pipeline.name) {
-            res.status(400).send(JSON.stringify({error: `Pipeline name and uuid required`}));
-        }
-        dataRepo.savePipeline(pipeline)
+
+        const isNew = !pipeline._id
+
+        dbRepo.savePipeline(pipeline)
             .then(([err, savedPipeline]) => {
-                if (err) return next(err);
-                res.json(savedPipeline);
+              //  if (err) return next(err);
+                if (!err) {
+                    console.log(`${isNew ? 'Created' : 'Updated'} pipeline ${savedPipeline.uuid} `)
+                }
+                else{
+                    console.warn(`Error ${isNew ? 'Creating' : 'Updating'} pipeline ${pipeline.uuid}: ${err} `)
+                }
+                res.json([err, err ? undefined : savedPipeline]);
             })
             .catch((err) => {
-                res.status(500).send(JSON.stringify({error: `${err}`}));
+                res.status(500).json(err);
             });
     },
 
@@ -71,7 +79,7 @@ module.exports = {
      */
     removePipeline: (req, res, next) => {
         const uuid = req.params.uuid;
-        dataRepo.removePipeline(uuid).then(([err, nodes]) => {
+        dbRepo.removePipeline(uuid).then(([err, nodes]) => {
             //if (err) return next(err);
             res.json([err, uuid]);
         }).catch((err) => {
@@ -86,7 +94,8 @@ module.exports = {
      * @param next
      */
     getAllNodes: (req, res, next) => {
-        dataRepo.getAllNodes().then(([err, nodes]) => {
+        dbRepo.getAllNodes().then(([err, nodes]) => {
+
             if (err) return next(err);
             res.json(nodes);
         }).catch((err) => {
@@ -104,24 +113,26 @@ module.exports = {
      */
     getNodeByUUID: (req, res, next) => {
         const uuid = req.params.uuid;
-        dataRepo.getNodeByUUID(uuid).then(([err, node]) => {
+        dbRepo.getNodeByUUID(uuid).then(([err, node]) => {
 
             if (err) {
-                console.log("controler:getNodeByUUID:error ->" + JSON.stringify(err));
+                console.log("controller:getNodeByUUID:error ->" + JSON.stringify(err));
+
                 next(err);
             } else if (!node) {
                 res.status(404).send(JSON.stringify({error: `Node ${uuid} not found.`}));
             } else {
-                console.log("controler:getNodeByUUID->" + JSON.stringify(node));
+
+                console.debug("controller:getNodeByUUID->" + JSON.stringify(node));
                 res.json(node);
             }
         }).catch((err) => {
-            console.log("controler:getNodeByUUID:error ->" + JSON.stringify(err));
+            console.log("controller:getNodeByUUID:error ->" + JSON.stringify(err));
+
             next(err);
             //res.status(500).json({error: err});
         });
     },
-
 
     /**
      *
@@ -131,8 +142,8 @@ module.exports = {
      */
     removeNode: (req, res, next) => {
         const uuid = req.params.uuid;
+        dbRepo.removeNode(uuid).then(([err, nodes]) => {
 
-        dataRepo.removeNode(uuid).then(([err, nodes]) => {
             //if (err) return next(err);
             res.json([err, uuid]);
         }).catch((err) => {
@@ -140,7 +151,6 @@ module.exports = {
             // res.status(500).json({error: err});
         });
     },
-
 
     /**
      *
@@ -155,7 +165,9 @@ module.exports = {
         if (!node.uuid || !node.name) {
             res.status(400).send(JSON.stringify({error: `Node name and uuid required`}));
         }
-        dataRepo.saveNode(node)
+
+        dbRepo.saveNode(node)
+
             .then(([err, savedNode]) => {
                 if (err) return next(err);
                 res.json(savedNode);
@@ -171,42 +183,51 @@ module.exports = {
      * @param res
      * @param next
      *
-     * Response:  [results, uuid, history, errorObj]
+     * Response:  {
+     *  error: "",
+     *  results: {},
+     *  "pipeline-uuid": uuid
+     *  trace: []
+     *  });
      */
     executePipeline: (req, res, next) => {
         const uuid = req.params.uuid;
+        const sendTrace = (req.query.trace === "true")
+        const initialData = req.body || {}
+        console.log(`controller:executePipeline: ${uuid}:${sendTrace}`)
+        const pipelineExecutor = new PipelineExecutor();
+        pipelineExecutor.executePipeline(uuid, initialData)
+            .then(([error, pipelineUUID, results]) => {
+                if (error) {
+                    console.warn(`POST /pipeline/:uuid/execute: Error: ${JSON.stringify(error)}`);
+                    // console.log(`POST /pipeline/:uuid/execute: History: ${JSON.stringify(history, null, 2)}`);
+                    const message = `${req.params.uuid}: ${JSON.stringify(error)}`;
 
-        dataRepo.getPipelineByUUID(uuid).then(([err, pipeline]) => {
-            if (err) return next(err);
-
-            /// check pipelineRequest.username/apiKey in middleware
-            const initialData = req.body;
-            const pr = new PipelineRequest(pipeline, initialData);
-            console.log(`POST /pipeline/:uuid/execute: pipelineRequest: ${JSON.stringify(pr)}`);
-            pr.start().then(([results, history, err]) => {
-                if (err) {
-                    console.log(`POST /pipeline/:uuid/execute: Error: ${JSON.stringify(err)}`);
-                    console.log(`POST /pipeline/:uuid/execute: History: ${JSON.stringify(history, null, 2)}`);
-                    const errorObj = {
-                        message: `[${pr.pipeline.name}]:${pr.pipeline.uuid}: ${err.toString()}`,
-                        log: history
+                    const errResponse = {
+                        error: message,
+                        'pipeline-uuid': req.params.uuid,
+                        trace: getTrace()
                     };
-                    const errResponse = [null, uuid, history, errorObj];
                     return res.status(500).json(errResponse);
                 }
 
-                //TODO Store the execution History
+                return res.json({
+                    error: null,
+                    results: results,
+                    "pipeline-uuid": uuid,
+                    trace: sendTrace ? getTrace() : undefined
+                });
+            }).catch((error) => {
+            console.warn(`POST /pipeline/:uuid/execute: Error: ${JSON.stringify(error)}`);
+            const message = `${req.params.uuid}: ${JSON.stringify(error)}`;
 
-                return res.json([results, uuid, history]);
-            }, (e) => {
-                const msg = `Execution error ${e.toString()}:\n${e.stack}\n${pr.pipeline}`;
-                console.log(msg);
-                return res.status(500).send(msg)
-            })
+            const errResponse = {
+                error: message,
+                'pipeline-uuid': req.params.uuid,
+                trace: getTrace()
+            };
+            return res.status(500).json(errResponse);
 
-        }).catch((err) => {
-            console.log("controller:getPipelineByUUID:error ->" + JSON.stringify(err));
-            next(err);
         });
     }
 }

@@ -6,7 +6,7 @@ const nock = require('nock');
 const Pipeline = require("../src/model/pipeline");
 const PipelineStep = require("../src/model/pipe");
 const PipelineRequest = require("../src/pipelineRequest");
-const Loader = require("../src/loader");
+const Loader = require("./loader");
 
 const testNodeFolder = './test/nodes';
 const testPipelineFolder = './test';

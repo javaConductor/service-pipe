@@ -13,7 +13,7 @@ const CURRENT_DB = "local";
 
 var connectionURL = getConnectionURL();
 
-console.log('Connect string: ' + connectionURL);
+console.debug('Connect string: ' + connectionURL);
 
 var theDb = null;
 
@@ -21,35 +21,36 @@ async function getDatabase() {
     if (theDb == null) {
         return MongoClient.connect(connectionURL)
             .then((db) => {
-            console.debug("Database created!");
-            theDb = db;
-            db.db().collections().then((collections) => {
-                collections.forEach((col) => {
-                    console.debug("getDatabase() Collection ->" + (col.collectionName));
-                })
-            });
-            db.db().collection("nodes")
-                .createIndex({uuid: 1}, (err, result) => {
-                    if (err) {
-                        console.error('Error creating index on [uuid]:', err);
-                        return;
-                    }
-
-                    console.log('Index created successfully:', result);
+                console.debug("Database created!");
+                theDb = db;
+                db.db().collections().then((collections) => {
+                    collections.forEach((col) => {
+                        console.debug("getDatabase() Collection ->" + (col.collectionName));
+                    })
                 });
+                db.db().collection("nodes")
+                    .createIndex({uuid: 1}, (err, result) => {
+                        if (err) {
+                            console.error('Error creating index on [uuid]:', err);
+                            return;
+                        }
 
-            db.db().collection("pipelines")
-                .createIndex({uuid: 1}, (err, result) => {
-                    if (err) {
-                        console.error('Error creating index on [uuid]:', err);
-                        return;
-                    }
+                        console.debug('Index created successfully:', result);
+                    });
 
-                    console.log('Index created successfully:', result);
-                });
+                db.db().collection("pipelines")
+                    .createIndex({uuid: 1}, (err, result) => {
+                        if (err) {
+                            console.error('Error creating index on [uuid]:', err);
+                            return;
+                        }
 
-            return db;
-        })
+                        console.debug('Index created successfully:', result);
+                    });
+
+                return db;
+            })
+
             .catch((err) => {
                 console.error(`Error connected to database at [${connectionURL}]: ${err}`);
                 throw err;
@@ -62,6 +63,11 @@ async function getDatabase() {
 }
 
 function getConnectionURL() {
+
+    if (process.env.MONGO_URL){
+        return process.env.MONGO_URL;
+    }
+
     var connectionURL = `mongodb+srv://${dbUsername}:${dbPassword}@lessons-cluster.gs5vn.mongodb.net/service-pipe`;
 
     switch (CURRENT_DB) {
