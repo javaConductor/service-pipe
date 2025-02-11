@@ -50,6 +50,7 @@ async function getDatabase() {
 
                 return db;
             })
+
             .catch((err) => {
                 console.error(`Error connected to database at [${connectionURL}]: ${err}`);
                 throw err;

@@ -170,6 +170,7 @@ class PipelineRequest {
         Data added from ${pipeline.steps.length} Step(s): -> ${JSON.stringify(extractedData)}`);
         return [null, extractedData];
     }// _startSeq
+
 }
 
 module.exports = PipelineRequest;

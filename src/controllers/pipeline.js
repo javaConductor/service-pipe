@@ -4,7 +4,6 @@ const PipelineExecutor = require("../processors/pipelineExecutor");
 const {addTrace, getTrace} = require('../trace')
 
 module.exports = {
-
     /**
      *
      * @param req
@@ -30,7 +29,9 @@ module.exports = {
      */
     getPipelineByUUID: (req, res, next) => {
         const uuid = req.params.uuid;
+
         dbRepo.getPipelineByUUID(uuid).then(([err, pipeline]) => {
+
             if (err) return next(err);
             if (!pipeline) {
                 res.status(404).send(JSON.stringify({error: `Pipeline ${uuid} not found.`}));
@@ -51,6 +52,7 @@ module.exports = {
      */
     savePipeline: (req, res, next) => {
         const pipeline = req.body;
+
         const isNew = !pipeline._id
 
         dbRepo.savePipeline(pipeline)
@@ -93,6 +95,7 @@ module.exports = {
      */
     getAllNodes: (req, res, next) => {
         dbRepo.getAllNodes().then(([err, nodes]) => {
+
             if (err) return next(err);
             res.json(nodes);
         }).catch((err) => {
@@ -114,15 +117,18 @@ module.exports = {
 
             if (err) {
                 console.log("controller:getNodeByUUID:error ->" + JSON.stringify(err));
+
                 next(err);
             } else if (!node) {
                 res.status(404).send(JSON.stringify({error: `Node ${uuid} not found.`}));
             } else {
+
                 console.debug("controller:getNodeByUUID->" + JSON.stringify(node));
                 res.json(node);
             }
         }).catch((err) => {
             console.log("controller:getNodeByUUID:error ->" + JSON.stringify(err));
+
             next(err);
             //res.status(500).json({error: err});
         });
@@ -137,6 +143,7 @@ module.exports = {
     removeNode: (req, res, next) => {
         const uuid = req.params.uuid;
         dbRepo.removeNode(uuid).then(([err, nodes]) => {
+
             //if (err) return next(err);
             res.json([err, uuid]);
         }).catch((err) => {
@@ -158,7 +165,9 @@ module.exports = {
         if (!node.uuid || !node.name) {
             res.status(400).send(JSON.stringify({error: `Node name and uuid required`}));
         }
+
         dbRepo.saveNode(node)
+
             .then(([err, savedNode]) => {
                 if (err) return next(err);
                 res.json(savedNode);
@@ -218,6 +227,7 @@ module.exports = {
                 trace: getTrace()
             };
             return res.status(500).json(errResponse);
+
         });
     }
 }

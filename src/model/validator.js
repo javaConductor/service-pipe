@@ -8,6 +8,7 @@ let extractObject = Joi.object().keys({
     sourceJmesPath: Joi.string().required(),
 })
 
+
 class Validator {
 
     constructor() {
@@ -93,6 +94,7 @@ class Validator {
                 .conditional('aggregateStep', [
                     {is: true, then: this.aggregation(), otherwise: Joi.optional()},
                 ]),
+
         });
     }
 
@@ -136,6 +138,7 @@ class Validator {
         return Joi.object().keys({
             token: Joi.string().required(),
         });
+
     }
 
     httpHeaderName() {

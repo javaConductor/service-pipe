@@ -5,6 +5,7 @@ const jsonTypes = require('../model/jsonTypes');
 const AggregationExtraction = require('./aggregateExtraction');
 const {addTrace} = require('../trace')
 
+
 class HttpJSONProcessor extends StepProcessor {
 
     constructor(processorProps) {
@@ -12,6 +13,7 @@ class HttpJSONProcessor extends StepProcessor {
         this.stepType = PipelineStep.StepTypes.HTTP_JSON;//TODO use stepType defined in step
         this.processStep = this.processStep.bind(this);
         this.aggregateStep = this.aggregateStep.bind(this);
+
     }
 
     canProcess(step) {
@@ -169,6 +171,7 @@ class HttpJSONProcessor extends StepProcessor {
                 aggExtractor.accumulateExtractionResults(results);
             }
         }).catch((err) => {
+
             stepTrace = [...stepTrace, {
                 pipeline: pipelineName,
                 step: step.name,
@@ -298,6 +301,7 @@ class HttpJSONProcessor extends StepProcessor {
             console.warn(`processStep(): Pipeline:${pipeline.name} -> Step:${step.name}: Error -> ${JSON.stringify(e)}\n`);
             return [e];
         }
+
     }
 }
 

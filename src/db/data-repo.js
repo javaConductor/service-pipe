@@ -80,18 +80,19 @@ const savePipeline = (pipelineDoc) => {
     return mongo.getDatabase()
         .then((db) => {
             const coll = db.db().collection("pipelines");
-            // new Pipeline(pipelineDoc);// validate
             const noId = {...pipelineDoc};
             delete noId._id;
 
             //console.log("savePipeline: saveOrUpdate: " + JSON.stringify(noId, null, 2));
 
             return (pipelineDoc._id
+
                 ? coll.updateOne({uuid: pipelineDoc.uuid}, {"$set": noId})
                 : coll.insertOne(pipelineDoc))
                 .then((result) => {
                     pipelineDoc._id = result.insertedId;
                     console.debug("savePipeline: result: " + JSON.stringify(result));
+
                     return [null, pipelineDoc];
                 })
                 .catch((err) => {
@@ -129,7 +130,6 @@ const createNode = (nodeDoc) => {
         .then((db) => {
 
             const coll = db.db().collection("nodes");
-
             return coll.insertOne(nodeDoc)
                 .then((result) => {
                     console.log("createNode result: " + JSON.stringify(result));
@@ -137,6 +137,7 @@ const createNode = (nodeDoc) => {
                 })
                 .catch((err) => {
                     console.debug(`createNode:err -> ${err}`);
+
                     return [err];
                 });
         })
@@ -145,7 +146,6 @@ const createNode = (nodeDoc) => {
             return [err];
         })
 };
-
 
 const saveNode = (nodeDoc) => {
     if (!nodeDoc._id) {
@@ -192,7 +192,6 @@ const saveNode = (nodeDoc) => {
             })
     };
 
-
     module.exports = {
         "getAllNodes": getAllNodes,
         "getAllPipelines": getAllPipelines,
@@ -203,3 +202,4 @@ const saveNode = (nodeDoc) => {
         removePipeline,
         removeNode
     };
+

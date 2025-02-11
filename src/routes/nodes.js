@@ -20,6 +20,7 @@ const mwDebug = (req, res, next) => {
 }
 
 router.get('/', mwDebug, pipelineController.getAllNodes);
+
 router.get('/:uuid', mwDebug, pipelineController.getNodeByUUID);
 router.post('/', validateDoc(validator.nodeSchema), pipelineController.saveNode);
 router.delete('/:uuid', pipelineController.removeNode);
