@@ -26,23 +26,10 @@ class Validator {
             inputExtract: Joi.array().items(extractObject),
             extract: Joi.array().items(extractObject),
             steps: Joi.array().items(this.stepSchema()),
-            // transformModules: Joi.object().keys({
-            //     before: Joi.object().keys({
-            //         name: Joi.string().required(),
-            //         stepFn: Joi.alternatives().try(
-            //             Joi.function(),
-            //             Joi.string(),
-            //         ).required(),
-            //     }),
-            //     after: Joi.object().keys({
-            //         name: Joi.string().required(),
-            //         stepFn: Joi.alternatives().try(
-            //             Joi.function(),
-            //             Joi.string(),
-            //         ).required(),
-            //
-            //     }),
-            // }),
+            transformModules: Joi.object().keys({
+                before: this.transformModule(),
+                after: this.transformModule(),
+            }),
         });
 
         this.nodeSchema = Joi.object().keys({
@@ -50,7 +37,7 @@ class Validator {
             uuid: Joi.string().guid({version: 'uuidv4'}),
             name: Joi.string().required(),
             accessType: Joi.string().valid("HTTP").default("HTTP"),
-            url: Joi.string().uri(),
+            url: Joi.string(),
             method: Joi.string().valid("POST", "GET", "PUT"),
             contentType: Joi.string(),
             headers: Joi.object(),//.keys([this.httpHeaderName()]),
@@ -75,6 +62,22 @@ class Validator {
             errorMessages: Joi.array().items(Joi.string()),
         });
 
+    }
+
+    transformModule() {
+        return Joi.object().keys({
+            stepFnSrc: Joi.string()
+        })
+    }
+
+    XXtransformModule() {
+        return Joi.object().keys({
+            name: Joi.string().default("transform"),
+            stepFnSrc: Joi.alternatives()
+                .conditional('name', [
+                    {is: "", then: Joi.string().optional(), otherwise: Joi.string().required()},
+                ]),
+        })
     }
 
     stepSchema() {

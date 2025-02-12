@@ -4,7 +4,7 @@ module.exports = {
 
     addTrace: (traceData) => {
         lastElement = {...lastElement, ...traceData}
-        traceElements.push(lastElement)
+        traceElements.push(traceData)
         return lastElement;
     },
 
@@ -14,6 +14,7 @@ module.exports = {
 
     clearTrace: () => {
         traceElements = []
+        lastElement = {}
     }
 
 }

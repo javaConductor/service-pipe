@@ -116,6 +116,7 @@ Pipe.StepStates = {
 
     IN_PROGRESS: 'in.progress',
     NODE_ACCESS: 'node.access',
+    NODE_COMPLETE: 'node.complete',
     STEP_COMPLETE: 'complete.step',
     STEP_COMPLETE_WITH_ERRORS: 'complete.step.w.errors',
     PIPELINE_COMPLETE: 'complete.pipeline',

@@ -237,7 +237,7 @@ class HttpJSONProcessor extends StepProcessor {
                 -> payload:${JSON.stringify(stepInput)}`);
 
             const [errNode, nodeOutput] = await step.node.execute(step, stepInput);
-            if (err) {
+            if (errNode) {
                 addTrace({
                     pipeline: pipelineName,
                     step: step.name,
@@ -250,7 +250,7 @@ class HttpJSONProcessor extends StepProcessor {
                 console.warn(`processStep(): 
                     Pipeline:${pipeline.name} -> 
                     Step:${step.name}: 
-                    Error -> ${JSON.stringify(err)}`);
+                    Error -> ${JSON.stringify(errNode)}`);
                 return [errNode];
             }
 
