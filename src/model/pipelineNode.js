@@ -32,7 +32,14 @@ class PipelineNode {
                 return {...headers, ...authHeaders};
 
             case authenticationTypes.Token: {
-                return headers;
+
+                if (!nodeAuthentication || !nodeAuthentication.token) {
+                    throw new Error(`Bad configuration: Authentication type is ${authentificationTypes.Token} 
+                    but no token config was found.`);
+                }
+
+                authHeaders = {Authorization: "Bearer "+ nodeAuthentication.token}
+                return {...headers, ...authHeaders};
             }
 
             case authenticationTypes.None: {
@@ -106,58 +113,101 @@ class PipelineNode {
             data: requestData,
             config: {headers: {'Content-Type': this.contentType, ...headers}}
         }).then((response) => {
-                console.debug(`PipelineNode.execute(): Step:${step.name} -> response:${JSON.stringify(response.data)}\n`);
-                return [null, response.data]
-            },
-            (error) => {
-                if (error.response) {
-                    if (error.response.status === 404) {
-                        addTrace({
-                            step: step.name,
-                            nodeName: this.name,
-                            nodeUrl: url,
-                            timestamp: Date.now(),
-                            message: `Resource not found.`,
-                            error: `${error.message}\n${JSON.stringify(error.stack, null, 2)}`,
-                            statusCode: error.response.status,
-                        });
-                        const errMsg = `Node target: [${step.node.url}] Not Found`;
-                        console.warn(errMsg);
-                        return [errMsg];
-                    }
+            console.debug(`PipelineNode.execute(): Step:${step.name} -> response:${JSON.stringify(response.data)}\n`);
+            addTrace({
+                step: step.name,
+                nodeName: this.name,
+                nodeURL: url,
+                nodeHeaders: headers,
+                timestamp: Date.now(),
+                state: PipelineStep.StepStates.NODE_COMPLETE,
+                message: "Node completed successfully.",
+                nodeResponse: response.data
+            });
+            return [null, response.data]
+        }).catch((axiosError) => {
+            return [this.handleAxiosError(axiosError, step.name, this.name, url, this.method)]
+        })
+    }
 
-                    if (error.response.status === 500) {
-                        addTrace({
-                            step: step.name,
-                            nodeName: step.node.name,
-                            nodeUrl: url,
-                            timestamp: Date.now(),
-                            message: `Error in resource.`,
-                            error: `${error.message}\n${JSON.stringify(error.stack, null, 2)}`,
-                            statusCode: error.response.status,
-                        });
-                        const errMsg = `Node: [${step.node.name}]: ${error.message}`;
-                        console.warn(errMsg);
-                        return [errMsg];
-                    }
+    handleAxiosError(axiosError, stepName, nodeName, url, method) {
+        if (axiosError.response) {
+            // The request was made and the server responded with a status code
+            // that falls out of the range of 2xx
+            // console.log(axiosError.response.data);
+            // console.log(axiosError.response.status);
+            // console.log(axiosError.response.headers);
+            switch (axiosError.response.status) {
 
-                    const errMsg = `Error contacting node url: [${this.method}:${url}]: ${error.message}`;
+                case 404: {
                     addTrace({
-                        step: step.name,
-                        nodeName: step.node.name,
+                        step: stepName,
+                        nodeName: nodeName,
                         nodeUrl: url,
                         timestamp: Date.now(),
-                        message: `${errMsg}]`,
-                        error: `${error.message}\n${JSON.stringify(error.stack, null, 2)}`,
-                        statusCode: error.response.status,
+                        message: `Resource not found.`,
+                        error: `${axiosError.message}\n${JSON.stringify(axiosError.stack, null, 2)}`,
+                        statusCode: axiosError.response.status,
+                    });
+                    const responseErr = `Node target: [${method}:${url}] Not Found`;
+                    console.warn(responseErr);
+                    return responseErr;
+                }
+                case 500: {
+                    addTrace({
+                        step: stepName,
+                        nodeName: nodeName,
+                        nodeUrl: url,
+                        timestamp: Date.now(),
+                        message: `Error in resource.`,
+                        error: `${axiosError.message}`,
+                        statusCode: axiosError.response.status,
+                    });
+                    let responseErr = `Node: [${nodeName}]: ${axiosError.message}`;
+                    console.warn(responseErr);
+                    return responseErr;
+                }
+                default:
+                    const responseErr = `Error contacting node url: [${method}:${url}]: Status: ${axiosError.response.status}`;
+                    addTrace({
+                        step: stepName,
+                        nodeName: nodeName,
+
+                        nodeUrl: url,
+                        timestamp: Date.now(),
+                        message: `${responseErr}]`,
+                        error: `${axiosError.message}`,
+                        statusCode: axiosError.response.status,
                     });
 
-                    console.warn(`PipelineNode.execute(): Step:${step.name}: Error -> ${errMsg}`);
-                    return [error];
+                    console.warn(`PipelineNode.execute(): Step:${stepName}: Error -> ${responseErr}:${axiosError.message}`);
+                    return responseErr;
+            }
+        } else if (axiosError.code) {
+            // console.log(axiosError.code);
+
+            switch (axiosError.code) {
+                case "ECONNREFUSED": {
+                    addTrace({
+                        step: stepName,
+                        nodeName: nodeName,
+                        nodeUrl: url,
+                        timestamp: Date.now(),
+                        message: `${axiosError.message}`,
+                        error: "ECONNREFUSED",
+                    });
+                    const responseErr = `Node target: [${method}:${url}] ECONNREFUSED`;
+                    console.warn(responseErr);
+                    return responseErr;
+
                 }
-                console.warn(`PipelineNode.execute(): Step:${step.name}: Error -> ${JSON.stringify(error)}`);
-                return [error]
-            })
+            }
+        } else {
+            // Something happened in setting up the request that triggered an Error
+            const responseErr = `Error contacting node url: [${method}:${url}]: ${axiosError.message}`;
+            console.log('Error', responseErr);
+            return responseErr;
+        }
 
     }
 

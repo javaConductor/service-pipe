@@ -35,46 +35,44 @@ class PipelineExecutor {
             return Promise.all(pList);
         }
 
-        return dataRepo.getPipelineByUUID(uuid).then(([err, pipeline]) => {
-            const re = async (err) => {
-                return [err, uuid, []];
-            };
-            if (err) return re(err);
+        /// Get the pipeline from uuid
+        const [err, pipeline] = await dataRepo.getPipelineByUUID(uuid);
+        if (err)
+            return [err, uuid, []];
 
-            /// check if pipeline exists
-            if (!pipeline){
-                const msg = `No such pipeline: ${uuid}`;
-                console.warn(`executePipeline: ${msg}`)
-                return [msg, uuid]
-            }
+        /// check if pipeline exists
+        if (!pipeline) {
+            const msg = `No such pipeline: ${uuid}`;
+            console.warn(`executePipeline: ${msg}`)
+            return [msg, uuid]
+        }
 
-            // this adds the node objects to the stepsx
-            return addPipelineNodes(pipeline).then((p) => {
-                const pr = new PipelineRequest(pipeline, initialData);
-                console.debug(`PipelineExecutor.executePipeline: pipelineRequest: ${JSON.stringify(pr)}\n`);
-                return pr.start().then(([err, results]) => {
-                    if (err) {
-                        console.warn(`pipelineExecutor:getPipelineByUUID: Error: ${JSON.stringify(err)}`);
-                        // console.log(`pipelineExecutor:getPipelineByUUID: History: ${JSON.stringify(history, null, 2)}`);
-                        const errMsg = `[${pr.pipeline.name}]:${pr.pipeline.uuid}: ${err.toString()}`;
-                        return [errMsg, uuid];
-                    }
+        /// this adds the node objects to the steps
+        await addPipelineNodes(pipeline)
 
-                    //TODO Store the execution History
-                    return [null, uuid, results];
+        /// Create pipeline request
+        const pr = new PipelineRequest(pipeline, initialData);
+        console.debug(`PipelineExecutor.executePipeline: pipelineRequest: ${JSON.stringify(pr)}\n`);
 
-                }, (e) => {
-                    const msg = `pipelineExecutor:getPipelineByUUID:Execution error ${e.toString()}:\n${e.stack}`;
-                    console.log(msg);
-                    return [msg, uuid];
-                })
-            }).catch((e) => {
-                return [e, uuid];
-            });
-        }).catch((err) => {
-            console.log("pipelineExecutor:getPipelineByUUID:error ->" + JSON.stringify(err));
-            return [err, uuid];
-        });
+        /// Execute pipeline
+        const [pipelineErr, results] = await pr.start()
+        if (pipelineErr) {
+            console.warn(`pipelineExecutor:getPipelineByUUID: Error: ${JSON.stringify(pipelineErr)}`);
+            // console.log(`pipelineExecutor:getPipelineByUUID: History: ${JSON.stringify(history, null, 2)}`);
+            const errMsg = `[${pr.pipeline.name}]:${pr.pipeline.uuid}: ${pipelineErr.toString()}`;
+            return [errMsg, uuid];
+        }
+
+        //TODO Store the execution History
+        return [null, uuid, results];
+    }
+
+    async executeStep(pipeline, step, initialData) {
+
+    }
+
+    async executePipelineStep(pipelineUUID, stepIndex, initialData) {
+
     }
 }
 
