@@ -4,7 +4,6 @@ class Transformer {
 
     postProcessPipelineResults(pipeline, transformModules, results) {
         if (!transformModules || !transformModules.after || !transformModules.after.stepFh) {
-
             return results
         }
         const data = transformModules.after.stepFn(pipeline, results);

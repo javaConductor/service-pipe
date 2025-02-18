@@ -128,11 +128,13 @@ class PipelineRequest {
         let sequence = pipeline.steps;
         ///TODO run the pipeline transformModule.before function on data if exists
         let results = {};
+      
         try {
             ///////////////////// execute each step /////////////////////
             ///////////////////// execute each step /////////////////////
             ///////////////////// execute each step /////////////////////
 
+          
             for (let step of sequence) {
                 const [err, stepResults] = await this._startStep(pipeline, step, data);
                 if (err) {
@@ -169,7 +171,6 @@ class PipelineRequest {
 
             ///////////////////// Extract values from stepResults /////////////////////
             ///////////////////// Extract values from stepResults /////////////////////
-
             const [extractedData, extractErr] = extractor.extract(
                 pipeline.contentType || 'application/json',
                 results,
@@ -232,7 +233,6 @@ class PipelineRequest {
 
         ///////////////////// TODO Extract input values from data /////////////////////
 
-
         ///////////////////////////////////////////////////////////////////////
         ///////////////////// Run Step Processor Function /////////////////////
         ///////////////////////////////////////////////////////////////////////
@@ -240,7 +240,6 @@ class PipelineRequest {
             pipeline,
             step,
             data);
-
 
         if (err) {
             addTrace({
