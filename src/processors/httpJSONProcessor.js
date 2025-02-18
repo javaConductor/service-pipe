@@ -259,6 +259,7 @@ class HttpJSONProcessor extends StepProcessor {
             console.debug(`processStep(): Pipeline:${pipeline.name} 
                 -> Step:${step.name} 
                 -> response:${JSON.stringify(nodeOutput)}`);
+
             return [null, nodeOutput];
         } catch (e) { // outer try
             addTrace({

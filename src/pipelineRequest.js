@@ -128,11 +128,13 @@ class PipelineRequest {
         let sequence = pipeline.steps;
         ///TODO run the pipeline transformModule.before function on data if exists
         let results = {};
-
+      
         try {
             ///////////////////// execute each step /////////////////////
             ///////////////////// execute each step /////////////////////
             ///////////////////// execute each step /////////////////////
+
+          
             for (let step of sequence) {
                 const [err, stepResults] = await this._startStep(pipeline, step, data);
                 if (err) {
@@ -145,6 +147,7 @@ class PipelineRequest {
                         payload: {...data, ...initialData}
                     });
                     return [err];
+
                 }
 
                 /// combine data from step with previous data
@@ -229,7 +232,6 @@ class PipelineRequest {
             : stepProcessor.processStep;
 
         ///////////////////// TODO Extract input values from data /////////////////////
-
 
         ///////////////////////////////////////////////////////////////////////
         ///////////////////// Run Step Processor Function /////////////////////

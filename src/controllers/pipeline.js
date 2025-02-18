@@ -195,6 +195,57 @@ module.exports = {
                     console.warn(`POST /pipeline/:uuid/execute: Error: ${JSON.stringify(error)}`);
                     // console.log(`POST /pipeline/:uuid/execute: History: ${JSON.stringify(history, null, 2)}`);
                     const message = `${req.params.uuid}: ${JSON.stringify(error)}`;
+                    return res.json({error: message, "pipeline-uuid": req.params.uuid, trace: getTrace()})
+                }
+
+                return res.json({
+                    error: null,
+                    results: results,
+                    "pipeline-uuid": uuid,
+                    trace: sendTrace ? getTrace() : undefined
+                });
+            }).catch((error) => {
+            console.warn(`POST /pipeline/:uuid/execute: Error: ${JSON.stringify(error)}`);
+            const message = `${req.params.uuid}: ${JSON.stringify(error)}`;
+
+            const errResponse = {
+                error: message,
+                'pipeline-uuid': req.params.uuid,
+                trace: getTrace()
+            };
+            return res.status(500).json(errResponse);
+
+        });
+    },
+
+    /**
+     *
+     * @param req
+     * @param res
+     * @param next
+     *
+     * Response:  {
+     *  error: "",
+     *  results: {},
+     *  "pipeline-uuid": uuid
+     *  "stepIndex": int
+
+     *  trace: []
+     *  });
+     */
+    executePipelineStep: (req, res, next) => {
+        const uuid = req.params.uuid;
+        const stepIndex = req.params.stepIndex;
+        const sendTrace = (req.query.trace === "true")
+        const initialData = req.body || {}
+        console.log(`controller:executePipelineStep: ${uuid}:${stepIndex}:${sendTrace}`)
+        const pipelineExecutor = new PipelineExecutor();
+        pipelineExecutor.executePipelineStep(uuid, stepIndex, initialData)
+            .then(([error, results]) => {
+                if (error) {
+                    console.warn(`POST /pipeline/uuid/execute/stepIndex: Error: ${JSON.stringify(error)}`);
+                    // console.log(`POST /pipeline/:uuid/execute: History: ${JSON.stringify(history, null, 2)}`);
+                    const message = `${req.params.uuid}: ${JSON.stringify(error)}`;
 
                     return res.json({error: message, "pipeline-uuid": req.params.uuid, trace: getTrace()})
                     //return res.status(500).json(errResponse);
@@ -204,6 +255,7 @@ module.exports = {
                     error: null,
                     results: results,
                     "pipeline-uuid": uuid,
+                    stepIndex,
                     trace: sendTrace ? getTrace() : undefined
                 });
             }).catch((error) => {

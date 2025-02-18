@@ -199,10 +199,10 @@ class PipelineNode {
                         message: `${axiosError.message}`,
                         error: "ECONNREFUSED",
                     });
+
                     const responseErr = `Node target: [${method}:${url}] ECONNREFUSED`;
                     console.warn(responseErr);
                     return responseErr;
-
                 }
             }
         } else {
