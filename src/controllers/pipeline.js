@@ -237,6 +237,7 @@ module.exports = {
      *  error: "",
      *  results: {},
      *  "pipeline-uuid": uuid
+     *  "stepIndex": int
      *  trace: []
      *  });
      */
@@ -250,7 +251,7 @@ module.exports = {
         pipelineExecutor.executePipelineStep(uuid, stepIndex, initialData)
             .then(([error, pipelineUUID, results]) => {
                 if (error) {
-                    console.warn(`POST /pipeline/:uuid/execute/stepIndex: Error: ${JSON.stringify(error)}`);
+                    console.warn(`POST /pipeline/uuid/execute/stepIndex: Error: ${JSON.stringify(error)}`);
                     // console.log(`POST /pipeline/:uuid/execute: History: ${JSON.stringify(history, null, 2)}`);
                     const message = `${req.params.uuid}: ${JSON.stringify(error)}`;
 

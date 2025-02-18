@@ -72,6 +72,9 @@ class PipelineNode {
      */
     async execute(step, requestData) {
 
+        /// Add node data to requestData
+        requestData = {...this.nodeData, ...requestData}
+
         /// create the URL from the step
         const url = misc.interpolate(this.url, requestData)
 

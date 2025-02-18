@@ -56,6 +56,10 @@ class Validator {
             nodeData: Joi.object(),// required data for the node to function
             payload: Joi.object(),// data being sent to the node (perhaps from the previous step)
             extract: Joi.array().items(extractObject),// {key: extracted element, value:jmesPath where 'key' is the key to store extracted value
+            transformModules: Joi.object().keys({
+                before: this.transformModule(),
+                after: this.transformModule(),
+            }),
             // and 'value' is the JmsPath location of the data returned from the node
             //.regex(/^\d{3}-\d{3}-\d{4}$/).required(),
             errorIndicators: Joi.array().items(Joi.string()),
@@ -67,16 +71,6 @@ class Validator {
     transformModule() {
         return Joi.object().keys({
             stepFnSrc: Joi.string()
-        })
-    }
-
-    XXtransformModule() {
-        return Joi.object().keys({
-            name: Joi.string().default("transform"),
-            stepFnSrc: Joi.alternatives()
-                .conditional('name', [
-                    {is: "", then: Joi.string().optional(), otherwise: Joi.string().required()},
-                ]),
         })
     }
 

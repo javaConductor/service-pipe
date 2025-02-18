@@ -4,7 +4,7 @@ FROM ubuntu:latest
 #ENTRYPOINT ["top", "-b"]
 
 # Use an official Node.js runtime as a parent image
-FROM node:14
+FROM node:18
 
 # Set the working directory in the container
 WORKDIR /app
@@ -18,8 +18,10 @@ RUN npm install
 # Copy the rest of the application code to the container
 COPY . .
 
+ENV PORT 3000
+
 # Make port 3000 available to the world outside this container
-EXPOSE 3000
+EXPOSE $PORT
 
 # Run the application
 CMD ["node", "server.js"]
