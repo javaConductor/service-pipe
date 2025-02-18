@@ -236,7 +236,7 @@ module.exports = {
      */
     executePipelineStep: async (req, res, next) => {
         const uuid = req.params.uuid;
-        const stepIndex = req.params.stepIndex;
+        const stepIndex = +req.params.stepIndex;
         const sendTrace = (req.query.trace === "true")
         const initialData = req.body || {}
         console.log(`controller:executePipelineStep: ${uuid}:${stepIndex}:${sendTrace}`)
