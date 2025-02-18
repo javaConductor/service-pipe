@@ -3,7 +3,7 @@ const Pipeline = require("../model/pipeline");
 class Transformer {
 
     postProcessPipelineResults(pipeline, transformModules, results) {
-        if (!transformModules || !transformModules.after || !transformModules.after.stepFh ) {
+        if (!transformModules || !transformModules.after || !transformModules.after.stepFh) {
             return results
         }
         const data = transformModules.after.stepFn(pipeline, results);
@@ -12,7 +12,7 @@ class Transformer {
 
 
     preProcessPipelineResults(pipeline, transformModules, results) {
-        if (!transformModules || !transformModules.before || !transformModules.before.stepFh ) {
+        if (!transformModules || !transformModules.before || !transformModules.before.stepFh) {
             return results
         }
         const data = transformModules.before.stepFn(pipeline, results);
@@ -21,7 +21,7 @@ class Transformer {
 
 
     postProcessStepResults(step, transformModules, results) {
-        if (!transformModules || !transformModules.after || !transformModules.after.stepFh ) {
+        if (!transformModules || !transformModules.after || !transformModules.after.stepFh) {
             return results
         }
         const data = transformModules.after.stepFn(step, results);
@@ -30,7 +30,7 @@ class Transformer {
 
 
     preProcessStepResults(step, transformModules, results) {
-        if (!transformModules || !transformModules.before || !transformModules.before.stepFh ) {
+        if (!transformModules || !transformModules.before || !transformModules.before.stepFh) {
             return results
         }
         const data = transformModules.before.stepFn(step, results);

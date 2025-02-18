@@ -64,7 +64,7 @@ async function getDatabase() {
 
 function getConnectionURL() {
 
-    if (process.env.MONGO_URL){
+    if (process.env.MONGO_URL) {
         return process.env.MONGO_URL;
     }
 

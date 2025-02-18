@@ -38,7 +38,7 @@ class PipelineNode {
                     but no token config was found.`);
                 }
 
-                authHeaders = {Authorization: "Bearer "+ nodeAuthentication.token}
+                authHeaders = {Authorization: "Bearer " + nodeAuthentication.token}
                 return {...headers, ...authHeaders};
             }
 

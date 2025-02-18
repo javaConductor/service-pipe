@@ -162,44 +162,44 @@ const saveNode = (nodeDoc) => {
                     return [null, {...nodeDoc, _id: theId}];
                 })
                 .catch((err) => {
-                        console.debug(`saveNode:err -> ${err}`);
-                        return [err];
-                    });
-                })
-                .catch((err) => {
                     console.debug(`saveNode:err -> ${err}`);
                     return [err];
+                });
+        })
+        .catch((err) => {
+            console.debug(`saveNode:err -> ${err}`);
+            return [err];
+        })
+};
+
+const removeNode = (uuid) => {
+    return mongo.getDatabase()
+        .then((db) => {
+            const coll = db.db().collection("nodes");
+            coll.deleteOne({"uuid": uuid})
+                .then((result) => {
+                    console.debug(`removeNode -> ${result}`);
+                    return [null, uuid];
                 })
-        };
+                .catch((err) => {
+                    console.debug(`removeNode:err -> ${err}`);
+                    return [err];
+                })
+        })
+        .catch((err) => {
+            console.debug(`removeNode:err -> ${err}`);
+            return [err];
+        })
+};
 
-    const removeNode = (uuid) => {
-        return mongo.getDatabase()
-            .then((db) => {
-                const coll = db.db().collection("nodes");
-                coll.deleteOne({"uuid": uuid})
-                    .then((result) => {
-                        console.debug(`removeNode -> ${result}`);
-                        return [null, uuid];
-                    })
-                    .catch((err) => {
-                        console.debug(`removeNode:err -> ${err}`);
-                        return [err];
-                    })
-            })
-            .catch((err) => {
-                console.debug(`removeNode:err -> ${err}`);
-                return [err];
-            })
-    };
-
-    module.exports = {
-        "getAllNodes": getAllNodes,
-        "getAllPipelines": getAllPipelines,
-        "getNodeByUUID": getNodeByUUID,
-        "getPipelineByUUID": getPipelineByUUID,
-        "savePipeline": savePipeline,
-        "saveNode": saveNode,
-        removePipeline,
-        removeNode
-    };
+module.exports = {
+    "getAllNodes": getAllNodes,
+    "getAllPipelines": getAllPipelines,
+    "getNodeByUUID": getNodeByUUID,
+    "getPipelineByUUID": getPipelineByUUID,
+    "savePipeline": savePipeline,
+    "saveNode": saveNode,
+    removePipeline,
+    removeNode
+};
 

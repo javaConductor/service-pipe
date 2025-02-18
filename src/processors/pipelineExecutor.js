@@ -54,14 +54,14 @@ class PipelineExecutor {
     }
 
     async preparePipeline(pipeline) {
-        const pSteps = pipeline.steps.map( (step) => {
+        const pSteps = pipeline.steps.map((step) => {
             const ps = this.prepareStep(step);
             console.log(`Preparing step: [${step.name}]`)
             return ps;
         });
 
         console.log(`Waiting for steps to be Prepared.`)
-        pipeline.steps =  await Promise.all(pSteps)
+        pipeline.steps = await Promise.all(pSteps)
         return pipeline
     }
 
@@ -118,13 +118,13 @@ class PipelineExecutor {
      */
     async executePipelineStep(pipelineUUID, stepIndex, initialData) {
         /// Get the pipeline from uuid
-        let [err, pipeline] = await dataRepo.getPipelineByUUID(uuid);
+        let [err, pipeline] = await dataRepo.getPipelineByUUID(pipelineUUID);
         if (err)
             return [err];
 
         /// check if pipeline exists
         if (!pipeline) {
-            const msg = `No such pipeline: ${uuid}`;
+            const msg = `No such pipeline: ${pipelineUUID}`;
             console.warn(`executePipeline: ${msg}`)
             return [msg]
         }
@@ -132,23 +132,23 @@ class PipelineExecutor {
 
         /// check if stepIndex in bounds
         if (stepIndex < 0 || stepIndex >= pipeline.steps.length) {
-            const msg = `No such step at index ${stepIndex} for step: ${uuid}`;
+            const msg = `No such step at index ${stepIndex} for step: ${pipelineUUID}`;
             console.warn(`executePipelineStep: ${msg}`)
             return [msg]
         }
 
         //// prepare the step
         try {
-            const step = this.prepareStep(pipeline.steps[stepIndex]);
+            const step = await this.prepareStep(pipeline.steps[stepIndex]);
+
+            /// Create pipeline request
+            const pr = new PipelineRequest(pipeline, initialData);
+            console.debug(`PipelineExecutor.executePipelineStep: pipelineRequest: ${JSON.stringify(pr)}\n`);
+            /// execute the step
+            return pr.executeStep(pipeline, step, initialData)
         } catch (e) {
             return [e.toString()];
         }
-
-        /// Create pipeline request
-        const pr = new PipelineRequest(pipeline, initialData);
-        console.debug(`PipelineExecutor.executePipelineStep: pipelineRequest: ${JSON.stringify(pr)}\n`);
-        /// execute the step
-        return pr.executeStep(pipeline, step, initialData)
     }
 }
 

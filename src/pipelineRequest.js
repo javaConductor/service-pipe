@@ -41,8 +41,9 @@ class PipelineRequest {
 
     /**
      *
+     * @param step
      * @returns {Promise<[error, data]>}
-     */
+     * */
     async start(step = null) {
         const startTime = Date.now();
         ///////////////////// Create History /////////////////////
@@ -53,7 +54,6 @@ class PipelineRequest {
             message: "Start pipeline.",
             steps: this.pipeline.steps.map((step) => (step.name))
         });
-
 
         ///////////////////// Run Pipeline Steps /////////////////////
         ///////////////////// Run Pipeline Steps /////////////////////
@@ -78,7 +78,7 @@ class PipelineRequest {
         ///////////////////// Successfully return pipeline output /////////////////////
         //TODO extract values
         if (this.pipeline.extract && misc.hasKeys(this.pipeline.extract)) {
-            [ results, err] = extractor.extract(this.pipeline.contentType || 'application/json', results, this.pipeline.extract);
+            [results, err] = extractor.extract(this.pipeline.contentType || 'application/json', results, this.pipeline.extract);
             if (err) {
                 const now = Date.now();
                 const millis = new Date(now).getTime() - new Date(startTime).getTime();
@@ -187,8 +187,8 @@ class PipelineRequest {
                 });
                 return [extractErr];
             }
+
             ///////////////////// Post process stepResults /////////////////////
-            ///TODO run the pipeline transformModule.after function on data if exists
             const postProcessedResults = transformer.postProcessPipelineResults(pipeline,
                 pipeline.transformModules,
                 extractedData);
@@ -228,7 +228,7 @@ class PipelineRequest {
             ? stepProcessor.aggregateStep
             : stepProcessor.processStep;
 
-        ///////////////////// TODO Extract values from data /////////////////////
+        ///////////////////// TODO Extract input values from data /////////////////////
 
 
         ///////////////////////////////////////////////////////////////////////
