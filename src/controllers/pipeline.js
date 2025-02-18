@@ -94,12 +94,10 @@ module.exports = {
      */
     getAllNodes: (req, res, next) => {
         dbRepo.getAllNodes().then(([err, nodes]) => {
-
             if (err) return next(err);
             res.json(nodes);
         }).catch((err) => {
             next(err);
-            // res.status(500).json({error: err});
         });
 
     },
@@ -116,20 +114,16 @@ module.exports = {
 
             if (err) {
                 console.log("controller:getNodeByUUID:error ->" + JSON.stringify(err));
-
                 next(err);
             } else if (!node) {
                 res.status(404).send(JSON.stringify({error: `Node ${uuid} not found.`}));
             } else {
-
                 console.debug("controller:getNodeByUUID->" + JSON.stringify(node));
                 res.json(node);
             }
         }).catch((err) => {
             console.log("controller:getNodeByUUID:error ->" + JSON.stringify(err));
-
             next(err);
-            //res.status(500).json({error: err});
         });
     },
 
@@ -240,46 +234,45 @@ module.exports = {
      *  trace: []
      *  });
      */
-    executePipelineStep: (req, res, next) => {
+    executePipelineStep: async (req, res, next) => {
         const uuid = req.params.uuid;
         const stepIndex = req.params.stepIndex;
         const sendTrace = (req.query.trace === "true")
         const initialData = req.body || {}
         console.log(`controller:executePipelineStep: ${uuid}:${stepIndex}:${sendTrace}`)
         const pipelineExecutor = new PipelineExecutor();
-        pipelineExecutor.executePipelineStep(uuid, stepIndex, initialData)
-            .then(([error, results]) => {
-                if (error) {
-                    console.warn(`POST /pipeline/uuid/execute/stepIndex: Error: ${JSON.stringify(error)}`);
-                    // console.log(`POST /pipeline/:uuid/execute: History: ${JSON.stringify(history, null, 2)}`);
-                    const message = `${req.params.uuid}: ${JSON.stringify(error)}`;
+        try {
+            const [error, results] = await pipelineExecutor.executePipelineStep(uuid, stepIndex, initialData)
+            if (error) {
+                console.warn(`POST /pipeline/uuid/execute/stepIndex: Error: ${JSON.stringify(error)}`);
+                // console.log(`POST /pipeline/:uuid/execute: History: ${JSON.stringify(history, null, 2)}`);
+                const message = `${req.params.uuid}: ${JSON.stringify(error)}`;
 
-                    const errResponse = {
-                        error: message,
-                        'pipeline-uuid': req.params.uuid,
-                        trace: getTrace()
-                    };
-                    return res.status(500).json(errResponse);
-                }
+                const errResponse = {
+                    error: message,
+                    'pipeline-uuid': req.params.uuid,
+                    trace: getTrace()
+                };
+                return res.status(500).json(errResponse);
+            }
 
-                return res.json({
-                    error: null,
-                    results: results,
-                    "pipeline-uuid": uuid,
-                    stepIndex,
-                    trace: sendTrace ? getTrace() : undefined
-                });
-            }).catch((error) => {
-            console.warn(`POST /pipeline/:uuid/execute: Error: ${JSON.stringify(error)}`);
+            return res.json({
+                error: null,
+                results: results,
+                "pipeline-uuid": uuid,
+                stepIndex,
+                trace: sendTrace ? getTrace() : undefined
+            })
+        } catch (error) {
+            console.warn(`POST /pipeline/:uuid/execute/:stepIndex: Error: ${JSON.stringify(error)}`);
             const message = `${req.params.uuid}: ${JSON.stringify(error)}`;
-
             const errResponse = {
                 error: message,
                 'pipeline-uuid': req.params.uuid,
+                stepIndex: stepIndex,
                 trace: getTrace()
             };
             return res.status(500).json(errResponse);
-
-        });
+        }
     }
 }

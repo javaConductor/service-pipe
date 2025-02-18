@@ -257,30 +257,8 @@ class HttpJSONProcessor extends StepProcessor {
             }
 
             console.debug(`processStep(): Pipeline:${pipeline.name} 
-            -> Step:${step.name} 
-            -> response:${JSON.stringify(nodeOutput)}`);
-            ////////////////////////////////////////////////////////////////////////////////////////////////////
-            ///////////////////// If extractions are defined extract data from step output /////////////////////
-            ////////////////////////////////////////////////////////////////////////////////////////////////////
-            // const [stepResults, errExtract] = extractor.extract(
-            //     pipeline.contentType || step.node.contentType,
-            //     nodeOutput, step.extract);
-            //
-            // /// Report extract error, if any
-            // if (errExtract) {
-            //     addTrace({
-            //         pipeline: pipelineName,
-            //         step: step.name,
-            //         nodeName: step.node.name,
-            //         timestamp: Date.now(),
-            //         message: `Error extracting data. keys: ${JSON.stringify(Object.keys(step.extract))}`,
-            //         data: nodeOutput,
-            //         state: PipelineStep.StepStates.ERROR,
-            //     });
-            //     console.warn(`processStep(): Pipeline:${pipeline.name} -> Step:${step.name}: Error -> ${JSON.stringify(errExtract)}`);
-            //     return [errExtract];
-            // }
-
+                -> Step:${step.name} 
+                -> response:${JSON.stringify(nodeOutput)}`);
             return [null, nodeOutput];
         } catch (e) { // outer try
             addTrace({
