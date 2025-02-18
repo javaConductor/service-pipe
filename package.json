@@ -5,7 +5,6 @@
   "main": "server.js",
   "scripts": {"start": "node server.js",
     "devStart": "nodemon server.js",
-    "run": "node server.js",
     "test": "mocha --full-trace --inline-diffs",
     "fullTest": "mocha --full-trace --inline-diffs --recursive",
     "integrationTest": "mocha --timeout 5000 --full-trace --inline-diffs test/integration/"

@@ -57,11 +57,10 @@ module.exports = {
 
         dbRepo.savePipeline(pipeline)
             .then(([err, savedPipeline]) => {
-              //  if (err) return next(err);
+                //  if (err) return next(err);
                 if (!err) {
                     console.log(`${isNew ? 'Created' : 'Updated'} pipeline ${savedPipeline.uuid} `)
-                }
-                else{
+                } else {
                     console.warn(`Error ${isNew ? 'Creating' : 'Updating'} pipeline ${pipeline.uuid}: ${err} `)
                 }
                 res.json([err, err ? undefined : savedPipeline]);
@@ -202,9 +201,7 @@ module.exports = {
                     console.warn(`POST /pipeline/:uuid/execute: Error: ${JSON.stringify(error)}`);
                     // console.log(`POST /pipeline/:uuid/execute: History: ${JSON.stringify(history, null, 2)}`);
                     const message = `${req.params.uuid}: ${JSON.stringify(error)}`;
-
-                    return res.json({error: message, "pipeline-uuid":req.params.uuid ,trace:getTrace() })
-                    //return res.status(500).json(errResponse);
+                    return res.json({error: message, "pipeline-uuid": req.params.uuid, trace: getTrace()})
                 }
 
                 return res.json({
@@ -237,6 +234,8 @@ module.exports = {
      *  error: "",
      *  results: {},
      *  "pipeline-uuid": uuid
+     *  "stepIndex": int
+
      *  trace: []
      *  });
      */
@@ -248,9 +247,9 @@ module.exports = {
         console.log(`controller:executePipelineStep: ${uuid}:${stepIndex}:${sendTrace}`)
         const pipelineExecutor = new PipelineExecutor();
         pipelineExecutor.executePipelineStep(uuid, stepIndex, initialData)
-            .then(([error, pipelineUUID, results]) => {
+            .then(([error, results]) => {
                 if (error) {
-                    console.warn(`POST /pipeline/:uuid/execute/stepIndex: Error: ${JSON.stringify(error)}`);
+                    console.warn(`POST /pipeline/uuid/execute/stepIndex: Error: ${JSON.stringify(error)}`);
                     // console.log(`POST /pipeline/:uuid/execute: History: ${JSON.stringify(history, null, 2)}`);
                     const message = `${req.params.uuid}: ${JSON.stringify(error)}`;
 
@@ -266,6 +265,7 @@ module.exports = {
                     error: null,
                     results: results,
                     "pipeline-uuid": uuid,
+                    stepIndex,
                     trace: sendTrace ? getTrace() : undefined
                 });
             }).catch((error) => {

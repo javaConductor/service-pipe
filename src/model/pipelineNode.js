@@ -37,8 +37,7 @@ class PipelineNode {
                     throw new Error(`Bad configuration: Authentication type is ${authentificationTypes.Token} 
                     but no token config was found.`);
                 }
-
-                authHeaders = {Authorization: "Bearer "+ nodeAuthentication.token}
+                authHeaders = {Authorization: "Bearer " + nodeAuthentication.token}
                 return {...headers, ...authHeaders};
             }
 
@@ -71,6 +70,9 @@ class PipelineNode {
      * @returns {Promise<[error, data]>}
      */
     async execute(step, requestData) {
+
+        /// Add node data to requestData
+        requestData = {...this.nodeData, ...requestData}
 
         /// create the URL from the step
         const url = misc.interpolate(this.url, requestData)
@@ -196,6 +198,7 @@ class PipelineNode {
                         message: `${axiosError.message}`,
                         error: "ECONNREFUSED",
                     });
+
                     const responseErr = `Node target: [${method}:${url}] ECONNREFUSED`;
                     console.warn(responseErr);
                     return responseErr;

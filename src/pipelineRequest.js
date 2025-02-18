@@ -41,9 +41,10 @@ class PipelineRequest {
 
     /**
      *
+     * @param step
      * @returns {Promise<[error, data]>}
-     */
-    async start() {
+     * */
+    async start(step = null) {
         const startTime = Date.now();
         ///////////////////// Create History /////////////////////
         clearTrace()
@@ -77,7 +78,7 @@ class PipelineRequest {
         ///////////////////// Successfully return pipeline output /////////////////////
         //TODO extract values
         if (this.pipeline.extract && misc.hasKeys(this.pipeline.extract)) {
-            [err,results] = extractor.extract(this.pipeline.contentType || 'application/json', results, this.pipeline.extract);
+            [results, err] = extractor.extract(this.pipeline.contentType || 'application/json', results, this.pipeline.extract);
             if (err) {
                 const now = Date.now();
                 const millis = new Date(now).getTime() - new Date(startTime).getTime();
@@ -101,6 +102,19 @@ class PipelineRequest {
         return [null, results];
     }//start
 
+
+    /**
+     *
+     * @param pipeline
+     * @param step
+     * @param stepData
+     * @returns {Promise<[string, results]>}
+     * */
+    async executeStep(pipeline, step, stepData) {
+        return this._startStep(pipeline, step, stepData);
+    }
+
+
     /**
      *
      * @param pipeline Pipeline
@@ -114,8 +128,11 @@ class PipelineRequest {
         let sequence = pipeline.steps;
         ///TODO run the pipeline transformModule.before function on data if exists
         let results = {};
-        /// execute each step
         try {
+            ///////////////////// execute each step /////////////////////
+            ///////////////////// execute each step /////////////////////
+            ///////////////////// execute each step /////////////////////
+
             for (let step of sequence) {
                 const [err, stepResults] = await this._startStep(pipeline, step, data);
                 if (err) {
@@ -127,15 +144,19 @@ class PipelineRequest {
                         error: err,
                         payload: {...data, ...initialData}
                     });
+                    return [err];
+
                 }
 
                 /// combine data from step with previous data
                 console.debug(`pipelineRequest._startSeq(): 
                         Pipeline:${pipeline.name}: 
                         Data added from Step:${step.name} -> ${JSON.stringify(stepResults)}`);
+
                 results = {...results, ...stepResults};
                 /// combine data from step with previous data
                 data = {...data, ...stepResults};
+
                 addTrace({
                     pipeline: pipelineName,
                     timestamp: Date.now(),
@@ -144,39 +165,18 @@ class PipelineRequest {
                     extracted: stepResults
                 });
 
-                // extract the relevant data if extract is defined
-                const [extractedData, extractErr] = extractor.extract(
-                    pipeline.contentType || 'application/json',
-                    results,
-                    step.extract)
-                if (extractErr) {
-                    addTrace({
-                        pipeline: pipelineName,
-                        timestamp: Date.now(),
-                        state: PipelineStep.StepStates.PIPELINE_COMPLETE_WITH_ERRORS,
-                        message: ` ${extractErr.toString()}.`,
-                        error: extractErr,
-                        data: results,
-                        extract: pipeline.extract
-                    });
-                    console.debug(`pipelineRequest._startSeq(): 
-                        Pipeline:${pipeline.name}: 
-                        Error in Pipeline:${pipelineName}
-                        -> ${JSON.stringify(extractErr)}`);
-                    return [extractErr];
-                }
-                console.debug(`pipelineRequest._startSeq():
-                    Pipeline:${pipeline.name}: 
-                    Data added from ${pipeline.steps.length} Step(s): 
-                    -> ${JSON.stringify(extractedData)}`);
-            }
+            }// for each step
 
             ///////////////////// Extract values from stepResults /////////////////////
+            ///////////////////// Extract values from stepResults /////////////////////
+
             const [extractedData, extractErr] = extractor.extract(
                 pipeline.contentType || 'application/json',
                 results,
                 pipeline.extract);
 
+            ///////////////////// Report extract error if Any /////////////////////
+            ///////////////////// Report extract error if Any /////////////////////
             if (extractErr) {
                 addTrace({
                     pipeline: pipelineName,
@@ -189,8 +189,8 @@ class PipelineRequest {
                 });
                 return [extractErr];
             }
+
             ///////////////////// Post process stepResults /////////////////////
-            ///TODO run the pipeline transformModule.after function on data if exists
             const postProcessedResults = transformer.postProcessPipelineResults(pipeline,
                 pipeline.transformModules,
                 extractedData);
@@ -198,11 +198,19 @@ class PipelineRequest {
         } catch (e) {
             return [e.toString()];
         }
-
     }
 
+    /**
+     *
+     * @param pipeline
+     * @param step
+     * @param data
+     * @returns {Promise<[string, stepResults]>}
+     * @private
+     */
     async _startStep(pipeline, step, data) {
         const pipelineName = pipeline.name;
+
         ///////////////////// Get Step Processor /////////////////////
         const stepProcessor = processorManager.getStepProcessor(step);
         if (!stepProcessor) {
@@ -222,11 +230,17 @@ class PipelineRequest {
             ? stepProcessor.aggregateStep
             : stepProcessor.processStep;
 
+        ///////////////////// TODO Extract input values from data /////////////////////
+
+
+        ///////////////////////////////////////////////////////////////////////
         ///////////////////// Run Step Processor Function /////////////////////
+        ///////////////////////////////////////////////////////////////////////
         const [err, stepResults] = await processOrAggregate(
             pipeline,
             step,
             data);
+
 
         if (err) {
             addTrace({
@@ -241,6 +255,7 @@ class PipelineRequest {
             });
             return [err];
         }
+
         ///////////////////// Extract values from stepResults /////////////////////
         const [extractedData, extractErr] = extractor.extract(
             pipeline.contentType || 'application/json',
