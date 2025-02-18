@@ -201,9 +201,7 @@ module.exports = {
                     console.warn(`POST /pipeline/:uuid/execute: Error: ${JSON.stringify(error)}`);
                     // console.log(`POST /pipeline/:uuid/execute: History: ${JSON.stringify(history, null, 2)}`);
                     const message = `${req.params.uuid}: ${JSON.stringify(error)}`;
-
                     return res.json({error: message, "pipeline-uuid": req.params.uuid, trace: getTrace()})
-                    //return res.status(500).json(errResponse);
                 }
 
                 return res.json({
@@ -237,6 +235,7 @@ module.exports = {
      *  results: {},
      *  "pipeline-uuid": uuid
      *  "stepIndex": int
+
      *  trace: []
      *  });
      */
