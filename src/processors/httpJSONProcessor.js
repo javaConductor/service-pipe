@@ -3,8 +3,6 @@ const PipelineStep = require('../model/pipe');
 const extractor = require("../extractor");
 const jsonTypes = require('../model/jsonTypes');
 const AggregationExtraction = require('./aggregateExtraction');
-const {addTrace} = require('../trace')
-
 
 class HttpJSONProcessor extends StepProcessor {
 
@@ -33,12 +31,14 @@ class HttpJSONProcessor extends StepProcessor {
      * @param pipeline
      * @param step
      * @param data
+     * @param pipelineExecution
      * @returns {Promise{[error, stepData]>}
      */
-    async aggregateStep(pipeline, step, data) {
+    async aggregateStep(pipeline, step, data, pipelineExecution) {
         if (step.parallelStep)
-            return this.aggregateParallelStep(pipeline, step, data);
+            return this.#aggregateParallelStep(pipeline, step, data, pipelineExecution);
 
+        const {addTrace} = pipelineExecution.trace;
         /// add step data to request
         const realData = {...(step.data || {}), ...data};
         console.debug(`aggregateStep: ${pipeline.toString()} -> ${step.name} -> ${JSON.stringify(realData)}`);
@@ -73,7 +73,7 @@ class HttpJSONProcessor extends StepProcessor {
         for (const idx in dataArrayElement) {
             ++cnt;
             const aggValues = aggExtractor.createAggregationData(dataArrayElement[idx], aggregateExtract);
-            const [errStep, stepResults] = await this.processStep(pipeline, step, {...realData, ...aggValues});
+            const [errStep, stepResults] = await this.processStep(pipeline, step, {...realData, ...aggValues}, pipelineExecution);
             if (errStep) {
                 addTrace({
                     pipeline: pipelineName,
@@ -115,16 +115,19 @@ class HttpJSONProcessor extends StepProcessor {
      * @param pipeline
      * @param step
      * @param data
+     * @param pipelineExecution
      * @returns {Promise<[err, stepData]>}
      */
-    async aggregateParallelStep(pipeline, step, data) {
+    async #aggregateParallelStep(pipeline, step, data, pipelineExecution) {
         const realData = {...step.node.nodeData, ...(step.data || {}), ...data};
+
+        const {addTrace} = pipelineExecution.trace;
 
         const pipelineName = pipeline.name;
         /// get the dataArrayProperty
         const dataArrayKey = step.aggregation.dataArrayProperty;
         const dataOutputKey = step.aggregation.outputArrayProperty;
-        const aggregateExtract = step.aggregation.aggregateExtract;
+        //TODO do we need this? const aggregateExtract = step.aggregation.aggregateExtract;
 
         let stepTrace = [];
         let value = realData[dataArrayKey];
@@ -207,10 +210,13 @@ class HttpJSONProcessor extends StepProcessor {
      * @param pipeline
      * @param step
      * @param data
+     * @param pipelineExecution
      * @returns {Promise<[error, stepResults]>}
      */
-    async processStep(pipeline, step, data) {
+    async processStep(pipeline, step, data, pipelineExecution) {
         const pipelineName = pipeline.name;
+        const {addTrace} = pipelineExecution.trace;
+
         try {
             /// use the data from the node in the step to make the HTTP call
             const realData = {...(step.data || {}), ...data};
@@ -238,7 +244,7 @@ class HttpJSONProcessor extends StepProcessor {
                 Pipeline:${pipeline.name} -> Step:${step.name}
                 -> payload:${JSON.stringify(stepInput)}`);
 
-            const [errNode, nodeOutput] = await step.node.execute(step, stepInput);
+            const [errNode, nodeOutput] = await step.node.execute(step, stepInput, pipelineExecution);
             if (errNode) {
                 addTrace({
                     pipeline: pipelineName,
