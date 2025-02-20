@@ -1,20 +1,34 @@
-let traceElements = [];
-let lastElement = {};
-module.exports = {
+let traces = {};
 
-    addTrace: (traceData) => {
-        lastElement = {...lastElement, ...traceData}
-        traceElements.push(traceData)
-        return lastElement;
-    },
+const createTrace = (executionId) => {
 
-    getTrace: () => {
+    let traceElements = [];
+
+    const addTrace = (traceData) => {
+        const tData = {...traceData, '@executionId': executionId};
+        traceElements.push(tData)
+        return tData;
+    }
+
+    const getTrace = () => {
         return traceElements;
-    },
+    }
 
-    clearTrace: () => {
+    const clearTrace = () => {
         traceElements = []
-        lastElement = {}
+    }
+    return {
+        addTrace, getTrace, clearTrace
     }
 
 }
+
+const get = (executionId) => {
+
+    if (!traces[executionId]) {
+        traces[executionId] = createTrace(executionId);
+    }
+    return traces[executionId];
+
+}
+module.exports = get

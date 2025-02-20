@@ -2,7 +2,6 @@ const extractor = require("./extractor");
 const PipelineStep = require("./model/pipe");
 const processorManager = require('./processors/processorManager');
 const dbRepo = require("./db/data-repo");
-const {addTrace, clearTrace} = require('./trace')
 const transformer = require('./processors/transformer');
 
 /**
@@ -14,8 +13,9 @@ class PipelineRequest {
      *
      * @param pipeline {Pipeline}
      * @param initialData Data from request
+     * @param pipelineExecution
      */
-    constructor(pipeline, initialData) {
+    constructor(pipeline, initialData, pipelineExecution) {
         if (!pipeline.uuid)
             throw new Error(`PipelineRequest: Bad Pipeline: no uuid`);
         if (!pipeline.steps || pipeline.steps.length === 0)
@@ -29,6 +29,10 @@ class PipelineRequest {
             return {...step, node: step.node || dbRepo.getNodeByUUID(step.nodeUUID)}
         });
 
+        if (!pipelineExecution){
+            throw new Error(`PipelineRequest: pipelineExecution is required`);
+        }
+        this.pipelineExecution = pipelineExecution;
         this.initialData = initialData || {};
     }
 
@@ -43,6 +47,8 @@ class PipelineRequest {
      * */
     async start(step = null) {
         const startTime = Date.now();
+        const {addTrace, clearTrace} = this.pipelineExecution.trace
+
         ///////////////////// Create History /////////////////////
         clearTrace()
         addTrace({
@@ -55,7 +61,7 @@ class PipelineRequest {
         ///////////////////// Run Pipeline Steps /////////////////////
         ///////////////////// Run Pipeline Steps /////////////////////
         ///////////////////// Run Pipeline Steps /////////////////////
-        let [err, results] = await this._startSeq(this.pipeline, this.initialData);
+        let [err, results] = await this._startSeq(this.pipeline, this.initialData, this.pipelineExecution);
         if (err) {
             const now = Date.now();
             const millis = new Date(now).getTime() - new Date(startTime).getTime();
@@ -123,10 +129,11 @@ class PipelineRequest {
      * @param pipeline
      * @param step
      * @param stepData
+     * @param pipelineExecution
      * @returns {Promise<[string, results]>}
      * */
-    async executeStep(pipeline, step, stepData) {
-        return this._startStep(pipeline, step, stepData);
+    async executeStep(pipeline, step, stepData, pipelineExecution) {
+        return this._startStep(pipeline, step, stepData,pipelineExecution);
     }
 
 
@@ -134,16 +141,18 @@ class PipelineRequest {
      *
      * @param pipeline Pipeline
      * @param initialData
+     * @param pipelineExecution
      * @returns {Promise<[error, stepResults]>}
      * @private
      */
-    async _startSeq(pipeline, initialData) {
+    async _startSeq(pipeline, initialData, pipelineExecution) {
         const pipelineName = pipeline.name;
         let data = initialData || {};
         let sequence = pipeline.steps;
         ///TODO run the pipeline transformModule.before function on data if exists
         let results = {};
 
+        const {addTrace} = pipelineExecution.trace;
         try {
             ///////////////////// execute each step /////////////////////
             ///////////////////// execute each step /////////////////////
@@ -151,7 +160,7 @@ class PipelineRequest {
 
 
             for (let step of sequence) {
-                const [err, stepResults] = await this._startStep(pipeline, step, data);
+                const [err, stepResults] = await this._startStep(pipeline, step, data, pipelineExecution);
                 if (err) {
                     addTrace({
                         pipeline: pipelineName,
@@ -217,11 +226,13 @@ class PipelineRequest {
      * @param pipeline
      * @param step
      * @param data
+     * @param pipelineExecution
      * @returns {Promise<[string, stepResults]>}
      * @private
      */
-    async _startStep(pipeline, step, data) {
+    async _startStep(pipeline, step, data, pipelineExecution) {
         const pipelineName = pipeline.name;
+        const {addTrace} = pipelineExecution.trace;
 
         ///////////////////// Get Step Processor /////////////////////
         const stepProcessor = processorManager.getStepProcessor(step);
@@ -250,7 +261,8 @@ class PipelineRequest {
         const [err, stepResults] = await processOrAggregate(
             pipeline,
             step,
-            data);
+            data,
+            pipelineExecution);
 
         if (err) {
             addTrace({

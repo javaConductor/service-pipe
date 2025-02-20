@@ -2,7 +2,7 @@ const misc = require("../misc");
 const PipelineStep = require("./pipe");
 const axios = require("axios");
 const validator = require('./validator')
-const {addTrace, getTrace} = require('../trace')
+
 const authenticationTypes = require("./authenticationTypes");
 
 class PipelineNode {
@@ -32,7 +32,6 @@ class PipelineNode {
                 return {...headers, ...authHeaders};
 
             case authenticationTypes.Token: {
-
                 if (!nodeAuthentication || !nodeAuthentication.token) {
                     throw new Error(`Bad configuration: Authentication type is ${authentificationTypes.Token} 
                     but no token config was found.`);
@@ -68,9 +67,11 @@ class PipelineNode {
      *
      * @param step
      * @param requestData
+     * @param pipelineExecution
      * @returns {Promise<[error, data]>}
      */
-    async execute(step, requestData) {
+    async execute(step, requestData, pipelineExecution) {
+        const {addTrace} = pipelineExecution.trace;
 
         /// Add node data to requestData
         requestData = {...this.nodeData, ...requestData}
@@ -129,11 +130,13 @@ class PipelineNode {
             });
             return [null, response.data]
         }).catch((axiosError) => {
-            return [this.handleAxiosError(axiosError, step.name, this.name, url, this.method)]
+            return [this.handleAxiosError(axiosError, step.name, this.name, url, this.method, pipelineExecution)]
         })
     }
 
-    handleAxiosError(axiosError, stepName, nodeName, url, method) {
+    handleAxiosError(axiosError, stepName, nodeName, url, method, pipelineExecution) {
+        const {addTrace} = pipelineExecution.trace;
+
         if (axiosError.response) {
             // The request was made and the server responded with a status code
             // that falls out of the range of 2xx

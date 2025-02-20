@@ -96,23 +96,24 @@ class PipelineExecutor {
 
     /**
      *
-     * @param uuid
+     * @param pipelineUUID
      * @param initialData
+     * @param pipelineExecution
      * @returns {Promise<[error, pipelineUUID, results]>}
      */
-    async executePipeline(uuid, initialData) {
+    async executePipeline(pipelineUUID, initialData, pipelineExecution) {
 
 
         /// Get the pipeline from uuid
-        let [err, pipeline] = await dataRepo.getPipelineByUUID(uuid);
+        let [err, pipeline] = await dataRepo.getPipelineByUUID(pipelineUUID);
         if (err)
-            return [err, uuid, []];
+            return [err, pipelineUUID, []];
 
         /// check if pipeline exists
         if (!pipeline) {
-            const msg = `No such pipeline: ${uuid}`;
+            const msg = `No such pipeline: ${pipelineUUID}`;
             console.warn(`executePipeline: ${msg}`)
-            return [msg, uuid]
+            return [msg, pipelineUUID]
         }
 
         console.log(`Got pipeline ${pipeline.uuid}`)
@@ -122,7 +123,7 @@ class PipelineExecutor {
         console.log(`Prepared pipeline ${pipeline.uuid}`)
 
         /// Create pipeline request
-        const pr = new PipelineRequest(pipeline, initialData);
+        const pr = new PipelineRequest(pipeline, initialData, pipelineExecution);
         console.debug(`PipelineExecutor.executePipeline: pipelineRequest: ${JSON.stringify(pr)}\n`);
 
         /// Execute pipeline
@@ -131,11 +132,11 @@ class PipelineExecutor {
             console.warn(`pipelineExecutor:getPipelineByUUID: Error: ${JSON.stringify(pipelineErr)}`);
             // console.log(`pipelineExecutor:getPipelineByUUID: History: ${JSON.stringify(history, null, 2)}`);
             const errMsg = `[${pr.pipeline.name}]:${pr.pipeline.uuid}: ${JSON.stringify(pipelineErr)}`;
-            return [errMsg, uuid];
+            return [errMsg, pipelineUUID];
         }
 
         //TODO Store the execution History
-        return [null, uuid, results];
+        return [null, pipelineUUID, results];
     }
 
     /**
@@ -143,9 +144,10 @@ class PipelineExecutor {
      * @param pipelineUUID
      * @param stepIndex
      * @param initialData
+     * @param pipelineExecution
      * @returns {Promise<[string, results]>}
      */
-    async executePipelineStep(pipelineUUID, stepIndex, initialData) {
+    async executePipelineStep(pipelineUUID, stepIndex, initialData, pipelineExecution) {
         /// Get the pipeline from uuid
         let [err, pipeline] = await dataRepo.getPipelineByUUID(pipelineUUID);
         if (err)
@@ -171,10 +173,10 @@ class PipelineExecutor {
             const step = await this.prepareStep(pipeline.steps[stepIndex]);
 
             /// Create pipeline request
-            const pr = new PipelineRequest(pipeline, initialData);
+            const pr = new PipelineRequest(pipeline, initialData, pipelineExecution);
             console.debug(`PipelineExecutor.executePipelineStep: pipelineRequest: ${JSON.stringify(pr)}\n`);
             /// execute the step
-            return pr.executeStep(pipeline, step, initialData)
+            return pr.executeStep(pipeline, step, initialData, pipelineExecution)
         } catch (e) {
             return [e.toString()];
         }
