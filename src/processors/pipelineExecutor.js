@@ -62,6 +62,35 @@ class PipelineExecutor {
 
         console.log(`Waiting for steps to be Prepared.`)
         pipeline.steps = await Promise.all(pSteps)
+
+
+        /// Compile transform functions if any
+        if (pipeline.transformModules) {
+            try {
+                if (pipeline.transformModules.before
+                    && pipeline.transformModules.before.stepFnSrc
+                ) {
+                    pipeline.transformModules.before.stepFn = eval(pipeline.transformModules.before.stepFnSrc)
+                }
+            } catch (err) {
+                const msg = `Error compiling before transform function. pipeline: [${pipeline.name}] -> ${err.toString()}`;
+                console.warn(msg)
+                throw msg;
+            }
+
+            try {
+                if (pipeline.transformModules.after
+                    && pipeline.transformModules.after.stepFnSrc
+                ) {
+                    pipeline.transformModules.after.stepFn = eval(pipeline.transformModules.after.stepFnSrc)
+                }
+            } catch (err) {
+                const msg = `Error compiling after transform function. pipeline: [${pipeline.name}] -> ${err.toString()}`;
+                console.warn(msg)
+                throw msg;
+            }
+        }
+
         return pipeline
     }
 

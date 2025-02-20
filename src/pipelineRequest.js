@@ -1,8 +1,5 @@
-const misc = require('./misc');
 const extractor = require("./extractor");
-// const Pipeline = require("./model/pipeline");
 const PipelineStep = require("./model/pipe");
-// const jmespath = require("jmespath");
 const processorManager = require('./processors/processorManager');
 const dbRepo = require("./db/data-repo");
 const {addTrace, clearTrace} = require('./trace')
@@ -76,30 +73,48 @@ class PipelineRequest {
         }
 
         ///////////////////// Successfully return pipeline output /////////////////////
-        //TODO extract values
-        if (this.pipeline.extract && misc.hasKeys(this.pipeline.extract)) {
-            [results, err] = extractor.extract(this.pipeline.contentType || 'application/json', results, this.pipeline.extract);
-            if (err) {
-                const now = Date.now();
-                const millis = new Date(now).getTime() - new Date(startTime).getTime();
-                addTrace({
-                    pipeline: this.pipeline.name,
-                    timestamp: Date.now(),
-                    pipelineTimeMillis: millis,
-                    message: "Pipeline completed with data extraction error.",
-                    errorMessage: err,
-                    state: PipelineStep.StepStates.PIPELINE_COMPLETE_WITH_ERRORS,
-                    extract: this.pipeline.extract,
-                    partialData: results
-                });
-                console.warn(`PipelineRequest.start(): Pipeline:${this.pipeline.name}: Error -> ${JSON.stringify(err)}\n`);
-                return [err];
-            }
+        [results, err] = extractor.extract(this.pipeline.contentType || 'application/json',
+            results,
+            this.pipeline.extract);
+        if (err) {
+            const now = Date.now();
+            const millis = new Date(now).getTime() - new Date(startTime).getTime();
+            addTrace({
+                pipeline: this.pipeline.name,
+                timestamp: Date.now(),
+                pipelineTimeMillis: millis,
+                message: "Pipeline completed with data extraction error.",
+                errorMessage: err,
+                state: PipelineStep.StepStates.PIPELINE_COMPLETE_WITH_ERRORS,
+                extract: this.pipeline.extract,
+                partialData: results
+            });
+            console.warn(`PipelineRequest.start(): Pipeline:${this.pipeline.name}: Error -> ${JSON.stringify(err)}\n`);
+            return [err];
+        }
+
+
+        ///////////////////// Post process stepResults /////////////////////
+        let postProcessedResults;
+        try {
+             postProcessedResults = transformer.postProcessPipelineResults(this.pipeline,
+                this.pipeline.transformModules,
+                results);
+        }catch (ppErr){
+            addTrace({
+                pipeline: this.pipeline.name,
+                timestamp: Date.now(),
+                state: PipelineStep.StepStates.PIPELINE_COMPLETE_WITH_ERRORS,
+                message: `Post Process Error: ${ppErr.toString()}.`,
+                error: ppErr,
+                data: results,
+            });
+            return [ppErr];
         }
 
         console.debug(`PipelineRequest.start: Pipeline: [${this.pipeline.name}]\n
-    Results: ${JSON.stringify(results, null, 2)} `);
-        return [null, results];
+    Results: ${JSON.stringify(postProcessedResults, null, 2)} `);
+        return [null, postProcessedResults];
     }//start
 
 
@@ -128,13 +143,13 @@ class PipelineRequest {
         let sequence = pipeline.steps;
         ///TODO run the pipeline transformModule.before function on data if exists
         let results = {};
-      
+
         try {
             ///////////////////// execute each step /////////////////////
             ///////////////////// execute each step /////////////////////
             ///////////////////// execute each step /////////////////////
 
-          
+
             for (let step of sequence) {
                 const [err, stepResults] = await this._startStep(pipeline, step, data);
                 if (err) {
@@ -191,11 +206,7 @@ class PipelineRequest {
                 return [extractErr];
             }
 
-            ///////////////////// Post process stepResults /////////////////////
-            const postProcessedResults = transformer.postProcessPipelineResults(pipeline,
-                pipeline.transformModules,
-                extractedData);
-            return [null, postProcessedResults];
+            return [null, extractedData];
         } catch (e) {
             return [e.toString()];
         }
