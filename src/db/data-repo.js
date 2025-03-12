@@ -1,4 +1,63 @@
 const mongo = require('./mongo');
+const User = require('../model/user');
+
+const getAllUsers = async (userFn) => {
+    try {
+        const db = await mongo.getDatabase();
+        const coll = db.db().collection("users");
+        const rows = await coll.find().toArray();
+        console.debug(`getAllUsers() -> + ${(rows.length)} rows.`);
+
+        const users = rows.map((row) => {return new User(row)})
+        if (userFn) {
+            userFn([null, users])
+        } else
+            return [null, users];
+    } catch (err) {
+        console.debug(err);
+
+        if (userFn) {
+            userFn([err])
+        } else
+            return [err];
+    }
+}
+
+const saveUser = async (userDoc) => {
+    try {
+
+        const db = await mongo.getDatabase();
+        const coll = db.db().collection("users");
+        //console.log("saveUser: saveOrUpdate: " + JSON.stringify(noId, null, 2));
+
+        const result = await (userDoc._id
+            ? coll.updateOne({_id: userDoc._id}, {"$set": userDoc})
+            : coll.insertOne(userDoc));
+
+        userDoc._id = result.insertedId;
+        console.debug("saveUser: result: " + JSON.stringify(result));
+        return [null, userDoc];
+    } catch (err) {
+        console.log(err);
+        return [err];
+    }
+
+};
+
+const getUser = async (username) => {
+    try {
+
+        const db = await mongo.getDatabase();
+        const coll = db.db().collection("users");
+        const result = await coll.findOne({username})
+
+        console.debug("getUser: result: " + JSON.stringify(result));
+        return [null, result];
+    } catch (err) {
+        console.log(err);
+        return [err];
+    }
+};
 
 const getAllNodes = () => {
     return mongo.getDatabase()
@@ -16,12 +75,18 @@ const getAllNodes = () => {
         });
 };
 
-
-const getAllPipelines = () => {
+const getAllPipelines = (username) => {
     return mongo.getDatabase()
         .then((db) => {
             const coll = db.db().collection("pipelines");
-            return coll.find().toArray().then((rows) => {
+            //TODO Add 'owner_id' to pipeline and node collections
+            const userIdMatchOrNoId = {'$or':[
+                    {owner_user: username},
+                    {owner_user: { $exists: false }}
+                ]}
+            return coll.find(
+                userIdMatchOrNoId
+            ).toArray().then((rows) => {
                 // log the rows
                 console.debug(`getAllPipelines() -> + ${(rows.length)} rows.`);
                 return [null, rows];
@@ -193,13 +258,14 @@ const removeNode = (uuid) => {
 };
 
 module.exports = {
-    "getAllNodes": getAllNodes,
-    "getAllPipelines": getAllPipelines,
-    "getNodeByUUID": getNodeByUUID,
-    "getPipelineByUUID": getPipelineByUUID,
-    "savePipeline": savePipeline,
-    "saveNode": saveNode,
+    getAllNodes,
+    getAllPipelines,
+    getNodeByUUID,
+    getPipelineByUUID,
+    savePipeline,
+    saveNode,
     removePipeline,
-    removeNode
+    removeNode,
+    getAllUsers, getUser, saveUser
 };
 

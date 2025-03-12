@@ -11,7 +11,10 @@ module.exports = {
      * @param next
      */
     getAllPipelines: (req, res, next) => {
-        dbRepo.getAllPipelines().then(([err, pipelines]) => {
+        // const user = req.user;
+        const {id: userId, role: userRole, username} =req.user;
+
+        dbRepo.getAllPipelines(username).then(([err, pipelines]) => {
             if (err) return next(err);
             res.json(pipelines);
         }).catch((err) => {
@@ -200,7 +203,7 @@ module.exports = {
 
                 return res.json({
                     error: null,
-                    results: results,
+                    results,
                     "pipeline-uuid": pipelineUUID,
                     "pipeline-execution-id": pipelineExecution.pipelineExecutionId,
                     trace: sendTrace ? getTrace() : undefined

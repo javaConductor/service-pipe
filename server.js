@@ -1,57 +1,83 @@
 const express = require("express");
-const bodyParser = require("body-parser");
 const app = express();
-const cors = require("cors");
+const bodyParser = require("body-parser");
+const endPoints = require('express-list-endpoints');
 
-// if (process.env.DEBUG){
-//     process.env.DEBUG = eval(process.env.DEBUG);
-// }else{
-//     process.env.DEBUG = false;
-// }
-if (!process.env.DEBUG){
+const pipelineRoutes = require("./src/routes/pipelines");
+const nodeRoutes = require("./src/routes/nodes");
+require('dotenv').config();
+
+if (!process.env.DEBUG) {
     console.debug = () => {
     }
 }
 
-/// Routes
-const pipelineRoutes = require('./src/routes/pipelines') ;
-const nodeRoutes = require('./src/routes/nodes') ;
-
-const corsOptions = {
-    // origin: 'http://example.com',
-    optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+const listEndpoints = (app) => {
+    console.log(endPoints(app));
 }
-app.use(cors(corsOptions));
 
-const options = {
-    setHeaders: function (res, path, stat) {
-        res.set('Access-Control-Allow-Origin', "*")
+try {
+    ///////////////////////////////////////////////////////
+    /////////////////////  Body Parser ////////////////////
+    ///////////////////////////////////////////////////////
+    // parse requests of content-type - application/json
+    app.use(bodyParser.json());
+    // parse requests of content-type - application/x-www-form-urlencoded
+    app.use(bodyParser.urlencoded({extended: true}));
+
+    ///////////////////////////////////////////////////////
+    //////////////////// Auth routes   ////////////////////
+    ///////////////////////////////////////////////////////
+    const security = require('./src/controllers/security')
+    security(app);
+
+    //////////////////////////////////////////////////////////////////
+    //////////////////// Add necessary Middleware ////////////////////
+    //////////////////////////////////////////////////////////////////
+    // JSON
+    app.use(express.json());
+
+    const options = {
+        setHeaders: function (res, path, stat) {
+            res.set('Access-Control-Allow-Origin', "*")
+        }
     }
-};
 
-const checkTokenMiddleware = function (req, res, next) {
-/// get the x-access-token header
+    // use /public for static files
+    app.use(express.static('public', options))
 
+    ///////////////////////////////////////////////////////
+    //////////////////////// Routes ///////////////////////
+    ///////////////////////////////////////////////////////
+    const pipelineRoutes = require('./src/routes/pipelines');
+    const nodeRoutes = require('./src/routes/nodes');
+    const {HttpStatusCode} = require("axios");
+
+    app.use('/pipeline', pipelineRoutes);
+    app.use('/node', nodeRoutes);
+
+    //////////////////////////////////////////////////////////
+    //////////////////////// Home Path ///////////////////////
+    //////////////////////////////////////////////////////////
+    app.get("/", (req, res) => {
+        //throw "Who is doing this??"
+        res.json({message: "Welcome to service-pipe application."});
+    });
+
+    //////////////////////////////////////////////////////////////////////////////
+    //////////////////////// set port, listen for requests ///////////////////////
+    //////////////////////////////////////////////////////////////////////////////
+    const PORT = process.env.PORT || 8080;
+    const server = app.listen(PORT, (h) => {
+        listEndpoints(app)
+        console.log(`Server is running on port ${PORT}.`);
+    });
+    server.on('error', (error) => {
+        console.error('server.js: Error starting the server:', error);
+    });
+
+} catch (e) {
+    console.error(`App could not start: ${e}`)
 }
 
-app.use(express.static('public', options))
-
-// parse requests of content-type - application/json
-app.use(bodyParser.json());
-// parse requests of content-type - application/x-www-form-urlencoded
-app.use(bodyParser.urlencoded({extended: true}));
-
-app.use('/pipeline', pipelineRoutes);
-app.use('/node', nodeRoutes);
-
-// simple route
-app.get("/", (req, res) => {
-    res.json({message: "Welcome to service-pipe application."});
-});
-
-// set port, listen for requests
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}.`);
-});
-
+module.exports = {app, listEndpoints}
