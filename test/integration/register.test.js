@@ -30,7 +30,7 @@ describe('POST /login', () => {
     it('should login the new user', (doneFn) => {
 
         const registration = {
-            username: 'javaconductor'+Date.now(),
+            username: 'javaconductor.'+Date.now(),
             password: '9555589'
         }
         const theLogin = {
@@ -46,23 +46,37 @@ describe('POST /login', () => {
             .then(response => {
                 assert.equal(response.body.username, registration.username, 'Username should be '+registration.username);
                 console.log(`Registered username: ${response.body.username}`);
-                doneFn()
+
+                request(app)
+                    .post('/login')
+                    .send(theLogin)
+                    .expect(200)
+                    .expect('Content-Type', /json/)
+                    .then(response => {
+                        assert.ok(response.body.token,'No token returned');
+                        console.log(`Login: ${ registration.username}`);
+
+                        /// check the cookie for the refreshToken
+                        // Access the 'set-cookie' header
+                        const setCookieHeader = response.headers['set-cookie'];
+                        assert.ok(setCookieHeader, 'set-cookie header is present');
+
+                        // Parse the cookie string
+                        const cookieString = setCookieHeader[0]; // Assuming only one cookie is set
+                        const [cookiePart, ...attributes] = cookieString.split(';');
+                        const [name, value] = cookiePart.split('=');
+
+                        // Assert cookie name and value
+                        assert.strictEqual(name, 'refreshToken', 'Cookie name is correct');
+
+                        // console.log(name, value)
+                        doneFn()
+                    });
+
+                //doneFn()
             }).catch((err) => {
             doneFn(err)
         });
-
-        request(app)
-            .post('/login')
-            .send(registration)
-            .expect(200)
-            .expect('Content-Type', /json/)
-            .then(response => {
-                assert.notEqual(response.body.token, '', 'No token returned');
-                console.log(`Login: ${ registration.username} -> ${response.body.token}`);
-                doneFn()
-            });
-
-
 
     });
 });

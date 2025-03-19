@@ -59,6 +59,30 @@ const getUser = async (username) => {
     }
 };
 
+
+
+const removeUser = (username) => {
+    return mongo.getDatabase()
+        .then((db) => {
+            const coll = db.db().collection("users");
+            coll.deleteOne({"username": username})
+                .then((result) => {
+                    console.debug(`removeUser -> ${result}`);
+                    return [];
+                })
+                .catch((err) => {
+                    console.debug(`removeUser:err -> ${err}`);
+                    return [err];
+                })
+        })
+        .catch((err) => {
+            console.debug(`removeUser:err -> ${err}`);
+            return [err];
+        })
+};
+
+
+
 const getAllNodes = () => {
     return mongo.getDatabase()
         .then((db) => {
@@ -266,6 +290,6 @@ module.exports = {
     saveNode,
     removePipeline,
     removeNode,
-    getAllUsers, getUser, saveUser
+    getAllUsers, getUser, saveUser, removeUser
 };
 

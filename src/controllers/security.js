@@ -53,8 +53,8 @@ const fn = (app) => {
             const [err, savedUser] = await userService.saveUser(user);
             if (err) return res.status(500).send(`${JSON.stringify(err)}`);
 
-            const {username, password, role} = savedUser;
-            res.status(HttpStatusCode.Created).json( {username, password, role});
+            const {username, role} = savedUser;
+            res.status(HttpStatusCode.Created).json( {username, role});
         } catch (e) {
             res.status(500).json(JSON.stringify(e, null, 2));
         }
@@ -65,6 +65,9 @@ const fn = (app) => {
         async (req, res) => {
             const {username, password} = req.body;
             const [err, user] = await userService.getUser(username);
+            if (err){
+                return res.status(HttpStatusCode.ServiceUnavailable).send('Database error.');
+            }
             if (!user || !(await bcrypt.compare(password, user.password))) {
                 return res.status(401).send('Invalid credentials');
             }
@@ -75,10 +78,29 @@ const fn = (app) => {
                     {expiresIn: '5m'});
                 return res.json({tempToken, mfaRequired: true});
             }
+
+
             const token = jwt.sign(
                 {id: user._id, role: user.role, username: user.username},
                 userService.SECRET_KEY,
                 {expiresIn: '1h'});
+
+
+            const refreshToken = jwt.sign(
+            {id: user._id, role: user.role, username: user.username},
+                userService.SECRET_KEY,
+                { expiresIn: '1d' });
+
+
+//        .cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'strict' })
+            // Assigning refresh token in http-only cookie
+            res.cookie('refreshToken', refreshToken, {
+                httpOnly: true,
+                sameSite: 'None',
+                secure: true,
+                maxAge: 24 * 60 * 60 * 1000
+            });
+
             res.json({token});
         });
 
