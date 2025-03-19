@@ -19,7 +19,7 @@ var theDb = null;
 
 async function getDatabase() {
     if (theDb == null) {
-        console.log(`getDatabase(): connecting to DB @${connectionURL}`)
+        //console.log(`getDatabase(): connecting to DB @${connectionURL}`)
 
         try {
             return MongoClient.connect(connectionURL)
@@ -66,7 +66,7 @@ async function getDatabase() {
 
     } else {
         return (async () => {
-            console.log(`getDatabase(): Connected to database at [${connectionURL}]: ${theDb.options.dbName}`);
+            //console.log(`getDatabase(): Connected to database at [${connectionURL}]: ${theDb.options.dbName}`);
             return theDb
         })();
     }

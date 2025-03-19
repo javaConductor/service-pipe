@@ -1,12 +1,13 @@
 const request = require('supertest');
 const assert = require('assert');
 const {app} = require('../../server');
+const dataRepo = require("../../src/db/data-repo");
 
 describe('POST /register', () => {
     it('should create a new user', (doneFn) => {
 
         const registration = {
-            username: 'javaconductor.'+Date.now()+'',
+            username: 'javaconductor.' + Date.now() + '',
             password: '9555589'
         }
 
@@ -16,11 +17,11 @@ describe('POST /register', () => {
             .expect(201)
             .expect('Content-Type', /json/)
             .then(response => {
-                assert.equal(response.body.username, registration.username, 'Username should be '+registration.username);
+                assert.equal(response.body.username, registration.username, 'Username should be ' + registration.username);
                 console.log(`Registered username: ${response.body.username}`);
                 doneFn()
             }).catch((err) => {
-                doneFn(err)
+            doneFn(err)
         });
     });
 });
@@ -30,7 +31,7 @@ describe('POST /login', () => {
     it('should login the new user', (doneFn) => {
 
         const registration = {
-            username: 'javaconductor.'+Date.now(),
+            username: 'javaconductor.' + Date.now(),
             password: '9555589'
         }
         const theLogin = {
@@ -44,7 +45,7 @@ describe('POST /login', () => {
             .expect(201)
             .expect('Content-Type', /json/)
             .then(response => {
-                assert.equal(response.body.username, registration.username, 'Username should be '+registration.username);
+                assert.equal(response.body.username, registration.username, 'Username should be ' + registration.username);
                 console.log(`Registered username: ${response.body.username}`);
 
                 request(app)
@@ -53,8 +54,8 @@ describe('POST /login', () => {
                     .expect(200)
                     .expect('Content-Type', /json/)
                     .then(response => {
-                        assert.ok(response.body.token,'No token returned');
-                        console.log(`Login: ${ registration.username}`);
+                        assert.ok(response.body.token, 'No token returned');
+                        console.log(`Login: ${registration.username}`);
 
                         /// check the cookie for the refreshToken
                         // Access the 'set-cookie' header

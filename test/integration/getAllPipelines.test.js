@@ -2,6 +2,7 @@ const request = require('supertest');
 const assert = require('assert');
 const {app} = require('../../server');
 const dataRepo = require('../../src/db/data-repo');
+const {whileLoggedIn} = require("../testHelper");
 
 describe('GET /pipeline', () => {
     it('should fetch all pipelines with no user', async () => {
@@ -70,4 +71,32 @@ describe('GET /pipeline', () => {
         })
 
     });
+
+    it('should fetch all pipelines with no user using helper', async () => {
+
+        return new Promise(async (resolve, reject) => {
+
+            return whileLoggedIn(app, async (app, username, token) => {
+                const authHeader = `Bearer ${token}`;
+
+                try {
+                    const getPipelinesResponse = await request(app)
+                        .get('/pipeline')
+                        .set('Authorization', authHeader)
+                        .expect(200)
+                        .expect('Content-Type', /json/)
+
+                    assert.ok(getPipelinesResponse.body.length > 0); // OK
+                    resolve(getPipelinesResponse.body)
+                    return getPipelinesResponse
+                    // console.log(`Get all pipelines w/ no owner: ${JSON.stringify(getPipelinesResponse.body)}`);
+                } catch (err) {
+                    reject(err)
+                }
+            })
+
+        })
+
+    });
+
 });

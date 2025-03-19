@@ -32,8 +32,9 @@ module.exports = {
      */
     getPipelineByUUID: (req, res, next) => {
         const uuid = req.params.uuid;
+        const {id: userId, role: userRole, username} =req.user;
 
-        dbRepo.getPipelineByUUID(uuid).then(([err, pipeline]) => {
+        dbRepo.getPipelineByUUID(uuid, user).then(([err, pipeline]) => {
 
             if (err) return next(err);
             if (!pipeline) {
