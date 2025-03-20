@@ -24,52 +24,79 @@ function whileLoggedIn(
         password: '9555589'
     }
 
-    return request(app)
+    const pRegister = request(app)
         .post('/register')
         .send(registration)
         .expect(201)
         .expect('Content-Type', /json/)
-        .then(response => {
-            assert.equal(response.body.username, registration.username, 'Username should be ' + registration.username);
-            console.log(`Registered username: ${response.body.username}`);
 
-            return request(app)
-                .post('/login')
-                .send(theLogin)
-                .expect(200)
-                .expect('Content-Type', /json/)
-                .then(response => {
-                    assert.ok(response.body.token, 'No token returned');
-                    console.log(`Login: ${registration.username}`);
+    pRegister.then(response => {
+        assert.equal(response.body.username, registration.username, 'Username should be ' + registration.username);
+        console.log(`Registered username: ${response.body.username}`);
 
-                    // call the testFunction
-                    const p = testFunction(app, theLogin.username, response.body.token)
+        const pLogin = request(app)
+            .post('/login')
+            .send(theLogin)
+            .expect(200)
+            .expect('Content-Type', /json/)
+        pLogin.then(loginResponse => {
+            assert.ok(loginResponse.body.token, 'No token returned');
+            // console.log(`Login: ${registration.username}`);
+            console.log(`Login successful: ${JSON.stringify(loginResponse.body)}`);
 
-                    p.then(async (response) => {
-                        const authHeader = `Bearer ${response.body.token}`;
+            const accessToken = loginResponse.body.token
+            // call the testFunction
+            const pTestFn = testFunction(app, theLogin.username, accessToken)
+            pTestFn.then(async (testFnResponse) => {
+                const authHeader = `Bearer ${accessToken}`;
 
-                        /// logout
-                        const logoutResponse = await request(app)
-                            .post('/logout')
-                            .set('Authorization', authHeader)
-                            .expect(200)
+                /// logout
+                const pLogout = request(app)
+                    .post('/logout')
+                    .set('Authorization', authHeader)
+                    .expect(200)
 
-                        /// remove user
-                        return await dataRepo.removeUser(theLogin.username)
-
+                pLogout.then((logoutResponse) => {
+                    console.log(`logout successful: ${JSON.stringify(logoutResponse.body)}`);
+                    /// remove user
+                    const pRemoveUser = dataRepo.removeUser(theLogin.username)
+                    // pRemoveUser.then((removeUserResponse) => {
+                    //     return removeUserResponse;
+                    // })
+                    pRemoveUser.catch((errRemoveUser) => {
+                        return Promise.reject(errRemoveUser);
                     })
-
-                    p.catch((err) => {
-                        assert.fail(err)
-                        return Promise.reject(err);
-                    })
-
-                    return p;
+                    return pRemoveUser;
+                })
+                pLogout.catch((errLogout) => {
+                    console.error(`logout Error: ${errLogout}`);
+                    assert.fail(errLogout)
+                    return Promise.reject(errLogout);
                 });
-        }).catch((err) => {
-            return Promise.reject(err)
-        });
 
+                return pLogout;
+            })
+            pTestFn.catch((errTestFn) => {
+                console.error(`testFunction Error: ${errTestFn}`);
+                assert.fail(errTestFn)
+                return Promise.reject(errTestFn);
+            })
+
+            return pTestFn;
+        });
+        pLogin.catch(err => {
+            console.error(`login Error: ${err}`);
+            throw err
+//            return Promise.reject(err);
+        })
+        return pLogin
+
+    })
+    pRegister.catch((errRegister) => {
+        console.error(`register Error: ${errRegister}`);
+        return Promise.reject(errRegister)
+    });
+    return pRegister;
 }
 
 module.exports = {whileLoggedIn};

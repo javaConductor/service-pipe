@@ -19,7 +19,7 @@ const fn = (app) => {
     ////////////////  Security middleware  ////////////////
     ///////////////////////////////////////////////////////
 
-    const {authenticateToken,authorizeRole} = require('./middleware');
+    const {authenticateToken, authorizeRole} = require('./middleware');
 
     ///////////////////////////////////////////////////////
     //////////////////// Auth routes   ////////////////////
@@ -35,9 +35,10 @@ const fn = (app) => {
         if (!username || !password) {
             return res.status(HttpStatusCode.BadRequest).send('Bad request. No credentials.');
         }
-        const [e, userExists]  = await userService.userExists(username)
-        if(e)
-        return res.status(HttpStatusCode.ServiceUnavailable).send('Database error.');
+
+        const [e, userExists] = await userService.userExists(username)
+        if (e)
+            return res.status(HttpStatusCode.ServiceUnavailable).send('Database error.');
 
         if (userExists) return res.status(400).send('User exists');
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -54,7 +55,7 @@ const fn = (app) => {
             if (err) return res.status(500).send(`${JSON.stringify(err)}`);
 
             const {username, role} = savedUser;
-            res.status(HttpStatusCode.Created).json( {username, role});
+            res.status(HttpStatusCode.Created).json({username, role});
         } catch (e) {
             res.status(500).json(JSON.stringify(e, null, 2));
         }
@@ -65,7 +66,7 @@ const fn = (app) => {
         async (req, res) => {
             const {username, password} = req.body;
             const [err, user] = await userService.getUser(username);
-            if (err){
+            if (err) {
                 return res.status(HttpStatusCode.ServiceUnavailable).send('Database error.');
             }
             if (!user || !(await bcrypt.compare(password, user.password))) {
@@ -87,9 +88,9 @@ const fn = (app) => {
 
 
             const refreshToken = jwt.sign(
-            {id: user._id, role: user.role, username: user.username},
+                {id: user._id, role: user.role, username: user.username},
                 userService.SECRET_KEY,
-                { expiresIn: '1d' });
+                {expiresIn: '1d'});
 
 
 //        .cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'strict' })
@@ -100,6 +101,16 @@ const fn = (app) => {
                 secure: true,
                 maxAge: 24 * 60 * 60 * 1000
             });
+
+            res.json({token});
+        });
+
+    app.post('/logout',
+        authenticateToken,
+        async (req, res) => {
+            const token = ''
+            // Remove refresh token in http-only cookie
+            res.cookie('refreshToken', '', {});
 
             res.json({token});
         });
