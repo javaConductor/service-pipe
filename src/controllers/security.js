@@ -108,7 +108,7 @@ const fn = (app) => {
     app.post('/logout',
         authenticateToken,
         async (req, res) => {
-            const token = ''
+            const token = '.'
             // Remove refresh token in http-only cookie
             res.cookie('refreshToken', '', {});
 

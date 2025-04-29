@@ -1,6 +1,7 @@
 const request = require('supertest');
 const assert = require('assert');
-
+const dataRepo = require("../src/db/data-repo");
+const userService = require("../src/services/userService");
 /**
  *
  * @param app
@@ -56,15 +57,22 @@ function whileLoggedIn(
                     .set('Authorization', authHeader)
                     .expect(200)
 
-                pLogout.then((logoutResponse) => {
+                pLogout.then( async (logoutResponse) => {
                     console.log(`logout successful: ${JSON.stringify(logoutResponse.body)}`);
                     /// remove user
-                    const pRemoveUser = dataRepo.removeUser(theLogin.username)
-                    // pRemoveUser.then((removeUserResponse) => {
-                    //     return removeUserResponse;
-                    // })
+                    const pRemoveUser = userService.removeUser(theLogin.username)
+                    pRemoveUser.then(([err]) => {
+                        if (err){
+                            const msg = `Error deleting user ${theLogin.username}: ${err}`;
+                            console.warn(msg);
+                            return Promise.reject(msg);
+                        }
+                        return true
+                    })
                     pRemoveUser.catch((errRemoveUser) => {
-                        return Promise.reject(errRemoveUser);
+                        const msg = `Error deleting user ${theLogin.username}: ${errRemoveUser}`;
+                        console.warn(msg);
+                        return Promise.reject(msg);
                     })
                     return pRemoveUser;
                 })

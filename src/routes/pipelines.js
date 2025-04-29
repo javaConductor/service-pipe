@@ -17,7 +17,8 @@ const validateDoc = (schema) => (req, res, next) => {
 router.get('/',
     authenticateToken,
     authorizeRole,
-    pipelineController.getAllPipelines);
+   pipelineController.getAllPipelines
+);
 router.get('/:uuid',
     authenticateToken,
     authorizeRole,

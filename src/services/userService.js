@@ -4,6 +4,8 @@ const dbRepo = require("../db/data-repo");
 const userService = {
     getUsers: (async () => dataRepo.getAllUsers()),
 
+    PUBLIC_USER: "$public",
+
     async getUser(username) {
         try {
             return dataRepo.getUser(username)
@@ -24,6 +26,23 @@ const userService = {
         } catch (e) {
             return [e]
         }
+    },
+    async removeUser(username) {
+        /// remove user
+        const pRemoveUser = dbRepo.removeUser(username)
+        //
+        // pRemoveUser.then(([err]) => {
+        //     if (err) {
+        //         return Promise.reject(err);
+        //     }
+        //     return true;
+        // })
+        //
+        // pRemoveUser.catch((errRemoveUser) => {
+        //     return Promise.reject(errRemoveUser);
+        // })
+
+        return pRemoveUser;
     },
 
     SECRET_KEY: process.env.JWT_SECRET || 'dfovuihwefoihxcvlkhjnefiohzdvfihw'

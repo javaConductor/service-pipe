@@ -3,7 +3,9 @@ const assert = require('assert');
 const {app} = require('../../server');
 const {whileLoggedIn} = require("../testHelper");
 const PUBLIC_USER = require("../../src/services/userService").PUBLIC_USER;
-describe('GET /pipeline', () => {
+
+
+describe('GET /node', () => {
 
     let server = null;
     before(() => {
@@ -14,30 +16,31 @@ describe('GET /pipeline', () => {
         server = null;
     })
 
-    it('should fetch all pipelines with no user using helper', async () => {
+    it('should fetch all nodes with no user using helper', async () => {
         return new Promise(async (resolve, reject) => {
             return whileLoggedIn(server, async (app, owner_user, token) => {
                 const authHeader = `Bearer ${token}`;
 
                 const pResponse = request(app)
-                    .get('/pipeline')
+                    .get('/node')
                     .set('Authorization', authHeader)
                     .expect(200)
                     .expect('Content-Type', /json/)
 
                 // console.log(`Get all pipelines w/ no owner: ${JSON.stringify(getPipelinesResponse.body)}`);
 
-                pResponse.then(getPipelinesResponse => {
-                    console.log(` getPipelinesResponse : ${JSON.stringify((getPipelinesResponse._body))}`)
-                    assert.ok(getPipelinesResponse.body.length > 0); // OK
+                pResponse.then(getNodesResponse => {
+                    console.log(` getPipelinesResponse : ${JSON.stringify((getNodesResponse._body))}`)
 
-                    for (const pipeline of getPipelinesResponse.body) {
-                        assert.ok(pipeline.owner_user === owner_user || pipeline.owner_user === PUBLIC_USER,
-                            `pipeline should have user '${PUBLIC_USER}' or '${pipeline.owner_user}'`);
+                    assert.ok(getNodesResponse.body.length > 0); // OK
+
+                    for (const node of getNodesResponse.body) {
+                        assert.ok(node.owner_user === owner_user || node.owner_user === PUBLIC_USER,
+                            `node should have user '${PUBLIC_USER}' or '${node.owner_user}'`);
                     }
 
-                    resolve(getPipelinesResponse.body)
-                    return getPipelinesResponse
+                    resolve(getNodesResponse.body)
+                    return getNodesResponse
                 })
                 pResponse.catch(err => {
                     console.error(`error: ${err}`)

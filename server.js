@@ -51,7 +51,6 @@ try {
     ///////////////////////////////////////////////////////
     const pipelineRoutes = require('./src/routes/pipelines');
     const nodeRoutes = require('./src/routes/nodes');
-    const {HttpStatusCode} = require("axios");
 
     app.use('/pipeline', pipelineRoutes);
     app.use('/node', nodeRoutes);

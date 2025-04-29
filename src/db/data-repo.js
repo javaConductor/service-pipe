@@ -61,14 +61,14 @@ const getUser = async (username) => {
 
 
 
-const removeUser = (username) => {
+const removeUser = async (username) => {
     return mongo.getDatabase()
         .then((db) => {
             const coll = db.db().collection("users");
             coll.deleteOne({"username": username})
                 .then((result) => {
-                    console.debug(`removeUser -> ${result}`);
-                    return [];
+                    console.log(`removeUser -> ${JSON.stringify(result)}`);
+                    return result.deletedCount === 0 ? ["No user deleted."] : [];
                 })
                 .catch((err) => {
                     console.debug(`removeUser:err -> ${err}`);
@@ -83,11 +83,19 @@ const removeUser = (username) => {
 
 
 
-const getAllNodes = () => {
+const getAllNodes = (username) => {
     return mongo.getDatabase()
         .then((db) => {
             const coll = db.db().collection("nodes");
-            return coll.find().toArray().then((rows) => {
+            //TODO Add 'owner_id' to pipeline and node collections
+            const userIdMatchOrNoId = username ? {'$or':[
+                    {owner_user: username},
+                    {owner_user: '$public'}
+                ]} : {}
+
+            return coll.find(
+                userIdMatchOrNoId
+            ).toArray().then((rows) => {
                 // log the rows
                 console.debug(`getAllNodes() -> + ${(rows.length)} rows.`);
                 return [null, rows];
@@ -104,10 +112,11 @@ const getAllPipelines = (username) => {
         .then((db) => {
             const coll = db.db().collection("pipelines");
             //TODO Add 'owner_id' to pipeline and node collections
-            const userIdMatchOrNoId = {'$or':[
+            const userIdMatchOrNoId = username ? {'$or':[
                     {owner_user: username},
-                    {owner_user: { $exists: false }}
-                ]}
+                    {owner_user: '$public'}
+                ]} : {owner_user: '$public'}
+
             return coll.find(
                 userIdMatchOrNoId
             ).toArray().then((rows) => {
