@@ -1,6 +1,11 @@
 const jmespath = require("jmespath");
 
 const misc = {
+
+    Constants: {
+        PUBLIC_USER: '$public'
+    },
+
     interpolate: (stringValue, data) => {
         if (typeof stringValue !== 'string')
             return stringValue;

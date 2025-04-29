@@ -22,8 +22,8 @@ const mwDebug = (req, res, next) => {
 
 router.get('/',
     mwDebug,
-    //authenticateToken,
-    //authorizeRole,
+    authenticateToken,
+    authorizeRole,
     pipelineController.getAllNodes);
 router.get('/:uuid',
     mwDebug,

@@ -2,15 +2,21 @@ const request = require('supertest');
 const assert = require('assert');
 const dataRepo = require("../src/db/data-repo");
 const userService = require("../src/services/userService");
+const Pipeline = require("../src/model/pipeline");
+const {v4:uuidV4} = require("uuid");
+const PipelineNode = require("../src/model/pipelineNode");
+
 /**
  *
  * @param app
  * @param testFunction ( app, username, accessToken ) => {}
+ * @param options {role:''}
  * @returns {Promise<any>}
  */
 function whileLoggedIn(
     app,
-    testFunction // (app, username, accessToken)
+    testFunction, // (app, username, accessToken)
+    options={}
 ) {
 
     assert.ok(app)
@@ -18,7 +24,8 @@ function whileLoggedIn(
 
     const registration = {
         username: 'javaconductor.' + Date.now(),
-        password: '9555589'
+        password: '9555589',
+        role: options.role ? options.role : undefined,
     }
     const theLogin = {
         username: registration.username,
@@ -57,12 +64,12 @@ function whileLoggedIn(
                     .set('Authorization', authHeader)
                     .expect(200)
 
-                pLogout.then( async (logoutResponse) => {
+                pLogout.then(async (logoutResponse) => {
                     console.log(`logout successful: ${JSON.stringify(logoutResponse.body)}`);
                     /// remove user
                     const pRemoveUser = userService.removeUser(theLogin.username)
                     pRemoveUser.then(([err]) => {
-                        if (err){
+                        if (err) {
                             const msg = `Error deleting user ${theLogin.username}: ${err}`;
                             console.warn(msg);
                             return Promise.reject(msg);
@@ -77,7 +84,7 @@ function whileLoggedIn(
                     return pRemoveUser;
                 })
                 pLogout.catch((errLogout) => {
-                    console.error(`logout Error: ${errLogout}`);
+                    console.error(`Logout Error: user:${theLogin.username}: ${errLogout}`);
                     assert.fail(errLogout)
                     return Promise.reject(errLogout);
                 });
@@ -107,4 +114,72 @@ function whileLoggedIn(
     return pRegister;
 }
 
-module.exports = {whileLoggedIn};
+const defaultPipeline = {
+    name: `testPipeline.${Date.now()}`,
+    uuid: uuidV4(),
+    contentType: "application/json",
+    transformModules: {
+        before: {
+            name: '',
+            stepFnSrc: ''
+        },
+        after: {
+            name: '',
+            stepFnSrc: ''
+        }
+    },
+    extract: [],
+    inputExtract: [],
+    steps: [],
+    status: "New"
+}
+
+
+const createTestPipeline = (props) => {
+    if (typeof props !== 'object') {
+        throw new Error(`Expected object, got ${typeof props}`);
+    }
+    return new Pipeline({...defaultPipeline, ...props});
+};
+
+const defaultNode = {
+    name: "",
+    accessType: "HTTP",
+    contentType: "application/json",
+    headers: {},
+    payload: {},
+    nodeData: {},
+    authenticationType: 'none',
+    authentication: {basic: {}, token: {}, aim: {}},
+    errorIndicators: [],
+    errorMessages: [],
+};
+
+const createTestNode = (nodeProps, returnValue) => {
+    const fn = async (step, requestData, pipelineExecution) => [null, returnValue]
+    return new PipelineNode({...defaultNode, ...nodeProps}, fn)
+}
+
+const defaultStep = () => {
+    return {
+        name: "",
+        nodeUUID: uuidV4(),
+        data: {},
+        extract: [],
+        inputExtract: [],
+        aggregateStep: false,
+        aggregation: {}
+    }
+};
+
+const createTestStep = (stepProps, returnValue) => {
+
+    const step = {...defaultStep(), ...stepProps}
+    if(!step.node) {
+        const node = createTestNode({uuid: step.nodeUUID}, returnValue)
+        step.node = node
+    }
+    return step;
+}
+
+module.exports = {whileLoggedIn, createTestPipeline, createTestNode, createTestStep};

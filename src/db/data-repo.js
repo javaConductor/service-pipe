@@ -1,5 +1,6 @@
 const mongo = require('./mongo');
 const User = require('../model/user');
+const PUBLIC_USER = require("../../src/misc").Constants.PUBLIC_USER;
 
 const getAllUsers = async (userFn) => {
     try {
@@ -8,7 +9,9 @@ const getAllUsers = async (userFn) => {
         const rows = await coll.find().toArray();
         console.debug(`getAllUsers() -> + ${(rows.length)} rows.`);
 
-        const users = rows.map((row) => {return new User(row)})
+        const users = rows.map((row) => {
+            return new User(row)
+        })
         if (userFn) {
             userFn([null, users])
         } else
@@ -46,7 +49,6 @@ const saveUser = async (userDoc) => {
 
 const getUser = async (username) => {
     try {
-
         const db = await mongo.getDatabase();
         const coll = db.db().collection("users");
         const result = await coll.findOne({username})
@@ -58,8 +60,6 @@ const getUser = async (username) => {
         return [err];
     }
 };
-
-
 
 const removeUser = async (username) => {
     return mongo.getDatabase()
@@ -81,17 +81,17 @@ const removeUser = async (username) => {
         })
 };
 
-
-
 const getAllNodes = (username) => {
     return mongo.getDatabase()
         .then((db) => {
             const coll = db.db().collection("nodes");
             //TODO Add 'owner_id' to pipeline and node collections
-            const userIdMatchOrNoId = username ? {'$or':[
+            const userIdMatchOrNoId = username ? {
+                '$or': [
                     {owner_user: username},
-                    {owner_user: '$public'}
-                ]} : {}
+                    {owner_user: PUBLIC_USER}
+                ]
+            } : {}
 
             return coll.find(
                 userIdMatchOrNoId
@@ -112,10 +112,12 @@ const getAllPipelines = (username) => {
         .then((db) => {
             const coll = db.db().collection("pipelines");
             //TODO Add 'owner_id' to pipeline and node collections
-            const userIdMatchOrNoId = username ? {'$or':[
+            const userIdMatchOrNoId = username ? {
+                '$or': [
                     {owner_user: username},
-                    {owner_user: '$public'}
-                ]} : {owner_user: '$public'}
+                    {owner_user: PUBLIC_USER}
+                ]
+            } : {owner_user: PUBLIC_USER}
 
             return coll.find(
                 userIdMatchOrNoId

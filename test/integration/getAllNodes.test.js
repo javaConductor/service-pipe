@@ -2,11 +2,9 @@ const request = require('supertest');
 const assert = require('assert');
 const {app} = require('../../server');
 const {whileLoggedIn} = require("../testHelper");
-const PUBLIC_USER = require("../../src/services/userService").PUBLIC_USER;
-
+const PUBLIC_USER = require("../../src/misc").Constants.PUBLIC_USER;
 
 describe('GET /node', () => {
-
     let server = null;
     before(() => {
         server = app.listen(3000);

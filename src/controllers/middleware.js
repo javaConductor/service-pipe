@@ -60,15 +60,4 @@ const authorizeRole =  (req, res, next) => {
     return next();
 }
 
-// const securedEndPoint = (url) => {
-//     switch (url) {
-//         case '/':
-//         case '/login':
-//         case '/register':
-//             return false;
-//         default:
-//             return true;
-//     }
-// }
-
-module.exports = {authenticateToken,authorizeRole}
+module.exports = {authenticateToken, authorizeRole}

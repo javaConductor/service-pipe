@@ -18,8 +18,8 @@ const fn = (app) => {
     ///////////////////////////////////////////////////////
     ////////////////  Security middleware  ////////////////
     ///////////////////////////////////////////////////////
-
-    const {authenticateToken, authorizeRole} = require('./middleware');
+    const {authenticateToken} = require('./middleware');
+    const validUsername = (username) => /[a-zA-Z][a-zA-Z0-9_.]+/.test(username)
 
     ///////////////////////////////////////////////////////
     //////////////////// Auth routes   ////////////////////
@@ -34,6 +34,9 @@ const fn = (app) => {
         const {username, password, role} = req.body;
         if (!username || !password) {
             return res.status(HttpStatusCode.BadRequest).send('Bad request. No credentials.');
+        }
+        if (!validUsername(username)){
+            return res.status(HttpStatusCode.BadRequest).send('Bad request. Invalid username.');
         }
 
         const [e, userExists] = await userService.userExists(username)
@@ -53,7 +56,6 @@ const fn = (app) => {
         try {
             const [err, savedUser] = await userService.saveUser(user);
             if (err) return res.status(500).send(`${JSON.stringify(err)}`);
-
             const {username, role} = savedUser;
             res.status(HttpStatusCode.Created).json({username, role});
         } catch (e) {
@@ -62,9 +64,10 @@ const fn = (app) => {
     });
 
     app.post('/login',
-        rateLimit({windowMs: 15 * 60 * 1000, max: 5}),
+       //TODO find good interval rateLimit({windowMs: 15 * 60 * 1000, max: 5}),
         async (req, res) => {
             const {username, password} = req.body;
+            console.debug(`POST: /login: ${username}, ${password}`);
             const [err, user] = await userService.getUser(username);
             if (err) {
                 return res.status(HttpStatusCode.ServiceUnavailable).send('Database error.');
@@ -80,20 +83,16 @@ const fn = (app) => {
                 return res.json({tempToken, mfaRequired: true});
             }
 
-
             const token = jwt.sign(
                 {id: user._id, role: user.role, username: user.username},
                 userService.SECRET_KEY,
                 {expiresIn: '1h'});
-
 
             const refreshToken = jwt.sign(
                 {id: user._id, role: user.role, username: user.username},
                 userService.SECRET_KEY,
                 {expiresIn: '1d'});
 
-
-//        .cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'strict' })
             // Assigning refresh token in http-only cookie
             res.cookie('refreshToken', refreshToken, {
                 httpOnly: true,
@@ -108,6 +107,10 @@ const fn = (app) => {
     app.post('/logout',
         authenticateToken,
         async (req, res) => {
+            const {id: userId, role: userRole, username} = req.user;
+
+            console.debug(`POST: /logout: ${username}`);
+
             const token = '.'
             // Remove refresh token in http-only cookie
             res.cookie('refreshToken', '', {});
