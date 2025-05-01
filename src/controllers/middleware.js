@@ -8,10 +8,13 @@ const authenticateToken = (req, res, next) => {
     // if (!securedEndPoint(req.url)) {
     //     return next();
     // }
-    console.log(`authenticateToken: url:[${req.url}]: headers:${JSON.stringify(req.headers)}`);
+    console.log(`authenticateToken: url:[${req.originalUrl}]: headers:${JSON.stringify(req.headers)}`);
 
     const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).send('No token provided');
+    if (!token) {
+        console.log(`authenticateToken: url:[${req.originalUrl}]: No token provided`);
+        return res.status(401).send('No token provided');
+    }
     try {
         jwt.verify(token, userService.SECRET_KEY, (accessTokenError, accessUser) => {
             if (accessTokenError) {
@@ -29,10 +32,12 @@ const authenticateToken = (req, res, next) => {
                         {expiresIn: '1h'});
                     // make user available for request
                     req.user = refreshUser;
+                    console.log(`authenticateToken: url:[${req.originalUrl}]: Authenticated`);
+
                     // complete the request
                     return next()
                 })
-
+                console.log(`authenticateToken: url:[${req.originalUrl}]: InvalidToken`);
                 return res.status(403).send('Invalid token');
             }
             // make user available for request
@@ -46,7 +51,7 @@ const authenticateToken = (req, res, next) => {
 
 const authorizeRole =  (req, res, next) => {
 
-    console.log(`authorizeRole: accessing resource: ${(req.originalUrl)}`);
+    console.log(`authorizeRole: accessing resource: ${req.method} ${(req.originalUrl)}`);
 
     // if (!securedEndPoint(req.url)) {
     //     return next();

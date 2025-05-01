@@ -7,6 +7,7 @@ const speakeasy = require("speakeasy");
 const qrcode = require("qrcode");
 const cors = require("cors");
 const userService = require("../services/userService");
+const {validUsername} = require("../misc");
 const fn = (app) => {
     // CORS
     const corsOptions = {
@@ -19,7 +20,7 @@ const fn = (app) => {
     ////////////////  Security middleware  ////////////////
     ///////////////////////////////////////////////////////
     const {authenticateToken} = require('./middleware');
-    const validUsername = (username) => /[a-zA-Z][a-zA-Z0-9_.]+/.test(username)
+  //  const validUsername = (username) => /[a-zA-Z][a-zA-Z0-9_.]+/.test(username)
 
     ///////////////////////////////////////////////////////
     //////////////////// Auth routes   ////////////////////

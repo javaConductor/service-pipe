@@ -183,7 +183,7 @@ const savePipeline = (pipelineDoc) => {
             const noId = {...pipelineDoc};
             delete noId._id;
 
-            //console.log("savePipeline: saveOrUpdate: " + JSON.stringify(noId, null, 2));
+            console.log("savePipeline: saveOrUpdate: " + JSON.stringify(noId, null, 2));
 
             return (pipelineDoc._id
 
@@ -192,15 +192,15 @@ const savePipeline = (pipelineDoc) => {
                 .then((result) => {
                     pipelineDoc._id = result.insertedId;
                     console.debug("savePipeline: result: " + JSON.stringify(result));
-
                     return [null, pipelineDoc];
                 })
                 .catch((err) => {
-                    console.log(err);
+                    console.log("savePipeline: Error: " + JSON.stringify(err, null, 2));
                     return [err];
                 });
         })
         .catch((err) => {
+            console.log("savePipeline: Error: " + JSON.stringify(err, null, 2));
             throw [err];
         })
 };
