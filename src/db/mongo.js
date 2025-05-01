@@ -15,13 +15,16 @@ var connectionURL = getConnectionURL();
 
 console.debug('Connect string: ' + connectionURL);
 
-var theDb = null;
+let theDb = null;
+const dbServer = new URL(connectionURL).host;
+let connectionString = connectionURL;
 
 async function getDatabase() {
     if (theDb == null) {
         //console.log(`getDatabase(): connecting to DB @${connectionURL}`)
 
         try {
+
             return MongoClient.connect(connectionURL)
                 .then(async (db) => {
                     console.debug("getDatabase(): Database created!");
@@ -95,4 +98,4 @@ function getConnectionURL() {
     return connectionURL;
 }
 
-module.exports = {getDatabase};
+module.exports = {getDatabase, dbServer, connectionString};
