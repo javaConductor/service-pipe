@@ -57,6 +57,12 @@ const misc = {
         return Object.keys(obj).reduce((cleanObj, key) => (
             (obj[key]) ? {...cleanObj, [key]: obj[key]} : cleanObj
         ), {});
+    },
+    deepCopy(obj) {
+        const objStr = JSON.stringify(obj, null, 2);
+        return JSON.parse(objStr);
     }
 }
+
+
 module.exports = misc;

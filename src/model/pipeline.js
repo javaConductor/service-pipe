@@ -1,4 +1,5 @@
 const {v4: uuid} = require('uuid');
+const validator = require("./validator");
 
 class Pipeline {
 
@@ -7,26 +8,11 @@ class Pipeline {
     }
 
     constructor(props) {
-        if (!props.name || props.name.trim().length === 0) {
-            throw new Error("Pipeline name is required ")
+        const {error, value} = validator.validatePipeline(props)
+        if (error) {
+            throw new Error(`Invalid pipeline: ${error}`);
         }
-        if (!(typeof props.steps) instanceof Array) {
-            throw new Error("Pipeline steps must be a non-empty array. ");
-        }
-        if (props.steps.length === 0) {
-            throw new Error("Pipeline steps are required ");
-        }
-        if (props.transformModules &&
-            (props.transformModules.before || props.transformModules.after)) {
-            this.transformModules = this.setTransformModules(props.transformModules);
-        }
-
-        this.uuid = props.uuid || uuid();
-        this.status = props.status || Pipeline.Status.New;
-        this.extract = props.extract || {};
-        this.name = props.name;
-        this.steps = props.steps;
-        this.contentType = props.contentType || 'application/json'
+        Object.assign(this, value);
     }
 
     setTransformModules(transformModules) {

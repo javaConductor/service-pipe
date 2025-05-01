@@ -1,57 +1,20 @@
 const AggregateExtraction = require('../processors/aggregateExtraction');
 const {v4: uuid} = require('uuid');
-
+const validator = require('../model/validator');
 // also called a step
 class Pipe {
     constructor(props) {
 
-        if (!props.uuid || props.uuid.trim().length === 0) {
-            this.uuid = uuid();
+        if (!props.nodeUUID || props.nodeUUID.trim().length === 0) {
+            this.nodeUUID = uuid();
             //throw new Error("Pipe uuid is required ");
         }
-        this.uuid = props.uuid;
-        if (!props.name || props.name.trim().length === 0) {
-            throw new Error("Pipe name is required ")
+
+        const {error, value} = validator.validateStepDoc(props)
+        if (error) {
+            throw new Error(`Invalid pipeline step: ${error}`);
         }
-        this.name = props.name;
-
-        if (props.transformModules &&
-            (props.transformModules.before || props.transformModules.after)) {
-            this.transformModules = this.setTransformModules(props.transformModules);
-        }
-
-        if (!props.node && !props.nodeName && !props.nodeUUID) {
-            throw new Error(`Pipe: node or nodeUUID is required.`);
-        }
-        this.node = props.node;
-        this.nodeUUID = props.nodeUUID;
-        this.nodeName = props.nodeName;
-
-        this.aggregateStep = props.aggregateStep;
-        if (this.aggregateStep) {
-
-            this.aggregation.parallelStep = props.parallelStep;
-
-            if (!props.aggregation.dataArrayProperty) {
-                throw new Error(`Pipe: dataArrayProperty is required.`);
-            }
-            this.aggregation.dataArrayProperty = props.aggregation.dataArrayProperty;
-
-            if (!props.aggregation.outputArrayProperty) {
-                throw new Error(`Pipe: outputArrayProperty is required.`);
-            }
-            this.aggregation.outputArrayProperty = props.aggregation.outputArrayProperty;
-            if (!props.aggregateExtract) {
-                throw new Error(`Pipe: aggregateExtract is required.`);
-            }
-            this.aggregation.aggregateExtract = props.aggregation.aggregateExtract;
-            this.aggregation.aggExtractionType = props.aggregation.aggregateExtract.aggExtractionType || AggregateExtraction.Types.AsNormal;
-        }
-
-        this.params = props.params;
-        this.data = props.data;
-        this.extract = props.extract || {};
-        this.stepType = props.stepType || Pipe.StepTypes.HTTP_JSON;
+        Object.assign(this, value);
     }
 
     setTransformModules(transformModules) {
