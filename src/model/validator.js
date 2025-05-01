@@ -2,6 +2,8 @@ const Joi = require("joi");
 const AggregationExtraction = require("../processors/aggregateExtraction");
 const authenticationTypes = require("../model/authenticationTypes");
 const jsonTypes = require("../model/jsonTypes")
+const {Constants} = require("../misc");
+const misc = require("../misc");
 
 let extractObject = Joi.object().keys({
     destinationElement: Joi.string().required(),
@@ -27,9 +29,16 @@ class Validator {
             extract: Joi.array().items(extractObject),
             steps: Joi.array().items(this.stepSchema()),
             transformModules: Joi.object().keys({
-                before: this.transformModule(),
-                after: this.transformModule(),
+                before: this.transformModule().optional(),
+                after: this.transformModule().optional(),
             }),
+            owner_user: Joi.string()
+                .custom((value, helper) => {
+                    if (!misc.validUsername(value) && value !== misc.Constants.PUBLIC_USER) {
+                        return helper.message("Invalid username for owner_user");
+                    }
+                    return value;
+                })
         });
 
         this.nodeSchema = Joi.object().keys({
@@ -38,13 +47,13 @@ class Validator {
             name: Joi.string().required(),
             accessType: Joi.string().valid("HTTP").default("HTTP"),
             url: Joi.string(),
-            method: Joi.string().valid("POST", "GET", "PUT"),
+            method: Joi.string().valid(...Constants.HTTP_METHODS),
             contentType: Joi.string(),
             headers: Joi.object(),//.keys([this.httpHeaderName()]),
-            authenticationType: Joi.string().valid(
-                authenticationTypes.None,
-                authenticationTypes.Basic,
-                authenticationTypes.Token,
+            authenticationType: Joi.string().valid(...(authenticationTypes.list),
+                // authenticationTypes.None,
+                // authenticationTypes.Basic,
+                // authenticationTypes.Token,
             ),
 
             authentication: Joi.alternatives()
@@ -57,9 +66,16 @@ class Validator {
             payload: Joi.object(),// data being sent to the node (perhaps from the previous step)
             extract: Joi.array().items(extractObject),// {key: extracted element, value:jmesPath where 'key' is the key to store extracted value
             transformModules: Joi.object().keys({
-                before: this.transformModule(),
-                after: this.transformModule(),
+                before: this.transformModule().optional(),
+                after: this.transformModule().optional(),
             }),
+            owner_user: Joi.string()
+                .custom((value, helper) => {
+                    if (!misc.validUsername(value) && value !== misc.Constants.PUBLIC_USER) {
+                        return helper.message("Invalid username for owner_user");
+                    }
+                    return value;
+                }),
             // and 'value' is the JmsPath location of the data returned from the node
             //.regex(/^\d{3}-\d{3}-\d{4}$/).required(),
             errorIndicators: Joi.array().items(Joi.string()),
@@ -70,8 +86,9 @@ class Validator {
 
     transformModule() {
         return Joi.object().keys({
-            stepFnSrc: Joi.string()
-        })
+            stepFnSrc: Joi.string().allow('').optional(),//.message("Must add function source")
+
+        }).optional()
     }
 
     stepSchema() {

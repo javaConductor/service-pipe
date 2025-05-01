@@ -1,10 +1,101 @@
 const mongo = require('./mongo');
+const User = require('../model/user');
+const PUBLIC_USER = require("../../src/misc").Constants.PUBLIC_USER;
 
-const getAllNodes = () => {
+const getAllUsers = async (userFn) => {
+    try {
+        const db = await mongo.getDatabase();
+        const coll = db.db().collection("users");
+        const rows = await coll.find().toArray();
+        console.debug(`getAllUsers() -> + ${(rows.length)} rows.`);
+
+        const users = rows.map((row) => {
+            return new User(row)
+        })
+        if (userFn) {
+            userFn([null, users])
+        } else
+            return [null, users];
+    } catch (err) {
+        console.debug(err);
+
+        if (userFn) {
+            userFn([err])
+        } else
+            return [err];
+    }
+}
+
+const saveUser = async (userDoc) => {
+    try {
+
+        const db = await mongo.getDatabase();
+        const coll = db.db().collection("users");
+        //console.log("saveUser: saveOrUpdate: " + JSON.stringify(noId, null, 2));
+
+        const result = await (userDoc._id
+            ? coll.updateOne({_id: userDoc._id}, {"$set": userDoc})
+            : coll.insertOne(userDoc));
+
+        userDoc._id = result.insertedId;
+        console.debug("saveUser: result: " + JSON.stringify(result));
+        return [null, userDoc];
+    } catch (err) {
+        console.log(err);
+        return [err];
+    }
+
+};
+
+const getUser = async (username) => {
+    try {
+        const db = await mongo.getDatabase();
+        const coll = db.db().collection("users");
+        const result = await coll.findOne({username})
+
+        console.debug("getUser: result: " + JSON.stringify(result));
+        return [null, result];
+    } catch (err) {
+        console.log(err);
+        return [err];
+    }
+};
+
+const removeUser = async (username) => {
+    return mongo.getDatabase()
+        .then((db) => {
+            const coll = db.db().collection("users");
+            coll.deleteOne({"username": username})
+                .then((result) => {
+                    console.log(`removeUser -> ${JSON.stringify(result)}`);
+                    return result.deletedCount === 0 ? ["No user deleted."] : [];
+                })
+                .catch((err) => {
+                    console.debug(`removeUser:err -> ${err}`);
+                    return [err];
+                })
+        })
+        .catch((err) => {
+            console.debug(`removeUser:err -> ${err}`);
+            return [err];
+        })
+};
+
+const getAllNodes = (username) => {
     return mongo.getDatabase()
         .then((db) => {
             const coll = db.db().collection("nodes");
-            return coll.find().toArray().then((rows) => {
+            //TODO Add 'owner_id' to pipeline and node collections
+            const userIdMatchOrNoId = username ? {
+                '$or': [
+                    {owner_user: username},
+                    {owner_user: PUBLIC_USER}
+                ]
+            } : {}
+
+            return coll.find(
+                userIdMatchOrNoId
+            ).toArray().then((rows) => {
                 // log the rows
                 console.debug(`getAllNodes() -> + ${(rows.length)} rows.`);
                 return [null, rows];
@@ -16,12 +107,21 @@ const getAllNodes = () => {
         });
 };
 
-
-const getAllPipelines = () => {
+const getAllPipelines = (username) => {
     return mongo.getDatabase()
         .then((db) => {
             const coll = db.db().collection("pipelines");
-            return coll.find().toArray().then((rows) => {
+            //TODO Add 'owner_id' to pipeline and node collections
+            const userIdMatchOrNoId = username ? {
+                '$or': [
+                    {owner_user: username},
+                    {owner_user: PUBLIC_USER}
+                ]
+            } : {owner_user: PUBLIC_USER}
+
+            return coll.find(
+                userIdMatchOrNoId
+            ).toArray().then((rows) => {
                 // log the rows
                 console.debug(`getAllPipelines() -> + ${(rows.length)} rows.`);
                 return [null, rows];
@@ -83,7 +183,7 @@ const savePipeline = (pipelineDoc) => {
             const noId = {...pipelineDoc};
             delete noId._id;
 
-            //console.log("savePipeline: saveOrUpdate: " + JSON.stringify(noId, null, 2));
+            console.log("savePipeline: saveOrUpdate: " + JSON.stringify(noId, null, 2));
 
             return (pipelineDoc._id
 
@@ -92,15 +192,15 @@ const savePipeline = (pipelineDoc) => {
                 .then((result) => {
                     pipelineDoc._id = result.insertedId;
                     console.debug("savePipeline: result: " + JSON.stringify(result));
-
                     return [null, pipelineDoc];
                 })
                 .catch((err) => {
-                    console.log(err);
+                    console.log("savePipeline: Error: " + JSON.stringify(err, null, 2));
                     return [err];
                 });
         })
         .catch((err) => {
+            console.log("savePipeline: Error: " + JSON.stringify(err, null, 2));
             throw [err];
         })
 };
@@ -193,13 +293,14 @@ const removeNode = (uuid) => {
 };
 
 module.exports = {
-    "getAllNodes": getAllNodes,
-    "getAllPipelines": getAllPipelines,
-    "getNodeByUUID": getNodeByUUID,
-    "getPipelineByUUID": getPipelineByUUID,
-    "savePipeline": savePipeline,
-    "saveNode": saveNode,
+    getAllNodes,
+    getAllPipelines,
+    getNodeByUUID,
+    getPipelineByUUID,
+    savePipeline,
+    saveNode,
     removePipeline,
-    removeNode
+    removeNode,
+    getAllUsers, getUser, saveUser, removeUser
 };
 

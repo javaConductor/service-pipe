@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pipelineController = require('../controllers/pipeline');
 const validator = require("../model/validator")
+const {authenticateToken, authorizeRole} = require("../controllers/middleware");
 
 const validateDoc = (schema) => (req, res, next) => {
     const {error, value} = schema.validate(req.body);
@@ -10,19 +11,33 @@ const validateDoc = (schema) => (req, res, next) => {
     if (error) {
         return res.status(400).json({error: error.details[0].message});
     }
-    next();
+    return next();
 };
 
 const inspect = require("util").inspect;
 const mwDebug = (req, res, next) => {
-    console.debug("route:debug ->" + inspect(req.rawHeaders));
-    next();
+    console.debug(`route:debug ${req.method} [${req.url}]: -> ${inspect(req.headers)}`);
+    return next();
 }
 
-router.get('/', mwDebug, pipelineController.getAllNodes);
-
-router.get('/:uuid', mwDebug, pipelineController.getNodeByUUID);
-router.post('/', validateDoc(validator.nodeSchema), pipelineController.saveNode);
-router.delete('/:uuid', pipelineController.removeNode);
+router.get('/',
+    mwDebug,
+    authenticateToken,
+    authorizeRole,
+    pipelineController.getAllNodes);
+router.get('/:uuid',
+    mwDebug,
+    authenticateToken,
+    authorizeRole,
+    pipelineController.getNodeByUUID);
+router.post('/',
+    validateDoc(validator.nodeSchema),
+    authenticateToken,
+    authorizeRole,
+    pipelineController.saveNode);
+router.delete('/:uuid',
+    authenticateToken,
+    authorizeRole,
+    pipelineController.removeNode);
 
 module.exports = router;

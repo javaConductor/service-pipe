@@ -11,9 +11,78 @@ class PipelineNode {
         return `[${this.name}](${this.url}):${this.uuid}`;
     }
 
-    constructor(nodeProps) {
+    constructor(nodeProps, executionFn) {
         const {err, warning, value} = validator.validateNodeDoc(nodeProps)
         Object.assign(this, value);
+
+        if (executionFn) {
+            executionFn.bind(this)
+        }
+        this.executionFn = executionFn ? executionFn : (async (step, requestData, pipelineExecution) =>
+        {
+            const {addTrace} = pipelineExecution.trace;
+
+            /// Add node data to requestData
+            requestData = {...this.nodeData, ...requestData}
+
+            /// create the URL from the step
+            const url = misc.interpolate(this.url, requestData)
+
+            /*
+             * Create the Header entries from the step data
+             * Interpolate headers using the realData
+             */
+            let headers = {};
+            for (const headerName in this.headers) {
+                headers[headerName] = misc.interpolate(this.headers[headerName], requestData)
+            }
+
+            ///////////////////// Update History /////////////////////
+            addTrace({
+                step: step.name,
+                nodeName: this.name,
+                nodeURL: url,
+                nodeHeaders: headers,
+                timestamp: Date.now(),
+                state: PipelineStep.StepStates.NODE_ACCESS,
+                message: "Initiate request.",
+                data: requestData
+            });
+
+            ///////////////////// Add authentication headers /////////////////////
+            headers = this.addAuthenticationHeaderValues(
+                headers,
+                this.authenticationType,
+                this.authentication
+            )
+            console.debug(`node.execute():requestData:${step.name}:${url}: payload -> ${JSON.stringify(requestData)}\n`);
+
+            ///////////////////// Make the HTTP CALL /////////////////////
+            ///////////////////// Make the HTTP CALL /////////////////////
+            ///////////////////// Make the HTTP CALL /////////////////////
+            return axios({
+                method: step.node.method,
+                url: url,
+                data: requestData,
+                config: {headers: {'Content-Type': this.contentType, ...headers}}
+            }).then((response) => {
+                console.debug(`PipelineNode.execute(): Step:${step.name} -> response:${JSON.stringify(response.data)}\n`);
+                addTrace({
+                    step: step.name,
+                    nodeName: this.name,
+                    nodeURL: url,
+                    nodeHeaders: headers,
+                    timestamp: Date.now(),
+                    state: PipelineStep.StepStates.NODE_COMPLETE,
+                    message: "Node completed successfully.",
+                    nodeResponse: response.data
+                });
+                return [null, response.data]
+            }).catch((axiosError) => {
+                return [this.handleAxiosError(axiosError, step.name, this.name, url, this.method, pipelineExecution)]
+            })
+        });
+
     }
 
     addAuthenticationHeaderValues(headers,
@@ -71,67 +140,7 @@ class PipelineNode {
      * @returns {Promise<[error, data]>}
      */
     async execute(step, requestData, pipelineExecution) {
-        const {addTrace} = pipelineExecution.trace;
-
-        /// Add node data to requestData
-        requestData = {...this.nodeData, ...requestData}
-
-        /// create the URL from the step
-        const url = misc.interpolate(this.url, requestData)
-
-        /*
-         * Create the Header entries from the step data
-         * Interpolate headers using the realData
-         */
-        let headers = {};
-        for (const headerName in this.headers) {
-            headers[headerName] = misc.interpolate(this.headers[headerName], requestData)
-        }
-
-        ///////////////////// Update History /////////////////////
-        addTrace({
-            step: step.name,
-            nodeName: this.name,
-            nodeURL: url,
-            nodeHeaders: headers,
-            timestamp: Date.now(),
-            state: PipelineStep.StepStates.NODE_ACCESS,
-            message: "Initiate request.",
-            data: requestData
-        });
-
-        ///////////////////// Add authentication headers /////////////////////
-        headers = this.addAuthenticationHeaderValues(
-            headers,
-            this.authenticationType,
-            this.authentication
-        )
-        console.debug(`node.execute():requestData:${step.name}:${url}: payload -> ${JSON.stringify(requestData)}\n`);
-
-        ///////////////////// Make the HTTP CALL /////////////////////
-        ///////////////////// Make the HTTP CALL /////////////////////
-        ///////////////////// Make the HTTP CALL /////////////////////
-        return axios({
-            method: step.node.method,
-            url: url,
-            data: requestData,
-            config: {headers: {'Content-Type': this.contentType, ...headers}}
-        }).then((response) => {
-            console.debug(`PipelineNode.execute(): Step:${step.name} -> response:${JSON.stringify(response.data)}\n`);
-            addTrace({
-                step: step.name,
-                nodeName: this.name,
-                nodeURL: url,
-                nodeHeaders: headers,
-                timestamp: Date.now(),
-                state: PipelineStep.StepStates.NODE_COMPLETE,
-                message: "Node completed successfully.",
-                nodeResponse: response.data
-            });
-            return [null, response.data]
-        }).catch((axiosError) => {
-            return [this.handleAxiosError(axiosError, step.name, this.name, url, this.method, pipelineExecution)]
-        })
+        return this.executionFn(step, requestData, pipelineExecution);
     }
 
     handleAxiosError(axiosError, stepName, nodeName, url, method, pipelineExecution) {

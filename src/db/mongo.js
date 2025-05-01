@@ -19,44 +19,54 @@ var theDb = null;
 
 async function getDatabase() {
     if (theDb == null) {
-        return MongoClient.connect(connectionURL)
-            .then((db) => {
-                console.debug("Database created!");
-                theDb = db;
-                db.db().collections().then((collections) => {
-                    collections.forEach((col) => {
-                        console.debug("getDatabase() Collection ->" + (col.collectionName));
-                    })
-                });
-                db.db().collection("nodes")
-                    .createIndex({uuid: 1}, (err, result) => {
-                        if (err) {
-                            console.error('Error creating index on [uuid]:', err);
-                            return;
-                        }
+        //console.log(`getDatabase(): connecting to DB @${connectionURL}`)
 
-                        console.debug('Index created successfully:', result);
+        try {
+            return MongoClient.connect(connectionURL)
+                .then(async (db) => {
+                    console.debug("getDatabase(): Database created!");
+                    theDb = db;
+                    db.db().collections().then((collections) => {
+                        collections.forEach((col) => {
+                            console.debug("getDatabase(): Collection ->" + (col.collectionName));
+                        })
                     });
 
-                db.db().collection("pipelines")
-                    .createIndex({uuid: 1}, (err, result) => {
-                        if (err) {
-                            console.error('Error creating index on [uuid]:', err);
-                            return;
-                        }
+                    await db.db().collection("nodes")
+                        .createIndex({uuid: 1}, (err, result) => {
+                            if (err) {
+                                console.error('getDatabase(): Error creating index on [uuid]:', err);
+                                return;
+                            }
+                            console.debug('getDatabase(): Index created successfully:', result);
+                        });
 
-                        console.debug('Index created successfully:', result);
-                    });
+                    await db.db().collection("pipelines")
+                        .createIndex({uuid: 1}, (err, result) => {
+                            if (err) {
+                                console.error('getDatabase(): Error creating index on [uuid]:', err);
+                                return;
+                            }
+                            console.debug('getDatabase(): Index created successfully:', result);
+                        });
 
-                return db;
-            })
+                    await db.db().collection("users")
+                        .createIndex({"username": 1}, {unique: true})
 
-            .catch((err) => {
-                console.error(`Error connected to database at [${connectionURL}]: ${err}`);
-                throw err;
-            })
+                    return db;
+                })
+                .catch((err) => {
+                    console.error(`getDatabase(): Error connected to database at [${connectionURL}]: ${err}`);
+                    throw err;
+                })
+        } catch (err) {
+            console.error(`getDatabase(): Error connecting to database at [${connectionURL}]: ${err}`);
+            throw err;
+        }
+
     } else {
         return (async () => {
+            //console.log(`getDatabase(): Connected to database at [${connectionURL}]: ${theDb.options.dbName}`);
             return theDb
         })();
     }
@@ -70,12 +80,15 @@ function getConnectionURL() {
 
     var connectionURL = `mongodb+srv://${dbUsername}:${dbPassword}@lessons-cluster.gs5vn.mongodb.net/service-pipe`;
 
-    switch (CURRENT_DB) {
+    switch (CURRENT_DB || 'local') {
         case 'local':
             connectionURL = `mongodb://localhost:27017/service-pipe`;
             break;
         case 'atlas-cluster':
             connectionURL = `mongodb+srv://${dbUsername}:${dbPassword}@lessons-cluster.gs5vn.mongodb.net/service-pipe`;
+            break;
+        case 'node-chef':
+            connectionURL = `mongodb+srv://${dbUsername}:${dbPassword}@db-service-pipe-26710.nodechef.com:5363/service-pipe`;
             break;
     }
 

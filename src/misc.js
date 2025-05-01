@@ -1,6 +1,25 @@
 const jmespath = require("jmespath");
 
 const misc = {
+
+    Constants: {
+        PUBLIC_USER: '$public',
+        HTTP_METHODS: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        NODE_AUTHENTICATION_TYPES: ['none', 'Basic', 'Token']
+    },
+
+    validUsername: (username) => /[a-zA-Z][a-zA-Z0-9_.]+/.test(username),
+
+    logWithLineNumber: (message) => {
+    const error = new Error();
+    const stackLines = error.stack.split('\n');
+    const callerLine = stackLines[2]; // Adjust index if needed
+    const lineNumberMatch = callerLine.match(/:(\d+):\d+\)$/);
+
+    const lineNumber = lineNumberMatch ? lineNumberMatch[1] : 'unknown';
+    console.log(`[Line ${lineNumber}] ${message}`);
+},
+
     interpolate: (stringValue, data) => {
         if (typeof stringValue !== 'string')
             return stringValue;
