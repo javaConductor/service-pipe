@@ -8,7 +8,7 @@ const authenticateToken = (req, res, next) => {
     // if (!securedEndPoint(req.url)) {
     //     return next();
     // }
-    console.log(`authenticateToken: url:[${req.originalUrl}]: headers:${JSON.stringify(req.headers)}`);
+    console.log(`authenticateToken: url:[${req.originalUrl}]: headers:${JSON.stringify(req.headers," ",2)}`);
 
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {

@@ -2,6 +2,7 @@ const chai = require('chai');
 const assert = chai.assert;
 const should = chai.should();
 const expect = chai.expect;
+const testHelper = require('../testHelper');
 
 const {v4: uuid} = require('uuid');
 const PipelineRequest = require("../../src/pipelineRequest");
@@ -15,8 +16,33 @@ describe('Aggregation Step', function () {
     describe('Aggregate Result Extraction', function () {
 
         it('should extract results of aggregate calls', function (doneFn) {
+            //
+            // const statLinksNode = new PipelineNode({
+            //         "id": 777,
+            //         "name": "test.statsLink",
+            //         "url": "http://localhost:3001/num_stats",
+            //         "method": "GET",
+            //         "headers": {
+            //             "Accept": "application/json",
+            //             "Cache-Control": "no-cache",
+            //             "Content-Type": "application/json",
+            //             "Authorization": ""
+            //         },
+            //         "nodeData": {},
+            //         "payload": {},
+            //         "errorIndicators": [
+            //             "error",
+            //             "documentation_url"
+            //         ],
+            //         "errorMessages": [
+            //             "message",
+            //             "documentation_url"
+            //         ],
+            //         "contentType": "application/json"
+            //     }
+            // );
 
-            const statLinksNode = new PipelineNode({
+            const statLinksNode = testHelper.createTestNode({
                     "id": 777,
                     "name": "test.statsLink",
                     "url": "http://localhost:3001/num_stats",
@@ -24,8 +50,7 @@ describe('Aggregation Step', function () {
                     "headers": {
                         "Accept": "application/json",
                         "Cache-Control": "no-cache",
-                        "Content-Type": "application/json",
-                        "Authorization": ""
+                        "Content-Type": "application/json"
                     },
                     "nodeData": {},
                     "payload": {},
@@ -38,10 +63,15 @@ describe('Aggregation Step', function () {
                         "documentation_url"
                     ],
                     "contentType": "application/json"
-                }
+                }, [
+                    "http://localhost:3001/sum",
+                    "http://localhost:3001/avg",
+                    "http://localhost:3001/min",
+                    "http://localhost:3001/max"
+                ]
             );
 
-            const statNode = new PipelineNode({
+            const statNode = testHelper.createTestNode({
                     "id": 7770,
                     "name": "test.stat",
                     "url": "http://localhost:3001/${statName}",
@@ -63,10 +93,16 @@ describe('Aggregation Step', function () {
                         "documentation_url"
                     ],
                     "contentType": "application/json"
+                },
+                {
+                    avg: 5.6,
+                    sum: 73.9,
+                    min: 2.8,
+                    max: 70
                 }
             );
 
-            const linksStep = new PipelineStep({
+            const linksStep = testHelper.createTestStep({
                 "name": "Stat links",
                 "description": "Get the list of stat urls for a list of numbers",
                 node: statLinksNode,
@@ -75,7 +111,7 @@ describe('Aggregation Step', function () {
                 "extract": {
                     "links": "array:"
                 }
-            });
+            }, []);
 
             const statStep = new PipelineStep({
                 "name": "Stat Step",

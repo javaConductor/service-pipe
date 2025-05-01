@@ -1,22 +1,21 @@
 const request = require('supertest');
 const assert = require('assert');
-const dataRepo = require("../src/db/data-repo");
 const userService = require("../src/services/userService");
 const Pipeline = require("../src/model/pipeline");
-const {v4:uuidV4} = require("uuid");
+const {v4: uuidV4} = require("uuid");
 const PipelineNode = require("../src/model/pipelineNode");
 
 /**
  *
  * @param app
- * @param testFunction ( app, username, accessToken ) => {}
- * @param options {role:''}
- * @returns {Promise<any>}
+ * @param testFunction
+ * @param options
+ * @returns {*}
  */
 function whileLoggedIn(
     app,
     testFunction, // (app, username, accessToken)
-    options={}
+    options = {}
 ) {
 
     assert.ok(app)
@@ -133,15 +132,6 @@ const defaultPipeline = {
     steps: [],
     status: "New"
 }
-
-
-const createTestPipeline = (props) => {
-    if (typeof props !== 'object') {
-        throw new Error(`Expected object, got ${typeof props}`);
-    }
-    return new Pipeline({...defaultPipeline, ...props});
-};
-
 const defaultNode = {
     name: "",
     accessType: "HTTP",
@@ -154,32 +144,41 @@ const defaultNode = {
     errorIndicators: [],
     errorMessages: [],
 };
-
-const createTestNode = (nodeProps, returnValue) => {
-    const fn = async (step, requestData, pipelineExecution) => [null, returnValue]
-    return new PipelineNode({...defaultNode, ...nodeProps}, fn)
-}
-
-const defaultStep = () => {
-    return {
-        name: "",
-        nodeUUID: uuidV4(),
-        data: {},
-        extract: [],
-        inputExtract: [],
-        aggregateStep: false,
-        aggregation: {}
-    }
+const defaultStep = {
+    name: "",
+    nodeUUID: uuidV4(),
+    data: {},
+    extract: [],
+    inputExtract: [],
+    aggregateStep: false,
+    aggregation: {}
 };
 
-const createTestStep = (stepProps, returnValue) => {
+const createTestPipeline = (props) => {
+    if (typeof props !== 'object') {
+        throw new Error(`Expected object, got ${typeof props}`);
+    }
+    return new Pipeline({...defaultPipeline, ...props});
+};
 
-    const step = {...defaultStep(), ...stepProps}
-    if(!step.node) {
-        const node = createTestNode({uuid: step.nodeUUID}, returnValue)
-        step.node = node
+const createTestNode = (nodeProps, returnValue) => {
+    // created function to return test response and null error
+    const fn = async (step, requestData, pipelineExecution) => [null, returnValue]
+    return new PipelineNode({...defaultNode, ...nodeProps}, fn);
+}
+
+const createTestStep = (stepProps, returnValue) => {
+    const step = {...defaultStep, ...stepProps};
+    if (!step.node) {
+        const node = createTestNode({uuid: step.nodeUUID}, returnValue);
+        step.node = node;
     }
     return step;
 }
 
-module.exports = {whileLoggedIn, createTestPipeline, createTestNode, createTestStep};
+module.exports = {
+    whileLoggedIn,
+    createTestPipeline,
+    createTestNode,
+    createTestStep
+};

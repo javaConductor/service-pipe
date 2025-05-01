@@ -81,7 +81,6 @@ class Validator {
             errorIndicators: Joi.array().items(Joi.string()),
             errorMessages: Joi.array().items(Joi.string()),
         });
-
     }
 
     transformModule() {
@@ -178,7 +177,17 @@ class Validator {
     validateNodeDoc(nodeDoc) {
         return this.nodeSchema.validate(nodeDoc);
     }
+
+
+    /**
+     * Validates step/pipe properties
+     *
+     * @param stepDoc
+     * @returns {Joi.ValidationResult<any>}
+     */
+    validateStepDoc(stepDoc) {
+        return this.stepSchema().validate(stepDoc);
+    }
 }
 
-module
-    .exports = new Validator();
+module.exports = new Validator();
