@@ -48,7 +48,8 @@ const fn = async (app) => {
         const response = {
             appServer: hostname,
             dbServer: mongo.dbServer,
-            dbStatus: dbConnectionStatus
+            dbStatus: dbConnectionStatus,
+            available: canConnect
         }
         try {
             res.status(HttpStatusCode.Ok).json(response);

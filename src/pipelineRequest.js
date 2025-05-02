@@ -19,7 +19,7 @@ class PipelineRequest {
         if (!pipeline.uuid)
             throw new Error(`PipelineRequest: Bad Pipeline: no uuid`);
         if (!pipeline.steps || pipeline.steps.length === 0)
-            throw new Error(`PipelineRequest: Bad Pipeline: no uuid`);
+            throw new Error(`PipelineRequest: Bad Pipeline: no steps`);
         this.pipeline = pipeline;
 
         this.pipeline.steps = this.pipeline.steps.map((step) => {
@@ -29,7 +29,7 @@ class PipelineRequest {
             return {...step, node: step.node || dbRepo.getNodeByUUID(step.nodeUUID)}
         });
 
-        if (!pipelineExecution){
+        if (!pipelineExecution) {
             throw new Error(`PipelineRequest: pipelineExecution is required`);
         }
         this.pipelineExecution = pipelineExecution;
@@ -47,10 +47,10 @@ class PipelineRequest {
      * */
     async start(step = null) {
         const startTime = Date.now();
-        const {addTrace, clearTrace} = this.pipelineExecution.trace
+        const {addTrace, clearTrace} = this.pipelineExecution.trace;
 
         ///////////////////// Create History /////////////////////
-        clearTrace()
+        clearTrace();
         addTrace({
             pipeline: this.pipeline.name,
             timestamp: Date.now(),
@@ -62,6 +62,8 @@ class PipelineRequest {
         ///////////////////// Run Pipeline Steps /////////////////////
         ///////////////////// Run Pipeline Steps /////////////////////
         let [err, results] = await this._startSeq(this.pipeline, this.initialData, this.pipelineExecution);
+
+        ///////////////////// Check for pipeline execution errors /////////////////////
         if (err) {
             const now = Date.now();
             const millis = new Date(now).getTime() - new Date(startTime).getTime();
@@ -78,10 +80,13 @@ class PipelineRequest {
             return [err];
         }
 
-        ///////////////////// Successfully return pipeline output /////////////////////
-        [results, err] = extractor.extract(this.pipeline.contentType || 'application/json',
+        ///////////////////// Extract relevant data from pipeline output /////////////////////
+        [results, err] = extractor.extract(
+            this.pipeline.contentType || 'application/json',
             results,
             this.pipeline.extract);
+
+        ///////////////////// Check for data extraction errors /////////////////////
         if (err) {
             const now = Date.now();
             const millis = new Date(now).getTime() - new Date(startTime).getTime();
@@ -99,14 +104,14 @@ class PipelineRequest {
             return [err];
         }
 
-
         ///////////////////// Post process stepResults /////////////////////
         let postProcessedResults;
         try {
-             postProcessedResults = transformer.postProcessPipelineResults(this.pipeline,
+            postProcessedResults = transformer.postProcessPipelineResults(
+                this.pipeline,
                 this.pipeline.transformModules,
                 results);
-        }catch (ppErr){
+        } catch (ppErr) {
             addTrace({
                 pipeline: this.pipeline.name,
                 timestamp: Date.now(),
@@ -123,7 +128,6 @@ class PipelineRequest {
         return [null, postProcessedResults];
     }//start
 
-
     /**
      *
      * @param pipeline
@@ -133,9 +137,8 @@ class PipelineRequest {
      * @returns {Promise<[string, results]>}
      * */
     async executeStep(pipeline, step, stepData, pipelineExecution) {
-        return this._startStep(pipeline, step, stepData,pipelineExecution);
+        return this._startStep(pipeline, step, stepData, pipelineExecution);
     }
-
 
     /**
      *
@@ -157,8 +160,6 @@ class PipelineRequest {
             ///////////////////// execute each step /////////////////////
             ///////////////////// execute each step /////////////////////
             ///////////////////// execute each step /////////////////////
-
-
             for (let step of sequence) {
                 const [err, stepResults] = await this._startStep(pipeline, step, data, pipelineExecution);
                 if (err) {
@@ -264,6 +265,7 @@ class PipelineRequest {
             data,
             pipelineExecution);
 
+        ///////////////////// Report step execution error(s) if Any /////////////////////
         if (err) {
             addTrace({
                 pipeline: pipelineName,
@@ -284,6 +286,7 @@ class PipelineRequest {
             stepResults,
             step.extract)
 
+        ///////////////////// Report stepResults extract error if Any /////////////////////
         if (extractErr) {
             addTrace({
                 pipeline: pipelineName,

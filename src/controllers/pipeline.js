@@ -17,7 +17,7 @@ module.exports = {
     getAllPipelines: (req, res, next) => {
         // const user = req.user;
         const {id: userId, role: userRole, username} = req.user;
-
+        console.log(`${username} ${req.method} ${req.originalUrl}`);
         dbRepo.getAllPipelines(username).then(([err, pipelines]) => {
             if (err) return next(err);
 
@@ -39,13 +39,14 @@ module.exports = {
      */
     getPipelineByUUID: async (req, res, next) => {
         const uuid = req.params.uuid;
+        const {id: userId, role: userRole, username} = req.user;
+        console.log(`${username} ${req.method} [${req.originalUrl}] : ${uuid}`);
         if (!uuid) {
             return res.status(HttpStatusCode.BadRequest).send('pipeline UUID missing from request.');
         }
-        const {id: userId, role: userRole, username} = req.user;
 
         try {
-            const [err, pipeline] = await dbRepo.getPipelineByUUID(uuid, user)
+            const [err, pipeline] = await dbRepo.getPipelineByUUID(uuid, username)
 
             if (err) return next(err);
             if (!pipeline) {
@@ -58,7 +59,7 @@ module.exports = {
             }
         } catch (err) {
             // console.warn("controller:getPipelineByUUID:error ->" + JSON.stringify(err));
-            console.warn(` ${username} ${req.method} ${req.originalUrl}: Error ${JSON.stringify(err)}`)
+            console.warn(` ${username} ${req.method} [${req.originalUrl}]: Error ${JSON.stringify(err)}`)
 
             next(err);
         }
@@ -72,7 +73,7 @@ module.exports = {
     savePipeline: async (req, res) => {
         const pipeline = req.body;
         const {id: userId, role: userRole, username} = req.user;
-        console.log(`${username} ${req.method} ${req.originalUrl}] `)
+        console.log(`${username} ${req.method} [${req.originalUrl}] `)
         if (!pipeline) {
             return res.status(HttpStatusCode.BadRequest).send('Pipeline missing from request.');
         }
@@ -83,20 +84,20 @@ module.exports = {
         } else if (!canAccessPipeline(pipeline, username, userRole)) {
             return res.status(HttpStatusCode.Unauthorized).send('User ' + username + ' has no access to this pipeline.');
         }
-        console.log(`${username} ${req.method} ${req.originalUrl}]: Can access pipeline `)
+        console.log(`${username} ${req.method} [${req.originalUrl}]: Can access pipeline `)
 
         try {
-            console.log(`${username} ${req.method} ${req.originalUrl}: ${isNew ? 'Creating' : 'Updating'} pipeline [${pipeline?.name}] `)
+            console.log(`${username} ${req.method} [${req.originalUrl}]: ${isNew ? 'Creating' : 'Updating'} pipeline [${pipeline?.name}] `)
 
             const [err, savedPipeline] =await  dbRepo.savePipeline(pipeline)
             if (!err) {
-                console.log(`${isNew ? 'Created' : 'Updated'} pipeline ${savedPipeline.uuid} `)
+                console.log(`${username} ${req.method} [${req.originalUrl}]: ${isNew ? 'Created' : 'Updated'} pipeline ${savedPipeline.uuid} `)
             } else {
-                console.warn(`Error ${isNew ? 'Creating' : 'Updating'} pipeline ${pipeline.uuid}: ${err} `)
+                console.warn(`${username} ${req.method} [${req.originalUrl}]: Error ${isNew ? 'Creating' : 'Updating'} pipeline ${pipeline.uuid}: ${err} `)
             }
             res.json([err, err ? undefined : savedPipeline]);
         } catch (err) {
-            console.warn(`${username} ${req.method} ${req.originalUrl}: Error ${JSON.stringify(err)}`)
+            console.warn(`${username} ${req.method} [${req.originalUrl}]: Error ${JSON.stringify(err)}`)
             res.status(500).json(err);
         }
     },
@@ -109,10 +110,11 @@ module.exports = {
      */
     removePipeline: async (req, res, next) => {
         const uuid = req.params.uuid;
+        const {id: userId, role: userRole, username} = req.user;
+        console.log(`${username} ${req.method} ${req.originalUrl} : ${uuid}`);
         if (!uuid) {
             return res.status(HttpStatusCode.BadRequest).send('pipeline UUID missing from request.');
         }
-        const {id: userId, role: userRole, username} = req.user;
 
         const [err, pipeline] = await dbRepo.getPipelineByUUID(uuid)
         if (err) return next(err);
@@ -139,7 +141,7 @@ module.exports = {
      */
     getAllNodes: (req, res, next) => {
         const {id: userId, role: userRole, username} = req.user;
-
+        console.log(`${username} ${req.method} ${req.originalUrl}`);
         dbRepo.getAllNodes(username).then(([err, nodes]) => {
             if (err) return next(err);
             res.json(nodes);
@@ -157,29 +159,33 @@ module.exports = {
      */
     getNodeByUUID: async (req, res, next) => {
         const nodeUUID = req.params.uuid;
+        const {id: userId, role: userRole, username} = req.user;
+        console.log(`${username} ${req.method} [${req.originalUrl}] : ${nodeUUID}`);
         if (!nodeUUID) {
+            console.log(`${username} ${req.method} [${req.originalUrl}] : node UUID missing from request.}`);
             return res.status(HttpStatusCode.BadRequest).send('node UUID missing from request.');
         }
 
-        const {id: userId, role: userRole, username} = req.user;
         try {
 
-            const [err, node] = dbRepo.getNodeByUUID(nodeUUID)
+            const [err, node] = await dbRepo.getNodeByUUID(nodeUUID)
 
             if (err) {
-                console.log("controller:getNodeByUUID:error ->" + JSON.stringify(err));
+                console.log(`${username} ${req.method} [${req.originalUrl}] : Error: ${JSON.stringify(err)}`);
                 next(err);
             } else if (!node) {
+                console.log(`${username} ${req.method} [${req.originalUrl}] : Error: Node ${nodeUUID} not found.}`);
                 res.status(404).send(JSON.stringify({error: `Node ${nodeUUID} not found.`}));
             } else {
                 if (!canAccessNode(node, username, userRole)) {
+                    console.log(`${username} ${req.method} [${req.originalUrl}]: Error : User ${ node.owner_user} has no access to this node.`);
                     return res.status(HttpStatusCode.Unauthorized).send('User ' + node.owner_user + ' has no access to this node.');
                 }
-                console.debug("controller:getNodeByUUID->" + JSON.stringify(node));
+                console.log(`${username} ${req.method} [${req.originalUrl}]: -> ${ JSON.stringify(node, null, 2)}`);
                 res.json(node);
             }
         } catch (err) {
-            console.log("controller:getNodeByUUID:error ->" + JSON.stringify(err));
+            console.log(`${username} ${req.method} [${req.originalUrl}]: Error: -> ${JSON.stringify(err)}`);
             next(err);
         }
     },
@@ -192,10 +198,12 @@ module.exports = {
      */
     removeNode: async (req, res, next) => {
         const uuid = req.params.uuid;
+        const {id: userId, role: userRole, username} = req.user;
+        console.log(`${username} ${req.method} ${req.originalUrl} : ${uuid}`);
         if (!uuid) {
             return res.status(HttpStatusCode.BadRequest).send('node UUID missing from request.');
         }
-        const {id: userId, role: userRole, username} = req.user;
+        // const {id: userId, role: userRole, username} = req.user;
         const [err, node] = await dbRepo.getNodeByUUID(uuid)
         if (err) return next(err);
         if (!node) {
@@ -222,6 +230,9 @@ module.exports = {
      */
     saveNode: async (req, res, next) => {
         const node = req.body;
+        const {id: userId, role: userRole, username} = req.user;
+        console.log(`${username} ${req.method} ${req.originalUrl}`);
+
         if (!node) {
             return res.status(HttpStatusCode.BadRequest).send('node missing from request.');
         }
@@ -230,10 +241,7 @@ module.exports = {
             res.status(400).send(JSON.stringify({error: `Node name and uuid required`}));
         }
 
-        const {id: userId, role: userRole, username} = req.user;
-
-
-        console.log(`${username} ${req.method} ${req.originalUrl}: ${node.uuid || node.uuid}`);
+        console.log(`${username} ${req.method} ${req.originalUrl}: ${node.name || node.uuid}`);
         if (!canAccessNode(node, username, userRole)) {
             //if(pipeline.owner_user !== username)
             return res.status(HttpStatusCode.Unauthorized).send('User ' + node.owner_user + ' has no access to this node.');
@@ -267,13 +275,13 @@ module.exports = {
      */
     executePipeline: async (req, res) => {
         const pipelineUUID = req.params.uuid;
+        const {id: userId, role: userRole, username} = req.user;
+        console.log(`${username} ${req.method} ${req.originalUrl}: ${pipelineUUID}`);
         if (!pipelineUUID) {
             return res.status(HttpStatusCode.BadRequest).send('pipeline UUID missing from request.');
         }
         const sendTrace = (req.query.trace === "true")
         const initialData = req.body || {}
-
-        const {id: userId, role: userRole, username} = req.user;
         const [err, pipeline] = await dbRepo.getPipelineByUUID(pipelineUUID)
         if (!pipeline) {
             res.status(404).send(JSON.stringify({error: `Pipeline ${pipelineUUID} not found.`}));
@@ -345,6 +353,9 @@ module.exports = {
      */
     executePipelineStep: async (req, res) => {
         const pipelineUUID = req.params.uuid;
+        const {id: userId, role: userRole, username} = req.user;
+        console.log(`${username} ${req.method} ${req.originalUrl}: ${pipelineUUID}`);
+
         if (!pipelineUUID) {
             return res.status(HttpStatusCode.BadRequest).send('pipeline UUID missing from request.');
         }
@@ -356,7 +367,6 @@ module.exports = {
         const initialData = req.body || {}
         console.log(`controller:executePipelineStep: ${pipelineUUID}:${stepIndex}:${sendTrace}`)
 
-        const {id: userId, role: userRole, username} = req.user;
         const [err, pipeline] = await dbRepo.getPipelineByUUID(pipelineUUID)
 
         if (err) {
